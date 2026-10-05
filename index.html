@@ -43,6 +43,7 @@
         </button>
         <div class="menu-list" id="menuList" role="menu" hidden>
           <button type="button" role="menuitem" data-action="new">Neue leere Matrix</button>
+          <button type="button" role="menuitem" data-action="open">Meine Matrizen …</button>
           <button type="button" role="menuitem" data-action="example">Beispiel laden</button>
           <hr>
           <button type="button" role="menuitem" data-action="export-json">Als JSON speichern</button>
@@ -115,6 +116,17 @@
       </div>
     </section>
   </main>
+
+  <dialog class="dialog" id="libraryDialog" aria-labelledby="libraryHeading">
+    <div class="dialog-head">
+      <h2 id="libraryHeading">Meine Matrizen</h2>
+      <button type="button" class="icon-btn" id="libraryClose" aria-label="Schließen" title="Schließen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="dialog-hint">Alle Matrizen werden in diesem Browser gespeichert. Jeder Tab bearbeitet seine eigene Matrix – öffnen Sie eine Matrix in einem neuen Tab, um parallel zu arbeiten.</p>
+    <ul class="doc-list" id="docList"></ul>
+  </dialog>
 
   <input type="file" id="importFile" accept="application/json,.json" hidden>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
