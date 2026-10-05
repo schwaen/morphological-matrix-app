@@ -898,6 +898,20 @@
     return { value: sumW > 0 ? sum / sumW : null, missing };
   }
 
+  /**
+   * Preis-Leistungs-Verhältnis als Kosten je Nutzwertpunkt (niedriger ist besser).
+   * Nur sinnvoll, wenn Kosten und Nutzwerte des Konzepts vollständig gepflegt sind.
+   */
+  function priceValue(c) {
+    const cost = conceptCost(c);
+    const util = conceptUtility(c);
+    if (cost.missing || util.missing) {
+      return { value: null, reason: 'Nicht berechenbar: Kosten oder Nutzwerte sind unvollständig.' };
+    }
+    if (!util.value) return { value: null, reason: 'Nicht berechenbar: Der Nutzwert ist 0.' };
+    return { value: cost.total / util.value, reason: null };
+  }
+
   function weightPercent(p) {
     const sumW = totalWeight();
     return sumW > 0 ? `${numberFormat.format(Math.round((weightOf(p) / sumW) * 1000) / 10)} %` : '–';
@@ -1021,6 +1035,18 @@
           class: [x.missing ? 'incomplete' : '', x.value != null && x.value === best ? 'best' : ''].join(' ').trim() || null,
           title: x.missing ? missingNote(x.missing).trim().slice(1, -1) : null,
         }, x.value == null ? '–' : numberFormat.format(x.value) + (x.missing ? ' *' : '')))));
+    }
+    if (state.settings.costs && state.settings.utility) {
+      const ratios = state.concepts.map(priceValue);
+      const values = ratios.filter(x => x.value != null).map(x => x.value);
+      const best = values.length > 1 ? Math.min(...values) : null;
+      footRows.push(h('tr', null,
+        h('th', { scope: 'row', title: 'Gesamtkosten geteilt durch Nutzwert – je niedriger, desto besser' },
+          'Preis-Leistung', h('small', { class: 'th-note' }, 'Kosten je Nutzwertpunkt')),
+        ratios.map(x => h('td', {
+          class: x.value == null ? 'incomplete' : (x.value === best ? 'best' : null),
+          title: x.reason,
+        }, x.value == null ? '–' : formatMoney(x.value)))));
     }
     table.replaceChildren(...[head, body, footRows.length ? h('tfoot', null, footRows) : null].filter(Boolean));
   }
@@ -1171,11 +1197,13 @@
     if (state.concepts.length) {
       lines.push([], [cell('Konzept'), ...state.parameters.map(p => cell(p.name)),
         ...(costs ? [cell(`Gesamtkosten (${state.settings.currency})`)] : []),
-        ...(utility ? [cell('Nutzwert')] : [])]);
+        ...(utility ? [cell('Nutzwert')] : []),
+        ...(costs && utility ? [cell(`Kosten je Nutzwertpunkt (${state.settings.currency})`)] : [])]);
       for (const c of state.concepts) {
         lines.push([cell(c.name), ...state.parameters.map(p => cell(optionText(p, c.selections[p.id]) || '')),
           ...(costs ? [csvNum(conceptCost(c).total)] : []),
-          ...(utility ? [csvNum(conceptUtility(c).value)] : [])]);
+          ...(utility ? [csvNum(conceptUtility(c).value)] : []),
+          ...(costs && utility ? [csvNum(priceValue(c).value)] : [])]);
       }
     }
     download(`${slugify(state.title)}.csv`, '﻿' + lines.map(l => l.join(';')).join('\r\n'), 'text/csv;charset=utf-8');
