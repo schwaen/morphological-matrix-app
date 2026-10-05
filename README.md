@@ -39,5 +39,5 @@ python3 -m http.server 8000
 | Datei        | Inhalt                         |
 |--------------|--------------------------------|
 | `index.html` | Seitengerüst                   |
-| `styles.css` | Layout, responsive Regeln, Druck |
+| `styles.css` | Design, Layout, responsive Regeln, Druck |
 | `app.js`     | Datenmodell, Rendering, Logik  |

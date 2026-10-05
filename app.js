@@ -819,27 +819,28 @@
         bindField(name, v => { p.name = v; });
         cells.push(h('div', { class: 'param-cell' },
           name,
-          state.settings.utility
-            ? h('label', { class: 'weight-field' },
-              h('span', null, 'Gewicht'),
-              numberField({
-                value: p.weight, placeholder: '1', label: `Gewichtung von ${p.name || `Parameter ${pi + 1}`}`,
-                apply: n => { p.weight = n != null && n >= 0 ? n : null; },
-                validate: n => n >= 0,
-              }),
-              h('span', { class: 'weight-pct', dataset: { weightPct: p.id } }, weightPercent(p)))
-            : null,
-          h('div', { class: 'row-tools' },
-            iconBtn('up', 'Nach oben verschieben', () => moveParameter(pi, -1), { disabled: pi === 0 }),
-            iconBtn('down', 'Nach unten verschieben', () => moveParameter(pi, 1), { disabled: pi === state.parameters.length - 1 }),
-            iconBtn('trash', 'Parameter löschen', () => deleteParameter(p.id), { danger: true }),
-          )));
+          h('div', { class: 'param-foot' },
+            state.settings.utility
+              ? h('label', { class: 'weight-field' },
+                h('span', null, 'Gewicht'),
+                numberField({
+                  value: p.weight, placeholder: '1', label: `Gewichtung von ${p.name || `Parameter ${pi + 1}`}`,
+                  apply: n => { p.weight = n != null && n >= 0 ? n : null; },
+                  validate: n => n >= 0,
+                }),
+                h('span', { class: 'weight-pct', dataset: { weightPct: p.id } }, weightPercent(p)))
+              : null,
+            h('div', { class: 'row-tools' },
+              iconBtn('up', 'Nach oben verschieben', () => moveParameter(pi, -1), { disabled: pi === 0 }),
+              iconBtn('down', 'Nach unten verschieben', () => moveParameter(pi, 1), { disabled: pi === state.parameters.length - 1 }),
+              iconBtn('trash', 'Parameter löschen', () => deleteParameter(p.id), { danger: true }),
+            ))));
       } else {
         cells.push(h('div', { class: 'param-cell' },
           h('span', { class: 'param-label' }, p.name || `Parameter ${pi + 1}`),
           h('span', { class: 'param-meta' },
             `${p.options.length} ${p.options.length === 1 ? 'Ausprägung' : 'Ausprägungen'}`
-            + (state.settings.utility ? ` · Gewicht ${weightPercent(p)}` : ''))));
+            + (state.settings.utility ? ` · Gewicht\u00a0${weightPercent(p)}` : ''))));
       }
 
       // Ausprägungen
@@ -1075,7 +1076,7 @@
 
   function weightPercent(p) {
     const sumW = totalWeight();
-    return sumW > 0 ? `${numberFormat.format(Math.round((weightOf(p) / sumW) * 1000) / 10)} %` : '–';
+    return sumW > 0 ? `${numberFormat.format(Math.round((weightOf(p) / sumW) * 1000) / 10)}\u00a0%` : '–';
   }
 
   function updateWeightPercents() {
