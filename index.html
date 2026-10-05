@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Morphologische Matrix (Zwicky-Box) im Browser erstellen, Lösungskonzepte kombinieren und exportieren.">
+  <meta name="theme-color" content="#3b5bdb">
+  <title>Morphologische Matrix</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%233b5bdb'/%3E%3Cg fill='%23fff'%3E%3Crect x='6' y='6' width='6' height='6' rx='1.5'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5'/%3E%3Crect x='20' y='20' width='6' height='6' rx='1.5'/%3E%3C/g%3E%3Cg fill='%23fff' opacity='.45'%3E%3Crect x='13' y='6' width='6' height='6' rx='1.5'/%3E%3Crect x='20' y='6' width='6' height='6' rx='1.5'/%3E%3Crect x='6' y='13' width='6' height='6' rx='1.5'/%3E%3Crect x='20' y='13' width='6' height='6' rx='1.5'/%3E%3Crect x='6' y='20' width='6' height='6' rx='1.5'/%3E%3Crect x='13' y='20' width='6' height='6' rx='1.5'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="7" fill="currentColor"/>
+        <g fill="#fff"><rect x="6" y="6" width="6" height="6" rx="1.5"/><rect x="13" y="13" width="6" height="6" rx="1.5"/><rect x="20" y="20" width="6" height="6" rx="1.5"/></g>
+        <g fill="#fff" opacity=".45"><rect x="13" y="6" width="6" height="6" rx="1.5"/><rect x="20" y="6" width="6" height="6" rx="1.5"/><rect x="6" y="13" width="6" height="6" rx="1.5"/><rect x="20" y="13" width="6" height="6" rx="1.5"/><rect x="6" y="20" width="6" height="6" rx="1.5"/><rect x="13" y="20" width="6" height="6" rx="1.5"/></g>
+      </svg>
+      <input id="title" class="title-input" type="text" aria-label="Titel der Matrix" placeholder="Titel der Matrix" autocomplete="off">
+    </div>
+
+    <div class="toolbar">
+      <div class="segmented" role="group" aria-label="Modus">
+        <button type="button" data-mode="edit">Bearbeiten</button>
+        <button type="button" data-mode="select">Kombinieren</button>
+      </div>
+
+      <div class="btn-group">
+        <button type="button" class="icon-btn" id="undoBtn" title="Rückgängig (Strg+Z)" aria-label="Rückgängig">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></svg>
+        </button>
+        <button type="button" class="icon-btn" id="redoBtn" title="Wiederholen (Strg+Umschalt+Z)" aria-label="Wiederholen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3"/></svg>
+        </button>
+      </div>
+
+      <div class="menu">
+        <button type="button" class="btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="menuList">
+          Datei
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="menu-list" id="menuList" role="menu" hidden>
+          <button type="button" role="menuitem" data-action="new">Neue leere Matrix</button>
+          <button type="button" role="menuitem" data-action="example">Beispiel laden</button>
+          <hr>
+          <button type="button" role="menuitem" data-action="export-json">Als JSON speichern</button>
+          <button type="button" role="menuitem" data-action="import-json">JSON öffnen …</button>
+          <button type="button" role="menuitem" data-action="export-csv">Als CSV exportieren</button>
+          <hr>
+          <button type="button" role="menuitem" data-action="share">Link zum Teilen kopieren</button>
+          <button type="button" role="menuitem" data-action="print">Drucken / PDF</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="matrix-section" aria-labelledby="matrixHeading">
+      <h2 id="matrixHeading" class="visually-hidden">Matrix</h2>
+      <textarea id="description" class="description" rows="1" placeholder="Problemstellung bzw. Gesamtfunktion beschreiben …" aria-label="Problemstellung"></textarea>
+
+      <div class="stats" id="stats" aria-live="polite"></div>
+
+      <div class="matrix-scroll" id="matrixScroll">
+        <div class="matrix-wrap" id="matrixWrap">
+          <svg id="lines" class="lines" aria-hidden="true"></svg>
+          <div class="matrix" id="matrix"></div>
+        </div>
+      </div>
+
+      <div class="below-matrix">
+        <button type="button" class="btn btn-dashed" id="addParamBtn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Parameter hinzufügen
+        </button>
+        <p class="hint" id="hint"></p>
+      </div>
+    </section>
+
+    <aside class="panel concepts-panel" aria-labelledby="conceptsHeading">
+      <div class="panel-head">
+        <h2 id="conceptsHeading">Lösungskonzepte</h2>
+        <button type="button" class="btn btn-small" id="addConceptBtn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Konzept
+        </button>
+      </div>
+      <ul class="concept-list" id="conceptList"></ul>
+      <div class="concept-actions">
+        <button type="button" class="btn btn-small" id="randomBtn" title="Für das aktive Konzept je Parameter eine zufällige Ausprägung wählen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2" class="fill"/><circle cx="15" cy="15" r="1.2" class="fill"/><circle cx="15" cy="9" r="1.2" class="fill"/><circle cx="9" cy="15" r="1.2" class="fill"/></svg>
+          Zufällig
+        </button>
+        <button type="button" class="btn btn-small" id="clearSelBtn">Auswahl leeren</button>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="showLines">
+        Verbindungslinien anzeigen
+      </label>
+      <div class="summary" id="conceptSummary"></div>
+    </aside>
+
+    <section class="panel compare-section" id="compareSection" aria-labelledby="compareHeading">
+      <h2 id="compareHeading">Konzeptvergleich</h2>
+      <div class="compare-scroll">
+        <table class="compare" id="compareTable"></table>
+      </div>
+    </section>
+  </main>
+
+  <input type="file" id="importFile" accept="application/json,.json" hidden>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
