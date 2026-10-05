@@ -839,7 +839,7 @@
           h('span', { class: 'param-label' }, p.name || `Parameter ${pi + 1}`),
           h('span', { class: 'param-meta' },
             `${p.options.length} ${p.options.length === 1 ? 'Ausprägung' : 'Ausprägungen'}`
-            + (state.settings.utility ? ` · Gewicht ${weightPercent(p)}` : ''))));
+            + (state.settings.utility ? ` · Gewicht\u00a0${weightPercent(p)}` : ''))));
       }
 
       // Ausprägungen
@@ -1075,7 +1075,7 @@
 
   function weightPercent(p) {
     const sumW = totalWeight();
-    return sumW > 0 ? `${numberFormat.format(Math.round((weightOf(p) / sumW) * 1000) / 10)} %` : '–';
+    return sumW > 0 ? `${numberFormat.format(Math.round((weightOf(p) / sumW) * 1000) / 10)}\u00a0%` : '–';
   }
 
   function updateWeightPercents() {
@@ -1525,6 +1525,25 @@
     });
   }
 
+  // ---------- Design-Vorschlag ----------
+
+  const DESIGN_KEY = 'morphologische-matrix:design';
+
+  function updateDesignToggle() {
+    const modern = document.documentElement.dataset.design === 'modern';
+    $('#designToggle').textContent = modern ? 'Zurück zum bisherigen Design' : 'Design-Vorschlag „Modern“ anzeigen';
+  }
+
+  function toggleDesign() {
+    const root = document.documentElement;
+    const modern = root.dataset.design !== 'modern';
+    if (modern) root.dataset.design = 'modern';
+    else delete root.dataset.design;
+    storage.set('localStorage', DESIGN_KEY, modern ? 'modern' : 'classic');
+    updateDesignToggle();
+    scheduleLines();
+  }
+
   // ---------- Menü ----------
 
   function toggleMenu(open) {
@@ -1546,6 +1565,7 @@
     'export-csv': exportCsv,
     share: shareLink,
     print: printMatrix,
+    design: toggleDesign,
   };
 
   // ---------- Initialisierung ----------
@@ -1669,6 +1689,7 @@
     });
 
     loadFromHash();
+    updateDesignToggle();
     render();
   }
 

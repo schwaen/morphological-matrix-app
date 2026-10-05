@@ -33,6 +33,7 @@ python3 -m http.server 8000
 - Teilen per Link (die Matrix steckt komplett in der URL).
 - Druckansicht bzw. PDF-Export über den Browser.
 - Helles und dunkles Farbschema (folgt der Systemeinstellung).
+- **Design-Vorschlag „Modern“** (zum Vergleich): über **Datei → Design-Vorschlag „Modern“ anzeigen** umschalten oder per URL `?design=modern` bzw. `?design=classic`. Die Auswahl wird im Browser gemerkt.
 
 ## Dateien
 
@@ -40,4 +41,5 @@ python3 -m http.server 8000
 |--------------|--------------------------------|
 | `index.html` | Seitengerüst                   |
 | `styles.css` | Layout, responsive Regeln, Druck |
+| `theme-modern.css` | Design-Vorschlag „Modern“ (nur aktiv mit `data-design="modern"`) |
 | `app.js`     | Datenmodell, Rendering, Logik  |
