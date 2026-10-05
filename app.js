@@ -534,6 +534,166 @@
     if (prefs.mode !== 'select') setMode('select');
   }
 
+  // ---------- Automatische Konzepte ----------
+
+  function lexLess(a, b) {
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] < b[i]) return true;
+      if (a[i] > b[i]) return false;
+    }
+    return false;
+  }
+
+  /** Wählt die Ausprägung mit dem lexikografisch kleinsten Schlüssel; Kandidaten per Filter. */
+  function pickBy(p, filter, key) {
+    let best = null;
+    let bestKey = null;
+    for (const o of p.options) {
+      if (!filter(o)) continue;
+      const k = key(o);
+      if (!best || lexLess(k, bestKey)) { best = o; bestKey = k; }
+    }
+    return best;
+  }
+
+  const hasScore = o => o.score != null;
+  const hasCost = o => o.cost != null;
+  // Nebenkriterien bei Gleichstand (nur wenn die jeweilige Bewertung aktiv ist)
+  const tieCost = o => (state.settings.costs && hasCost(o) ? o.cost : Infinity);
+  const tieScore = o => (state.settings.utility && hasScore(o) ? -clampScore(o.score) : Infinity);
+
+  /** Je Parameter unabhängig wählen – exakt für Summenkriterien (Kosten, gewichteter Nutzwert). */
+  function separable(filter, key) {
+    return () => {
+      const selections = {};
+      let skipped = 0;
+      for (const p of state.parameters) {
+        const o = pickBy(p, filter, key);
+        if (o) selections[p.id] = o.id;
+        else skipped++;
+      }
+      return { selections, skipped };
+    };
+  }
+
+  /**
+   * Bestes Preis-Leistungs-Verhältnis (minimale Kosten je Nutzwertpunkt).
+   * Der Quotient ist nicht je Parameter zerlegbar; das Dinkelbach-Verfahren löst ihn
+   * exakt über eine Folge zerlegbarer Probleme min Σ (Kosten − λ · Nutzwertanteil).
+   */
+  function buildBestValue() {
+    const W = totalWeight();
+    const cands = state.parameters.map(p => p.options.filter(o => hasCost(o) && hasScore(o)));
+    if (!state.parameters.length || cands.some(list => !list.length)) {
+      return { error: 'Dafür müssen in jedem Parameter Ausprägungen mit Kosten und Nutzwert gepflegt sein.' };
+    }
+    if (W <= 0) return { error: 'Die Summe der Gewichte ist 0.' };
+    const util = (p, o) => (weightOf(p) * clampScore(o.score)) / W;
+    const solve = objective => state.parameters.map((p, i) => cands[i].reduce((best, o) => {
+      const d = objective(p, o) - objective(p, best);
+      return d < -1e-12 || (Math.abs(d) <= 1e-12 && util(p, o) > util(p, best)) ? o : best;
+    }));
+    const totals = xs => xs.reduce((t, o, i) => ({ C: t.C + o.cost, U: t.U + util(state.parameters[i], o) }), { C: 0, U: 0 });
+
+    // Start: höchster Nutzwert
+    let x = solve((p, o) => -util(p, o));
+    let { C, U } = totals(x);
+    if (U <= 0) return { error: 'Alle gepflegten Nutzwerte sind 0.' };
+    let lambda = C / U;
+    for (let iter = 0; iter < 100; iter++) {
+      const next = solve((p, o) => o.cost - lambda * util(p, o));
+      const t = totals(next);
+      if (t.U <= 0 || t.C - lambda * t.U >= -1e-9) break;
+      x = next;
+      lambda = t.C / t.U;
+    }
+    return { selections: Object.fromEntries(state.parameters.map((p, i) => [p.id, x[i].id])), skipped: 0 };
+  }
+
+  /** Strategien zum automatischen Erstellen eines Konzepts; Reihenfolge = Reihenfolge der Knöpfe. */
+  const GENERATORS = {
+    'max-utility': {
+      label: 'Höchster Nutzwert',
+      available: () => state.settings.utility,
+      missing: 'Nutzwert',
+      build: separable(hasScore, o => [-clampScore(o.score), tieCost(o)]),
+    },
+    'min-utility': {
+      label: 'Geringster Nutzwert',
+      available: () => state.settings.utility,
+      missing: 'Nutzwert',
+      build: separable(hasScore, o => [clampScore(o.score), tieCost(o)]),
+    },
+    'min-cost': {
+      label: 'Geringste Kosten',
+      available: () => state.settings.costs,
+      missing: 'Kosten',
+      build: separable(hasCost, o => [o.cost, tieScore(o)]),
+    },
+    'max-cost': {
+      label: 'Höchste Kosten',
+      available: () => state.settings.costs,
+      missing: 'Kosten',
+      build: separable(hasCost, o => [-o.cost, tieScore(o)]),
+    },
+    'best-value': {
+      label: 'Beste Preis-Leistung',
+      available: () => state.settings.costs && state.settings.utility,
+      missing: 'Kosten und Nutzwert',
+      build: buildBestValue,
+    },
+  };
+
+  function sameSelections(a, b) {
+    const ka = Object.keys(a);
+    return ka.length === Object.keys(b).length && ka.every(k => a[k] === b[k]);
+  }
+
+  function uniqueConceptName(base) {
+    const names = new Set(state.concepts.map(c => c.name));
+    if (!names.has(base)) return base;
+    let i = 2;
+    while (names.has(`${base} ${i}`)) i++;
+    return `${base} ${i}`;
+  }
+
+  function generateConcept(key) {
+    const gen = GENERATORS[key];
+    if (!gen || !gen.available()) return;
+    const { selections, skipped, error } = gen.build();
+    if (error || !Object.keys(selections).length) {
+      toast(`Kein Konzept erstellt. ${error || `Bitte zuerst ${gen.missing} an den Ausprägungen erfassen.`}`);
+      return;
+    }
+    const existing = state.concepts.find(c => sameSelections(c.selections, selections));
+    if (existing) {
+      setActiveConcept(existing.id);
+      if (prefs.mode !== 'select') setMode('select');
+      toast(`Diese Kombination („${gen.label}“) gibt es bereits als Konzept „${existing.name || 'Unbenannt'}“ – es wurde ausgewählt.`);
+      return;
+    }
+    const c = { id: uid(), name: uniqueConceptName(gen.label), color: nextColor(state.concepts), selections };
+    mutate(s => {
+      s.concepts.push(c);
+      s.activeConceptId = c.id;
+    });
+    if (prefs.mode !== 'select') setMode('select');
+    toast(skipped
+      ? `Konzept „${c.name}“ erstellt – ${skipped} ${skipped === 1 ? 'Parameter blieb' : 'Parameter blieben'} ohne Auswahl, da dort ${gen.missing} fehlt.`
+      : `Konzept „${c.name}“ erstellt.`, true);
+  }
+
+  function renderGenerators() {
+    let any = false;
+    document.querySelectorAll('[data-generate]').forEach(btn => {
+      const gen = GENERATORS[btn.dataset.generate];
+      const on = !!gen && gen.available();
+      btn.hidden = !on;
+      any = any || on;
+    });
+    $('#autoConcepts').hidden = !any;
+  }
+
   function clearActive() {
     const c = activeConcept();
     if (!c || !Object.keys(c.selections).length) return;
@@ -580,6 +740,7 @@
 
     renderMatrix();
     renderConcepts();
+    renderGenerators();
     refreshLight();
     syncSettingsForm();
     updateHistoryButtons();
@@ -1405,6 +1566,9 @@
     $('#addParamBtn').addEventListener('click', addParameter);
     $('#addConceptBtn').addEventListener('click', addConcept);
     $('#randomBtn').addEventListener('click', randomizeActive);
+    document.querySelectorAll('[data-generate]').forEach(btn => {
+      btn.addEventListener('click', () => generateConcept(btn.dataset.generate));
+    });
     $('#clearSelBtn').addEventListener('click', clearActive);
     $('#compareToggle').addEventListener('click', () => {
       prefs.compareOpen = prefs.compareOpen === false;

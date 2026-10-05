@@ -299,6 +299,11 @@ svg .fill { fill: currentColor; stroke: none; }
 .swatch::-moz-color-swatch { border: 0; border-radius: 50%; }
 
 .concept-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.auto-concepts { margin: 0 0 12px; padding: 10px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); }
+.auto-label { display: block; margin-bottom: 6px; font-size: .78rem; font-weight: 600; color: var(--muted); }
+.auto-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.auto-buttons .btn { white-space: normal; text-align: center; line-height: 1.2; }
+.auto-buttons .btn:not([hidden]):last-child:nth-child(odd) { grid-column: 1 / -1; }
 .check { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); cursor: pointer; }
 .check input { width: 16px; height: 16px; accent-color: var(--accent); }
 
@@ -443,7 +448,7 @@ svg .fill { fill: currentColor; stroke: none; }
   :root { --bg: #fff; --surface: #fff; --surface-2: #f2f4f7; --text: #000; --muted: #555; --border: #bbb; }
   body { background: #fff; font-size: 11pt; }
   .app-header { position: static; border: 0; padding: 0 0 8px; }
-  .toolbar, .below-matrix, .concept-actions, .check, .icon-btn, .add-opt, .panel-head .btn, .swatch { display: none !important; }
+  .toolbar, .below-matrix, .concept-actions, .auto-concepts, .check, .icon-btn, .add-opt, .panel-head .btn, .swatch { display: none !important; }
   .layout { display: block; padding: 0; }
   .panel, .matrix-scroll { border: 0; padding: 0; box-shadow: none; }
   .matrix-scroll { overflow: visible; }

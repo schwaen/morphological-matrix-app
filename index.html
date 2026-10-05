@@ -98,6 +98,16 @@
         </button>
         <button type="button" class="btn btn-small" id="clearSelBtn">Auswahl leeren</button>
       </div>
+      <div class="auto-concepts" id="autoConcepts" hidden>
+        <span class="auto-label">Konzept automatisch erstellen</span>
+        <div class="auto-buttons">
+          <button type="button" class="btn btn-small" data-generate="max-utility" title="Neues Konzept: je Parameter die Ausprägung mit dem höchsten Nutzwert">Höchster Nutzwert</button>
+          <button type="button" class="btn btn-small" data-generate="min-utility" title="Neues Konzept: je Parameter die Ausprägung mit dem geringsten Nutzwert">Geringster Nutzwert</button>
+          <button type="button" class="btn btn-small" data-generate="min-cost" title="Neues Konzept: je Parameter die günstigste Ausprägung">Geringste Kosten</button>
+          <button type="button" class="btn btn-small" data-generate="max-cost" title="Neues Konzept: je Parameter die teuerste Ausprägung">Höchste Kosten</button>
+          <button type="button" class="btn btn-small" data-generate="best-value" title="Neues Konzept: Kombination mit den geringsten Kosten je Nutzwertpunkt">Beste Preis-Leistung</button>
+        </div>
+      </div>
       <label class="check">
         <input type="checkbox" id="showLines">
         Verbindungslinien anzeigen

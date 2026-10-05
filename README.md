@@ -23,6 +23,7 @@ python3 -m http.server 8000
   - **Nutzwert** je Ausprägung als Erfüllungsgrad (Skala 0–5, 0–10 oder 0–100) und optionale **Gewichtung** je Parameter (Standard 1). Der Nutzwert eines Konzepts ist wie in der Nutzwertanalyse Σ(Gewicht × Erfüllungsgrad) / Σ Gewichte; nicht gewählte oder unbewertete Parameter zählen mit 0.
   - Sind beide aktiv, zeigt der Konzeptvergleich zusätzlich das **Preis-Leistungs-Verhältnis** als Kosten je Nutzwertpunkt (Gesamtkosten ÷ Nutzwert, niedriger ist besser). Es wird nur berechnet, wenn Kosten und Nutzwerte des Konzepts vollständig gepflegt sind.
   - Ergebnisse in der Konzeptzusammenfassung und im Konzeptvergleich (bester Wert hervorgehoben, unvollständige Werte mit * markiert) sowie im CSV-Export.
+  - **Konzepte automatisch erstellen** (Seitenleiste, nur bei aktivierter Bewertung): *Höchster Nutzwert*, *Geringster Nutzwert*, *Geringste Kosten*, *Höchste Kosten* und *Beste Preis-Leistung*. Die ersten vier wählen je Parameter die passende Ausprägung (bei Gleichstand entscheidet Kosten bzw. Nutzwert); *Beste Preis-Leistung* findet exakt die Kombination mit den geringsten Kosten je Nutzwertpunkt (Dinkelbach-Verfahren) und setzt voraus, dass jeder Parameter Ausprägungen mit Kosten und Nutzwert hat. Existiert die Kombination schon, wird das vorhandene Konzept ausgewählt.
   - Ausgeblendete Werte bleiben erhalten.
 - Konzeptvergleich als Tabelle, ein- und ausklappbar (Zustand wird gemerkt; beim Drucken immer sichtbar).
 - Rückgängig / Wiederholen (`Strg+Z`, `Strg+Umschalt+Z`).
