@@ -197,7 +197,7 @@
   }
 
   function loadPrefs() {
-    const defaults = { mode: 'select', showLines: true };
+    const defaults = { mode: 'select', showLines: true, compareOpen: true };
     try {
       return { ...defaults, ...JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') };
     } catch (e) {
@@ -671,12 +671,21 @@
 
   function renderCompare() {
     const section = $('#compareSection');
-    const table = $('#compareTable');
     if (!state.concepts.length || !state.parameters.length) {
       section.hidden = true;
       return;
     }
     section.hidden = false;
+    const open = prefs.compareOpen !== false;
+    $('#compareToggle').setAttribute('aria-expanded', String(open));
+    $('#compareBody').hidden = !open;
+    const n = state.concepts.length;
+    $('#compareMeta').textContent = `${n} ${n === 1 ? 'Konzept' : 'Konzepte'}`;
+    if (open) buildCompareTable();
+  }
+
+  function buildCompareTable() {
+    const table = $('#compareTable');
     const head = h('thead', null, h('tr', null,
       h('th', { scope: 'col' }, 'Parameter'),
       state.concepts.map(c => h('th', { scope: 'col', style: { '--c': c.color } }, h('span', { 'aria-hidden': 'true' }), c.name || 'Unbenannt'))));
@@ -920,6 +929,11 @@
     $('#addConceptBtn').addEventListener('click', addConcept);
     $('#randomBtn').addEventListener('click', randomizeActive);
     $('#clearSelBtn').addEventListener('click', clearActive);
+    $('#compareToggle').addEventListener('click', () => {
+      prefs.compareOpen = prefs.compareOpen === false;
+      savePrefs();
+      renderCompare();
+    });
     $('#showLines').addEventListener('change', e => {
       prefs.showLines = e.target.checked;
       savePrefs();
@@ -976,7 +990,13 @@
     // Linien bei Größenänderungen neu berechnen
     if ('ResizeObserver' in window) new ResizeObserver(scheduleLines).observe($('#matrix'));
     window.addEventListener('resize', scheduleLines);
-    window.addEventListener('beforeprint', drawLines);
+    window.addEventListener('beforeprint', () => {
+      // Beim Drucken den Vergleich immer vollständig ausgeben
+      buildCompareTable();
+      $('#compareBody').hidden = false;
+      drawLines();
+    });
+    window.addEventListener('afterprint', renderCompare);
 
     // Änderungen aus anderen Tabs übernehmen
     window.addEventListener('storage', e => {

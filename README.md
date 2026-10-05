@@ -18,7 +18,7 @@ python3 -m http.server 8000
 - **Kombinieren-Modus:** Lösungskonzepte bilden, indem je Parameter eine Ausprägung angeklickt wird. Jedes Konzept hat eine eigene Farbe; die Auswahl wird durch Verbindungslinien dargestellt.
 - Konzepte anlegen, duplizieren, umbenennen, umfärben, zufällig befüllen.
 - Kennzahlen: Anzahl Parameter, Ausprägungen und mögliche Kombinationen.
-- Konzeptvergleich als Tabelle.
+- Konzeptvergleich als Tabelle, ein- und ausklappbar (Zustand wird gemerkt; beim Drucken immer sichtbar).
 - Rückgängig / Wiederholen (`Strg+Z`, `Strg+Umschalt+Z`).
 - Automatisches Speichern im Browser (localStorage).
 - Export als JSON (`Strg+S`) und CSV (Excel-kompatibel), Import von JSON.
