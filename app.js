@@ -819,21 +819,22 @@
         bindField(name, v => { p.name = v; });
         cells.push(h('div', { class: 'param-cell' },
           name,
-          state.settings.utility
-            ? h('label', { class: 'weight-field' },
-              h('span', null, 'Gewicht'),
-              numberField({
-                value: p.weight, placeholder: '1', label: `Gewichtung von ${p.name || `Parameter ${pi + 1}`}`,
-                apply: n => { p.weight = n != null && n >= 0 ? n : null; },
-                validate: n => n >= 0,
-              }),
-              h('span', { class: 'weight-pct', dataset: { weightPct: p.id } }, weightPercent(p)))
-            : null,
-          h('div', { class: 'row-tools' },
-            iconBtn('up', 'Nach oben verschieben', () => moveParameter(pi, -1), { disabled: pi === 0 }),
-            iconBtn('down', 'Nach unten verschieben', () => moveParameter(pi, 1), { disabled: pi === state.parameters.length - 1 }),
-            iconBtn('trash', 'Parameter löschen', () => deleteParameter(p.id), { danger: true }),
-          )));
+          h('div', { class: 'param-foot' },
+            state.settings.utility
+              ? h('label', { class: 'weight-field' },
+                h('span', null, 'Gewicht'),
+                numberField({
+                  value: p.weight, placeholder: '1', label: `Gewichtung von ${p.name || `Parameter ${pi + 1}`}`,
+                  apply: n => { p.weight = n != null && n >= 0 ? n : null; },
+                  validate: n => n >= 0,
+                }),
+                h('span', { class: 'weight-pct', dataset: { weightPct: p.id } }, weightPercent(p)))
+              : null,
+            h('div', { class: 'row-tools' },
+              iconBtn('up', 'Nach oben verschieben', () => moveParameter(pi, -1), { disabled: pi === 0 }),
+              iconBtn('down', 'Nach unten verschieben', () => moveParameter(pi, 1), { disabled: pi === state.parameters.length - 1 }),
+              iconBtn('trash', 'Parameter löschen', () => deleteParameter(p.id), { danger: true }),
+            ))));
       } else {
         cells.push(h('div', { class: 'param-cell' },
           h('span', { class: 'param-label' }, p.name || `Parameter ${pi + 1}`),
@@ -1525,25 +1526,6 @@
     });
   }
 
-  // ---------- Design-Vorschlag ----------
-
-  const DESIGN_KEY = 'morphologische-matrix:design';
-
-  function updateDesignToggle() {
-    const modern = document.documentElement.dataset.design === 'modern';
-    $('#designToggle').textContent = modern ? 'Zurück zum bisherigen Design' : 'Design-Vorschlag „Modern“ anzeigen';
-  }
-
-  function toggleDesign() {
-    const root = document.documentElement;
-    const modern = root.dataset.design !== 'modern';
-    if (modern) root.dataset.design = 'modern';
-    else delete root.dataset.design;
-    storage.set('localStorage', DESIGN_KEY, modern ? 'modern' : 'classic');
-    updateDesignToggle();
-    scheduleLines();
-  }
-
   // ---------- Menü ----------
 
   function toggleMenu(open) {
@@ -1565,7 +1547,6 @@
     'export-csv': exportCsv,
     share: shareLink,
     print: printMatrix,
-    design: toggleDesign,
   };
 
   // ---------- Initialisierung ----------
@@ -1689,7 +1670,6 @@
     });
 
     loadFromHash();
-    updateDesignToggle();
     render();
   }
 
