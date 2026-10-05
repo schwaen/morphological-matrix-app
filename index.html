@@ -46,6 +46,8 @@
           <button type="button" role="menuitem" data-action="open">Meine Matrizen …</button>
           <button type="button" role="menuitem" data-action="example">Beispiel laden</button>
           <hr>
+          <button type="button" role="menuitem" data-action="settings">Bewertung: Kosten &amp; Nutzwert …</button>
+          <hr>
           <button type="button" role="menuitem" data-action="export-json">Als JSON speichern</button>
           <button type="button" role="menuitem" data-action="import-json">JSON öffnen …</button>
           <button type="button" role="menuitem" data-action="export-csv">Als CSV exportieren</button>
@@ -126,6 +128,53 @@
     </div>
     <p class="dialog-hint">Alle Matrizen werden in diesem Browser gespeichert. Jeder Tab bearbeitet seine eigene Matrix – öffnen Sie eine Matrix in einem neuen Tab, um parallel zu arbeiten.</p>
     <ul class="doc-list" id="docList"></ul>
+  </dialog>
+
+  <dialog class="dialog" id="settingsDialog" aria-labelledby="settingsHeading">
+    <div class="dialog-head">
+      <h2 id="settingsHeading">Bewertung der Ausprägungen</h2>
+      <button type="button" class="icon-btn" id="settingsClose" aria-label="Schließen" title="Schließen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="dialog-hint">Die Einstellungen gelten für die gesamte Matrix. Ausgeblendete Werte bleiben erhalten und erscheinen beim erneuten Aktivieren wieder.</p>
+
+    <div class="setting">
+      <label class="check setting-toggle">
+        <input type="checkbox" id="setCosts">
+        <span><strong>Kosten</strong> je Ausprägung erfassen</span>
+      </label>
+      <p class="setting-desc">Für jedes Konzept werden die Kosten der gewählten Ausprägungen summiert.</p>
+      <label class="setting-sub">
+        Währung
+        <select id="setCurrency">
+          <option value="EUR">Euro (€)</option>
+          <option value="USD">US-Dollar ($)</option>
+          <option value="CHF">Schweizer Franken (CHF)</option>
+          <option value="GBP">Britisches Pfund (£)</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="setting">
+      <label class="check setting-toggle">
+        <input type="checkbox" id="setUtility">
+        <span><strong>Nutzwert</strong> je Ausprägung erfassen</span>
+      </label>
+      <p class="setting-desc">Wie in der Nutzwertanalyse: Jede Ausprägung erhält einen Erfüllungsgrad, jeder Parameter optional eine Gewichtung (Standard 1). Der Nutzwert eines Konzepts ist die gewichtete Summe der Erfüllungsgrade, geteilt durch die Summe der Gewichte.</p>
+      <label class="setting-sub">
+        Skala
+        <select id="setScale">
+          <option value="5">0 bis 5</option>
+          <option value="10">0 bis 10</option>
+          <option value="100">0 bis 100</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="dialog-foot">
+      <button type="button" class="btn" id="settingsDone">Fertig</button>
+    </div>
   </dialog>
 
   <input type="file" id="importFile" accept="application/json,.json" hidden>

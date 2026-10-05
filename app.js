@@ -82,6 +82,39 @@
     return typeof v === 'string' ? v : (v == null ? fallback : String(v));
   }
 
+  const CURRENCIES = ['EUR', 'USD', 'CHF', 'GBP'];
+  const SCALES = [5, 10, 100];
+  const numberFormat = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 });
+
+  function defaultSettings() {
+    return { costs: false, utility: false, currency: 'EUR', utilityMax: 10 };
+  }
+
+  function num(v) {
+    return typeof v === 'number' && Number.isFinite(v) ? v : null;
+  }
+
+  /** Liest Zahlen in deutscher oder englischer Schreibweise („1.200,50“, „1200.5“). Ungültig → NaN. */
+  function parseNumber(text) {
+    let s = String(text).trim().replace(/[\s€$£]|CHF/g, '');
+    if (!s) return null;
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    return /^-?\d*\.?\d+$/.test(s) ? Number(s) : NaN;
+  }
+
+  function numberToInput(n) {
+    return n == null ? '' : String(n).replace('.', ',');
+  }
+
+  function formatMoney(n) {
+    try {
+      return new Intl.NumberFormat('de-DE', { style: 'currency', currency: state.settings.currency }).format(n);
+    } catch (e) {
+      return `${numberFormat.format(n)} ${state.settings.currency}`;
+    }
+  }
+
   function isColor(v) {
     return typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
   }
@@ -101,17 +134,23 @@
 
   // ---------- Zustand ----------
 
+  function newOption() {
+    return { id: uid(), text: '', cost: null, score: null };
+  }
+
   function blankState() {
     const parameters = [1, 2, 3].map(i => ({
       id: uid(),
       name: `Parameter ${i}`,
-      options: [{ id: uid(), text: '' }, { id: uid(), text: '' }],
+      weight: null,
+      options: [newOption(), newOption()],
     }));
     const concept = { id: uid(), name: 'Konzept 1', color: COLORS[0], selections: {} };
     return {
       version: 1,
       title: 'Neue morphologische Matrix',
       description: '',
+      settings: defaultSettings(),
       parameters,
       concepts: [concept],
       activeConceptId: concept.id,
@@ -119,18 +158,20 @@
   }
 
   function exampleState() {
+    // [Parameter, Gewicht, [[Ausprägung, Kosten, Nutzwert 0–10], …]]
     const rows = [
-      ['Wassererwärmung', ['Durchlauferhitzer', 'Boiler', 'Thermoblock', 'Induktion']],
-      ['Druckerzeugung', ['Schwerkraft', 'Vibrationspumpe', 'Rotationspumpe', 'Handhebel']],
-      ['Kaffeezufuhr', ['Pulver (lose)', 'Kapsel', 'Pad', 'Bohnen mit Mahlwerk']],
-      ['Bedienung', ['Drehknopf', 'Tasten', 'Touch-Display', 'Smartphone-App']],
-      ['Energieversorgung', ['Netzstrom', 'Akku', 'Gaskartusche', 'Muskelkraft']],
-      ['Reinigung', ['Manuell', 'Automatische Spülung', 'Spülmaschinenfest']],
+      ['Wassererwärmung', 3, [['Durchlauferhitzer', 18, 6], ['Boiler', 25, 5], ['Thermoblock', 22, 8], ['Induktion', 40, 9]]],
+      ['Druckerzeugung', 3, [['Schwerkraft', 2, 3], ['Vibrationspumpe', 12, 7], ['Rotationspumpe', 45, 9], ['Handhebel', 8, 6]]],
+      ['Kaffeezufuhr', 2, [['Pulver (lose)', 3, 6], ['Kapsel', 10, 8], ['Pad', 6, 5], ['Bohnen mit Mahlwerk', 35, 9]]],
+      ['Bedienung', 1, [['Drehknopf', 2, 5], ['Tasten', 4, 6], ['Touch-Display', 20, 8], ['Smartphone-App', 15, 7]]],
+      ['Energieversorgung', 2, [['Netzstrom', 3, 8], ['Akku', 30, 6], ['Gaskartusche', 15, 5], ['Muskelkraft', 1, 3]]],
+      ['Reinigung', 1, [['Manuell', 0, 3], ['Automatische Spülung', 10, 8], ['Spülmaschinenfest', 5, 7]]],
     ];
-    const parameters = rows.map(([name, opts]) => ({
+    const parameters = rows.map(([name, weight, opts]) => ({
       id: uid(),
       name,
-      options: opts.map(text => ({ id: uid(), text })),
+      weight,
+      options: opts.map(([text, cost, score]) => ({ id: uid(), text, cost, score })),
     }));
     const pick = idx => Object.fromEntries(parameters.map((p, i) => [p.id, p.options[idx[i]].id]));
     const concepts = [
@@ -142,6 +183,8 @@
       version: 1,
       title: 'Beispiel: Kaffeemaschine',
       description: 'Gesamtfunktion: Aus Wasser und Kaffee ein heißes Getränk zubereiten.',
+      // Kosten und Nutzwerte sind hinterlegt, aber zunächst ausgeblendet.
+      settings: defaultSettings(),
       parameters,
       concepts,
       activeConceptId: concepts[0].id,
@@ -160,12 +203,25 @@
       seen.add(s);
       return s;
     };
-    const parameters = data.parameters.map(p => ({
-      id: id(p && p.id),
-      name: str(p && p.name),
-      options: (Array.isArray(p && p.options) ? p.options : []).map(o =>
-        typeof o === 'string' ? { id: id(), text: o } : { id: id(o && o.id), text: str(o && o.text) }),
-    }));
+    const parameters = data.parameters.map(p => {
+      const weight = num(p && p.weight);
+      return {
+        id: id(p && p.id),
+        name: str(p && p.name),
+        weight: weight != null && weight >= 0 ? weight : null,
+        options: (Array.isArray(p && p.options) ? p.options : []).map(o =>
+          typeof o === 'string'
+            ? { id: id(), text: o, cost: null, score: null }
+            : { id: id(o && o.id), text: str(o && o.text), cost: num(o && o.cost), score: num(o && o.score) }),
+      };
+    });
+    const src = (data.settings && typeof data.settings === 'object') ? data.settings : {};
+    const settings = {
+      costs: src.costs === true,
+      utility: src.utility === true,
+      currency: CURRENCIES.includes(src.currency) ? src.currency : 'EUR',
+      utilityMax: SCALES.includes(src.utilityMax) ? src.utilityMax : 10,
+    };
     const concepts = (Array.isArray(data.concepts) ? data.concepts : []).map((c, i, all) => {
       const selections = {};
       const src = (c && c.selections) || {};
@@ -187,6 +243,7 @@
       version: 1,
       title: str(data.title, 'Morphologische Matrix'),
       description: str(data.description),
+      settings,
       parameters,
       concepts,
       activeConceptId,
@@ -366,7 +423,7 @@
   // ---------- Aktionen ----------
 
   function addParameter() {
-    const p = { id: uid(), name: '', options: [{ id: uid(), text: '' }, { id: uid(), text: '' }] };
+    const p = { id: uid(), name: '', weight: null, options: [newOption(), newOption()] };
     pendingFocus = `param:${p.id}`;
     mutate(s => { s.parameters.push(p); });
   }
@@ -388,7 +445,7 @@
   }
 
   function addOption(pid, afterIndex) {
-    const o = { id: uid(), text: '' };
+    const o = newOption();
     pendingFocus = `opt:${o.id}`;
     mutate(s => {
       const p = s.parameters.find(x => x.id === pid);
@@ -524,6 +581,7 @@
     renderMatrix();
     renderConcepts();
     refreshLight();
+    syncSettingsForm();
     updateHistoryButtons();
     autosizeAll();
     applyPendingFocus();
@@ -531,6 +589,7 @@
 
   /** Leichte Aktualisierung ohne Eingabefelder neu zu erzeugen. */
   function refreshLight() {
+    updateWeightPercents();
     renderStats();
     renderHint();
     renderSummary();
@@ -599,6 +658,16 @@
         bindField(name, v => { p.name = v; });
         cells.push(h('div', { class: 'param-cell' },
           name,
+          state.settings.utility
+            ? h('label', { class: 'weight-field' },
+              h('span', null, 'Gewicht'),
+              numberField({
+                value: p.weight, placeholder: '1', label: `Gewichtung von ${p.name || `Parameter ${pi + 1}`}`,
+                apply: n => { p.weight = n != null && n >= 0 ? n : null; },
+                validate: n => n >= 0,
+              }),
+              h('span', { class: 'weight-pct', dataset: { weightPct: p.id } }, weightPercent(p)))
+            : null,
           h('div', { class: 'row-tools' },
             iconBtn('up', 'Nach oben verschieben', () => moveParameter(pi, -1), { disabled: pi === 0 }),
             iconBtn('down', 'Nach unten verschieben', () => moveParameter(pi, 1), { disabled: pi === state.parameters.length - 1 }),
@@ -607,7 +676,9 @@
       } else {
         cells.push(h('div', { class: 'param-cell' },
           h('span', { class: 'param-label' }, p.name || `Parameter ${pi + 1}`),
-          h('span', { class: 'param-meta' }, `${p.options.length} ${p.options.length === 1 ? 'Ausprägung' : 'Ausprägungen'}`)));
+          h('span', { class: 'param-meta' },
+            `${p.options.length} ${p.options.length === 1 ? 'Ausprägung' : 'Ausprägungen'}`
+            + (state.settings.utility ? ` · Gewicht ${weightPercent(p)}` : ''))));
       }
 
       // Ausprägungen
@@ -637,9 +708,32 @@
             },
           });
           bindField(ta, v => { o.text = v; });
+          const optLabel = o.text.trim() || `Ausprägung ${oi + 1}`;
           cells.push(h('div', { class: 'opt-cell edit' },
-            ta,
-            iconBtn('x', 'Ausprägung löschen', () => deleteOption(p.id, o.id), { danger: true })));
+            h('div', { class: 'opt-main' },
+              ta,
+              iconBtn('x', 'Ausprägung löschen', () => deleteOption(p.id, o.id), { danger: true })),
+            evaluationOn()
+              ? h('div', { class: 'opt-metrics' },
+                state.settings.costs
+                  ? h('label', { class: 'metric-field' },
+                    h('span', { class: 'metric-unit' }, currencySymbol()),
+                    numberField({
+                      value: o.cost, placeholder: 'Kosten', label: `Kosten von ${optLabel}`,
+                      apply: n => { o.cost = n; },
+                    }))
+                  : null,
+                state.settings.utility
+                  ? h('label', { class: 'metric-field' },
+                    h('span', { class: 'metric-unit', title: 'Nutzwert (Erfüllungsgrad)' }, 'NW'),
+                    numberField({
+                      value: o.score, placeholder: `0–${state.settings.utilityMax}`,
+                      label: `Nutzwert von ${optLabel} (0 bis ${state.settings.utilityMax})`,
+                      apply: n => { o.score = n; },
+                      validate: n => n >= 0 && n <= state.settings.utilityMax,
+                    }))
+                  : null)
+              : null));
         } else {
           const selectedBy = state.concepts.filter(c => c.selections[p.id] === o.id);
           const isActive = !!active && active.selections[p.id] === o.id;
@@ -652,7 +746,9 @@
             dataset: { cell: `${p.id}:${o.id}` },
             onclick: () => toggleSelection(p.id, o.id),
           },
-          h('span', null, o.text.trim() || `(Ausprägung ${oi + 1})`),
+          h('span', { class: 'opt-label' },
+            h('span', null, o.text.trim() || `(Ausprägung ${oi + 1})`),
+            optionMetricsText(o) ? h('span', { class: 'opt-metrics-view' }, optionMetricsText(o)) : null),
           selectedBy.length
             ? h('span', { class: 'markers', 'aria-hidden': 'true' },
               selectedBy.map(c => h('span', { class: 'marker', style: { '--c': c.color } })))
@@ -674,6 +770,23 @@
     });
 
     matrix.replaceChildren(...cells);
+  }
+
+  function currencySymbol() {
+    try {
+      const part = new Intl.NumberFormat('de-DE', { style: 'currency', currency: state.settings.currency })
+        .formatToParts(0).find(x => x.type === 'currency');
+      return part ? part.value : state.settings.currency;
+    } catch (e) {
+      return state.settings.currency;
+    }
+  }
+
+  function optionMetricsText(o) {
+    const parts = [];
+    if (state.settings.costs && o.cost != null) parts.push(formatMoney(o.cost));
+    if (state.settings.utility && o.score != null) parts.push(`NW ${numberFormat.format(o.score)}`);
+    return parts.join(' · ');
   }
 
   function renderConcepts() {
@@ -742,6 +855,89 @@
     return p.options[idx].text.trim() || `(Ausprägung ${idx + 1})`;
   }
 
+  // ---------- Bewertung (Kosten & Nutzwert) ----------
+
+  const evaluationOn = () => state.settings.costs || state.settings.utility;
+  const weightOf = p => (p.weight == null ? 1 : p.weight);
+  const totalWeight = () => state.parameters.reduce((s, p) => s + weightOf(p), 0);
+  const clampScore = s => Math.min(state.settings.utilityMax, Math.max(0, s));
+
+  function selectedOption(p, c) {
+    const oid = c.selections[p.id];
+    return oid ? p.options.find(o => o.id === oid) || null : null;
+  }
+
+  /** Summe der Kosten aller gewählten Ausprägungen; `missing` zählt fehlende Angaben. */
+  function conceptCost(c) {
+    let total = 0;
+    let missing = 0;
+    for (const p of state.parameters) {
+      const o = selectedOption(p, c);
+      if (!o || o.cost == null) missing++;
+      else total += o.cost;
+    }
+    return { total, missing };
+  }
+
+  /**
+   * Gesamtnutzwert wie in der Nutzwertanalyse: Σ (Gewicht × Erfüllungsgrad) / Σ Gewichte.
+   * Nicht gewählte oder unbewertete Parameter gehen mit 0 ein.
+   */
+  function conceptUtility(c) {
+    const sumW = totalWeight();
+    let sum = 0;
+    let missing = 0;
+    for (const p of state.parameters) {
+      const o = selectedOption(p, c);
+      if (!o || o.score == null) {
+        if (weightOf(p) > 0) missing++;
+        continue;
+      }
+      sum += weightOf(p) * clampScore(o.score);
+    }
+    return { value: sumW > 0 ? sum / sumW : null, missing };
+  }
+
+  function weightPercent(p) {
+    const sumW = totalWeight();
+    return sumW > 0 ? `${numberFormat.format(Math.round((weightOf(p) / sumW) * 1000) / 10)} %` : '–';
+  }
+
+  function updateWeightPercents() {
+    for (const p of state.parameters) {
+      const el = document.querySelector(`[data-weight-pct="${p.id}"]`);
+      if (el) el.textContent = weightPercent(p);
+    }
+  }
+
+  function missingNote(missing) {
+    return missing ? ` (${missing} ${missing === 1 ? 'Wert fehlt' : 'Werte fehlen'})` : '';
+  }
+
+  /** Eingabefeld für Zahlen; speichert beim Tippen, formatiert beim Verlassen. */
+  function numberField({ value, label, placeholder, fid, apply, validate }) {
+    const input = h('input', {
+      type: 'text', inputmode: 'decimal', class: 'num-input', value: numberToInput(value),
+      placeholder, 'aria-label': label, title: label, dataset: fid ? { fid } : null,
+      onkeydown: e => { if (e.key === 'Enter') e.target.blur(); },
+    });
+    const check = n => {
+      const bad = Number.isNaN(n) || (n != null && !!validate && !validate(n));
+      input.toggleAttribute('aria-invalid', bad);
+    };
+    bindField(input, v => {
+      const n = parseNumber(v);
+      check(n);
+      apply(Number.isNaN(n) ? null : n);
+    });
+    input.addEventListener('blur', () => {
+      const n = parseNumber(input.value);
+      if (!Number.isNaN(n)) input.value = numberToInput(n);
+    });
+    check(value);
+    return input;
+  }
+
   function renderSummary() {
     const box = $('#conceptSummary');
     const c = activeConcept();
@@ -756,8 +952,24 @@
         h('dd', text ? null : { class: 'none' }, text || 'nicht gewählt'),
       ];
     });
+    const metrics = [];
+    if (state.parameters.length && state.settings.costs) {
+      const { total, missing } = conceptCost(c);
+      metrics.push(h('div', { class: 'metric' },
+        h('span', null, 'Gesamtkosten'),
+        h('strong', null, formatMoney(total)),
+        missing ? h('small', null, missingNote(missing).trim()) : null));
+    }
+    if (state.parameters.length && state.settings.utility) {
+      const { value, missing } = conceptUtility(c);
+      metrics.push(h('div', { class: 'metric' },
+        h('span', null, 'Nutzwert'),
+        h('strong', null, value == null ? '–' : `${numberFormat.format(value)} / ${state.settings.utilityMax}`),
+        missing ? h('small', null, missingNote(missing).trim()) : null));
+    }
     box.replaceChildren(
       h('h3', { style: { '--c': c.color } }, c.name || 'Unbenanntes Konzept'),
+      metrics.length ? h('div', { class: 'metrics' }, metrics) : null,
       rows.length ? h('dl', null, rows) : h('p', { class: 'summary-empty' }, 'Die Matrix enthält noch keine Parameter.'),
     );
   }
@@ -788,7 +1000,28 @@
         const text = optionText(p, c.selections[p.id]);
         return h('td', text ? null : { class: 'none' }, text || '–');
       }))));
-    table.replaceChildren(head, body);
+    const footRows = [];
+    if (state.settings.costs) {
+      const costs = state.concepts.map(conceptCost);
+      const complete = costs.filter(x => !x.missing).map(x => x.total);
+      const best = complete.length > 1 ? Math.min(...complete) : null;
+      footRows.push(h('tr', null, h('th', { scope: 'row' }, 'Gesamtkosten'),
+        costs.map(x => h('td', {
+          class: [x.missing ? 'incomplete' : '', !x.missing && x.total === best ? 'best' : ''].join(' ').trim() || null,
+          title: x.missing ? missingNote(x.missing).trim().slice(1, -1) : null,
+        }, formatMoney(x.total) + (x.missing ? ' *' : '')))));
+    }
+    if (state.settings.utility) {
+      const utils = state.concepts.map(conceptUtility);
+      const values = utils.filter(x => x.value != null).map(x => x.value);
+      const best = values.length > 1 ? Math.max(...values) : null;
+      footRows.push(h('tr', null, h('th', { scope: 'row' }, `Nutzwert (max. ${state.settings.utilityMax})`),
+        utils.map(x => h('td', {
+          class: [x.missing ? 'incomplete' : '', x.value != null && x.value === best ? 'best' : ''].join(' ').trim() || null,
+          title: x.missing ? missingNote(x.missing).trim().slice(1, -1) : null,
+        }, x.value == null ? '–' : numberFormat.format(x.value) + (x.missing ? ' *' : '')))));
+    }
+    table.replaceChildren(head, body, footRows.length ? h('tfoot', null, footRows) : '');
   }
 
   // ---------- Verbindungslinien ----------
@@ -916,10 +1149,32 @@
       [cell('Parameter'), ...Array.from({ length: maxOptions }, (_, i) => cell(`Ausprägung ${i + 1}`))],
       ...state.parameters.map(p => [cell(p.name), ...p.options.map(o => cell(o.text))]),
     ];
+    const { costs, utility } = state.settings;
+    const csvNum = n => (n == null ? '' : String(Math.round(n * 100) / 100).replace('.', ','));
+    if (costs || utility) {
+      lines.push([], [cell('Parameter'),
+        ...(utility ? [cell('Gewicht')] : []),
+        cell('Ausprägung'),
+        ...(costs ? [cell(`Kosten (${state.settings.currency})`)] : []),
+        ...(utility ? [cell(`Nutzwert (0–${state.settings.utilityMax})`)] : [])]);
+      for (const p of state.parameters) {
+        for (const o of p.options) {
+          lines.push([cell(p.name),
+            ...(utility ? [csvNum(weightOf(p))] : []),
+            cell(o.text),
+            ...(costs ? [csvNum(o.cost)] : []),
+            ...(utility ? [csvNum(o.score)] : [])]);
+        }
+      }
+    }
     if (state.concepts.length) {
-      lines.push([], [cell('Konzept'), ...state.parameters.map(p => cell(p.name))]);
+      lines.push([], [cell('Konzept'), ...state.parameters.map(p => cell(p.name)),
+        ...(costs ? [cell(`Gesamtkosten (${state.settings.currency})`)] : []),
+        ...(utility ? [cell('Nutzwert')] : [])]);
       for (const c of state.concepts) {
-        lines.push([cell(c.name), ...state.parameters.map(p => cell(optionText(p, c.selections[p.id]) || ''))]);
+        lines.push([cell(c.name), ...state.parameters.map(p => cell(optionText(p, c.selections[p.id]) || '')),
+          ...(costs ? [csvNum(conceptCost(c).total)] : []),
+          ...(utility ? [csvNum(conceptUtility(c).value)] : [])]);
       }
     }
     download(`${slugify(state.title)}.csv`, '﻿' + lines.map(l => l.join(';')).join('\r\n'), 'text/csv;charset=utf-8');
@@ -1033,6 +1288,53 @@
     $('#docList').replaceChildren(...items);
   }
 
+  // ---------- Einstellungen ----------
+
+  function syncSettingsForm() {
+    const s = state.settings;
+    $('#setCosts').checked = s.costs;
+    $('#setCurrency').value = s.currency;
+    $('#setCurrency').disabled = !s.costs;
+    $('#setUtility').checked = s.utility;
+    $('#setScale').value = String(s.utilityMax);
+    $('#setScale').disabled = !s.utility;
+  }
+
+  function openSettings() {
+    syncSettingsForm();
+    const dialog = $('#settingsDialog');
+    if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
+  }
+
+  function closeSettings() {
+    const dialog = $('#settingsDialog');
+    if (dialog.close) dialog.close(); else dialog.removeAttribute('open');
+  }
+
+  function changeSetting(key, value) {
+    if (state.settings[key] === value) return;
+    mutate(s => { s.settings[key] = value; });
+  }
+
+  /** Neue Nutzwert-Skala; vorhandene Werte werden auf Wunsch proportional umgerechnet. */
+  function changeScale(max) {
+    const oldMax = state.settings.utilityMax;
+    if (max === oldMax) return;
+    const hasScores = state.parameters.some(p => p.options.some(o => o.score != null));
+    const rescale = hasScores && window.confirm(
+      `Vorhandene Nutzwerte von der Skala 0–${oldMax} auf 0–${max} umrechnen?\n\n`
+      + 'OK: umrechnen (z. B. wird 7 von 10 zu 3,5 von 5)\nAbbrechen: Werte unverändert lassen');
+    mutate(s => {
+      s.settings.utilityMax = max;
+      if (!rescale) return;
+      for (const p of s.parameters) {
+        for (const o of p.options) {
+          if (o.score != null) o.score = Math.round((o.score / oldMax) * max * 100) / 100;
+        }
+      }
+    });
+  }
+
   // ---------- Menü ----------
 
   function toggleMenu(open) {
@@ -1048,6 +1350,7 @@
     new: () => { openNewDoc(blankState(), 'Neue Matrix angelegt.'); setMode('edit'); },
     example: () => openNewDoc(exampleState(), 'Beispiel als neue Matrix geöffnet.'),
     open: openLibrary,
+    settings: openSettings,
     'export-json': exportJson,
     'import-json': () => $('#importFile').click(),
     'export-csv': exportCsv,
@@ -1104,6 +1407,15 @@
     });
 
     $('#libraryClose').addEventListener('click', closeLibrary);
+    $('#settingsClose').addEventListener('click', closeSettings);
+    $('#settingsDone').addEventListener('click', closeSettings);
+    $('#settingsDialog').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeSettings();
+    });
+    $('#setCosts').addEventListener('change', e => changeSetting('costs', e.target.checked));
+    $('#setUtility').addEventListener('change', e => changeSetting('utility', e.target.checked));
+    $('#setCurrency').addEventListener('change', e => changeSetting('currency', e.target.value));
+    $('#setScale').addEventListener('change', e => changeScale(Number(e.target.value)));
     $('#libraryDialog').addEventListener('click', e => {
       if (e.target === e.currentTarget) closeLibrary();
     });
