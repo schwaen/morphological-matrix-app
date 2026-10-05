@@ -66,6 +66,8 @@
 
       <div class="stats" id="stats" aria-live="polite"></div>
 
+      <nav class="cat-nav" id="catNav" aria-label="Kategorien" hidden></nav>
+
       <div class="matrix-scroll" id="matrixScroll">
         <div class="matrix-wrap" id="matrixWrap">
           <svg id="lines" class="lines" aria-hidden="true"></svg>
@@ -77,6 +79,10 @@
         <button type="button" class="btn btn-dashed" id="addParamBtn">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           Parameter hinzufügen
+        </button>
+        <button type="button" class="btn btn-dashed" id="addCategoryBtn" title="Parameter in Kategorien gliedern (optional)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7M18 15v6M15 18h6"/></svg>
+          Kategorie hinzufügen
         </button>
         <p class="hint" id="hint"></p>
       </div>

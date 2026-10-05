@@ -82,6 +82,7 @@
     return typeof v === 'string' ? v : (v == null ? fallback : String(v));
   }
 
+  const CATEGORY_COLORS = ['#4f46e5', '#0891b2', '#d97706', '#059669', '#db2777', '#7c3aed', '#475569', '#65a30d'];
   const CURRENCIES = ['EUR', 'USD', 'CHF', 'GBP'];
   const SCALES = [5, 10, 100];
   const numberFormat = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 });
@@ -143,6 +144,7 @@
       id: uid(),
       name: `Parameter ${i}`,
       weight: null,
+      categoryId: null,
       options: [newOption(), newOption()],
     }));
     const concept = { id: uid(), name: 'Konzept 1', color: COLORS[0], selections: {} };
@@ -151,6 +153,7 @@
       title: 'Neue morphologische Matrix',
       description: '',
       settings: defaultSettings(),
+      categories: [],
       parameters,
       concepts: [concept],
       activeConceptId: concept.id,
@@ -167,10 +170,15 @@
       ['Energieversorgung', 2, [['Netzstrom', 3, 8], ['Akku', 30, 6], ['Gaskartusche', 15, 5], ['Muskelkraft', 1, 3]]],
       ['Reinigung', 1, [['Manuell', 0, 3], ['Automatische Spülung', 10, 8], ['Spülmaschinenfest', 5, 7]]],
     ];
-    const parameters = rows.map(([name, weight, opts]) => ({
+    const categories = [
+      { id: uid(), name: 'Brühsystem', color: CATEGORY_COLORS[0] },
+      { id: uid(), name: 'Nutzung & Betrieb', color: CATEGORY_COLORS[1] },
+    ];
+    const parameters = rows.map(([name, weight, opts], i) => ({
       id: uid(),
       name,
       weight,
+      categoryId: categories[i < 3 ? 0 : 1].id,
       options: opts.map(([text, cost, score]) => ({ id: uid(), text, cost, score })),
     }));
     const pick = idx => Object.fromEntries(parameters.map((p, i) => [p.id, p.options[idx[i]].id]));
@@ -185,6 +193,7 @@
       description: 'Gesamtfunktion: Aus Wasser und Kaffee ein heißes Getränk zubereiten.',
       // Kosten und Nutzwerte sind hinterlegt, aber zunächst ausgeblendet.
       settings: defaultSettings(),
+      categories,
       parameters,
       concepts,
       activeConceptId: concepts[0].id,
@@ -209,12 +218,21 @@
         id: id(p && p.id),
         name: str(p && p.name),
         weight: weight != null && weight >= 0 ? weight : null,
+        categoryId: str(p && p.categoryId) || null,
         options: (Array.isArray(p && p.options) ? p.options : []).map(o =>
           typeof o === 'string'
             ? { id: id(), text: o, cost: null, score: null }
             : { id: id(o && o.id), text: str(o && o.text), cost: num(o && o.cost), score: num(o && o.score) }),
       };
     });
+    const categories = (Array.isArray(data.categories) ? data.categories : []).map((k, i) => ({
+      id: id(k && k.id),
+      name: str(k && k.name),
+      color: isColor(k && k.color) ? k.color : CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+    }));
+    for (const p of parameters) {
+      if (!categories.some(k => k.id === p.categoryId)) p.categoryId = null;
+    }
     const src = (data.settings && typeof data.settings === 'object') ? data.settings : {};
     const settings = {
       costs: src.costs === true,
@@ -244,10 +262,28 @@
       title: str(data.title, 'Morphologische Matrix'),
       description: str(data.description),
       settings,
-      parameters,
+      categories,
+      parameters: sortedByCategory(categories, parameters),
       concepts,
       activeConceptId,
     };
+  }
+
+  /**
+   * Parameter nach Kategorien gruppiert sortieren (Reihenfolge der Kategorien, ohne
+   * Kategorie zuletzt; innerhalb einer Gruppe stabil). So entspricht die Reihenfolge
+   * im Array immer der Anzeige – Linien, Vergleich und Export brauchen keine Sonderfälle.
+   */
+  function sortedByCategory(categories, parameters) {
+    const rank = new Map(categories.map((k, i) => [k.id, i]));
+    const r = p => (rank.has(p.categoryId) ? rank.get(p.categoryId) : categories.length);
+    return parameters.map((p, i) => ({ p, i }))
+      .sort((a, b) => r(a.p) - r(b.p) || a.i - b.i)
+      .map(x => x.p);
+  }
+
+  function resort(s) {
+    s.parameters = sortedByCategory(s.categories, s.parameters);
   }
 
   // ---------- Speicher ----------
@@ -422,10 +458,121 @@
 
   // ---------- Aktionen ----------
 
-  function addParameter() {
-    const p = { id: uid(), name: '', weight: null, options: [newOption(), newOption()] };
+  function addParameter(categoryId = null) {
+    const p = { id: uid(), name: '', weight: null, categoryId, options: [newOption(), newOption()] };
     pendingFocus = `param:${p.id}`;
-    mutate(s => { s.parameters.push(p); });
+    if (categoryId) setCollapsed(categoryId, false);
+    mutate(s => {
+      s.parameters.push(p);
+      resort(s);
+    });
+  }
+
+  /** Nur innerhalb der eigenen Kategorie verschiebbar. */
+  function canMoveParameter(index, delta) {
+    const p = state.parameters[index];
+    const q = state.parameters[index + delta];
+    return !!q && q.categoryId === p.categoryId;
+  }
+
+  // ---------- Kategorien ----------
+
+  const categoryById = id => state.categories.find(k => k.id === id) || null;
+
+  /** Parametergruppen in Anzeigereihenfolge; ohne Kategorien genau eine Gruppe ohne Kopfzeile. */
+  function categoryGroups() {
+    const groups = state.categories.map(cat => ({ cat, items: [] }));
+    const none = { cat: null, items: [] };
+    state.parameters.forEach((p, pi) => {
+      const g = groups.find(x => x.cat.id === p.categoryId) || none;
+      g.items.push({ p, pi });
+    });
+    if (none.items.length || !groups.length) groups.push(none);
+    return groups;
+  }
+
+  let printing = false;
+  const isCollapsed = cid => !printing && !!(prefs.collapsed && prefs.collapsed[cid || '__none']);
+
+  function setCollapsed(cid, value) {
+    prefs.collapsed = { ...(prefs.collapsed || {}) };
+    if (value) prefs.collapsed[cid || '__none'] = true;
+    else delete prefs.collapsed[cid || '__none'];
+    savePrefs();
+  }
+
+  function toggleCategory(cid) {
+    setCollapsed(cid, !isCollapsed(cid));
+    renderMatrix();
+    renderCategoryNav();
+    scheduleLines();
+  }
+
+  function setAllCollapsed(value) {
+    for (const g of categoryGroups()) setCollapsed(g.cat ? g.cat.id : null, value);
+    renderMatrix();
+    renderCategoryNav();
+    scheduleLines();
+  }
+
+  function jumpToCategory(cid) {
+    if (isCollapsed(cid)) toggleCategory(cid);
+    const band = document.querySelector(`[data-cat-band="${CSS.escape(cid || '__none')}"]`);
+    if (band) band.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function addCategory() {
+    const used = new Set(state.categories.map(k => k.color));
+    const k = {
+      id: uid(),
+      name: `Kategorie ${state.categories.length + 1}`,
+      color: CATEGORY_COLORS.find(c => !used.has(c)) || CATEGORY_COLORS[state.categories.length % CATEGORY_COLORS.length],
+    };
+    pendingFocus = `cat:${k.id}`;
+    if (prefs.mode !== 'edit') {
+      prefs.mode = 'edit';
+      savePrefs();
+    }
+    mutate(s => { s.categories.push(k); });
+    return k;
+  }
+
+  function moveCategory(index, delta) {
+    mutate(s => {
+      const [k] = s.categories.splice(index, 1);
+      s.categories.splice(index + delta, 0, k);
+      resort(s);
+    });
+  }
+
+  function deleteCategory(cid) {
+    const k = categoryById(cid);
+    mutate(s => {
+      s.categories = s.categories.filter(x => x.id !== cid);
+      s.parameters.forEach(p => { if (p.categoryId === cid) p.categoryId = null; });
+      resort(s);
+    });
+    toast(`Kategorie „${(k && k.name) || 'Unbenannt'}“ gelöscht – ihre Parameter bleiben erhalten.`, true);
+  }
+
+  function setParameterCategory(pid, cid) {
+    if (cid === '__new') {
+      const name = window.prompt('Name der neuen Kategorie:', `Kategorie ${state.categories.length + 1}`);
+      if (name == null) { renderMatrix(); return; }
+      const used = new Set(state.categories.map(k => k.color));
+      const k = { id: uid(), name: name.trim(), color: CATEGORY_COLORS.find(c => !used.has(c)) || CATEGORY_COLORS[0] };
+      mutate(s => {
+        s.categories.push(k);
+        s.parameters.find(p => p.id === pid).categoryId = k.id;
+        resort(s);
+      });
+      return;
+    }
+    if (cid) setCollapsed(cid, false);
+    mutate(s => {
+      s.parameters.find(p => p.id === pid).categoryId = cid || null;
+      resort(s);
+    });
   }
 
   function moveParameter(index, delta) {
@@ -737,8 +884,10 @@
     });
     $('#showLines').checked = prefs.showLines;
     $('#addParamBtn').hidden = prefs.mode !== 'edit';
+    $('#addCategoryBtn').hidden = prefs.mode !== 'edit';
 
     renderMatrix();
+    renderCategoryNav();
     renderConcepts();
     renderGenerators();
     refreshLight();
@@ -751,6 +900,7 @@
   /** Leichte Aktualisierung ohne Eingabefelder neu zu erzeugen. */
   function refreshLight() {
     updateWeightPercents();
+    renderCategoryNav();
     renderStats();
     renderHint();
     renderSummary();
@@ -800,8 +950,9 @@
     }
 
     const active = activeConcept();
+    const showBands = state.categories.length > 0;
 
-    state.parameters.forEach((p, pi) => {
+    const renderParam = (p, pi) => {
       // Kopfzelle des Parameters
       if (editing) {
         const name = h('textarea', {
@@ -817,8 +968,9 @@
           },
         });
         bindField(name, v => { p.name = v; });
-        cells.push(h('div', { class: 'param-cell' },
+        cells.push(h('div', { class: 'param-cell', style: categoryStyle(p) },
           name,
+          showBands ? categorySelect(p) : null,
           h('div', { class: 'param-foot' },
             state.settings.utility
               ? h('label', { class: 'weight-field' },
@@ -831,12 +983,12 @@
                 h('span', { class: 'weight-pct', dataset: { weightPct: p.id } }, weightPercent(p)))
               : null,
             h('div', { class: 'row-tools' },
-              iconBtn('up', 'Nach oben verschieben', () => moveParameter(pi, -1), { disabled: pi === 0 }),
-              iconBtn('down', 'Nach unten verschieben', () => moveParameter(pi, 1), { disabled: pi === state.parameters.length - 1 }),
+              iconBtn('up', 'Nach oben verschieben', () => moveParameter(pi, -1), { disabled: !canMoveParameter(pi, -1) }),
+              iconBtn('down', 'Nach unten verschieben', () => moveParameter(pi, 1), { disabled: !canMoveParameter(pi, 1) }),
               iconBtn('trash', 'Parameter löschen', () => deleteParameter(p.id), { danger: true }),
             ))));
       } else {
-        cells.push(h('div', { class: 'param-cell' },
+        cells.push(h('div', { class: 'param-cell', style: categoryStyle(p) },
           h('span', { class: 'param-label' }, p.name || `Parameter ${pi + 1}`),
           h('span', { class: 'param-meta' },
             `${p.options.length} ${p.options.length === 1 ? 'Ausprägung' : 'Ausprägungen'}`
@@ -929,9 +1081,126 @@
         used += 1;
       }
       for (let i = used; i < cols; i++) cells.push(h('div', { 'aria-hidden': 'true' }));
-    });
+    };
+
+    for (const group of categoryGroups()) {
+      const cid = group.cat ? group.cat.id : null;
+      if (showBands) cells.push(renderBand(group, editing, active));
+      if (showBands && isCollapsed(cid)) continue;
+      group.items.forEach(({ p, pi }) => renderParam(p, pi));
+    }
 
     matrix.replaceChildren(...cells);
+  }
+
+  function categoryStyle(p) {
+    const k = categoryById(p.categoryId);
+    return k ? { '--k': k.color } : null;
+  }
+
+  function categorySelect(p) {
+    return h('select', {
+      class: 'cat-select', 'aria-label': `Kategorie von ${p.name || 'Parameter'}`, title: 'Kategorie',
+      onchange: e => setParameterCategory(p.id, e.target.value),
+    },
+    h('option', { value: '', selected: !p.categoryId }, 'Ohne Kategorie'),
+    state.categories.map(k => h('option', { value: k.id, selected: k.id === p.categoryId }, k.name || 'Unbenannt')),
+    h('option', { value: '__new' }, '+ Neue Kategorie …'));
+  }
+
+  /** Fortschritt und Auswahl des aktiven Konzepts innerhalb einer Gruppe. */
+  function groupProgress(group, concept) {
+    const picks = concept ? group.items.map(({ p }) => selectedOption(p, concept)).filter(Boolean) : [];
+    const cost = state.settings.costs && picks.length && picks.every(o => o.cost != null)
+      ? picks.reduce((s, o) => s + o.cost, 0) : null;
+    return { picks, cost };
+  }
+
+  function renderBand(group, editing, active) {
+    const k = group.cat;
+    const cid = k ? k.id : null;
+    const collapsed = isCollapsed(cid);
+    const n = group.items.length;
+    const { picks, cost } = groupProgress(group, active);
+    const index = k ? state.categories.indexOf(k) : -1;
+    const toggle = h('button', {
+      type: 'button', class: 'cat-toggle', 'aria-expanded': String(!collapsed),
+      title: collapsed ? 'Ausklappen' : 'Einklappen',
+      'aria-label': `${k ? k.name || 'Unbenannt' : 'Ohne Kategorie'} ${collapsed ? 'ausklappen' : 'einklappen'}`,
+      onclick: () => toggleCategory(cid),
+    }, h('span', { class: 'cat-chevron', 'aria-hidden': 'true' }));
+
+    let title;
+    if (editing && k) {
+      const color = h('input', { type: 'color', class: 'swatch cat-swatch', value: k.color, 'aria-label': `Farbe von ${k.name}`, title: 'Farbe ändern' });
+      bindField(color, v => { k.color = v; }, () => { renderMatrix(); renderCategoryNav(); refreshLight(); });
+      const name = h('input', {
+        type: 'text', class: 'cat-name', value: k.name, placeholder: 'Kategorie',
+        'aria-label': 'Name der Kategorie', dataset: { fid: `cat:${k.id}` },
+        onkeydown: e => { if (e.key === 'Enter') e.target.blur(); },
+      });
+      bindField(name, v => { k.name = v; }, () => { renderCategoryNav(); refreshLight(); });
+      title = [color, name];
+    } else {
+      title = [h('span', { class: 'cat-dot', 'aria-hidden': 'true' }),
+        h('span', { class: 'cat-title', onclick: () => toggleCategory(cid) }, k ? k.name || 'Unbenannt' : 'Ohne Kategorie')];
+    }
+
+    return h('div', {
+      class: `cat-band${collapsed ? ' is-collapsed' : ''}${k ? '' : ' is-none'}`,
+      style: { '--k': k ? k.color : 'var(--muted)' },
+      dataset: { catBand: cid || '__none' },
+    },
+    toggle,
+    title,
+    h('span', { class: 'cat-meta' }, `${n} Parameter`),
+    collapsed && !editing && picks.length
+      ? h('span', { class: 'cat-picks' }, picks.map(o => h('span', null, o.text.trim() || '–')))
+      : null,
+    h('span', { class: 'cat-end' },
+      !editing && active
+        ? h('span', { class: 'cat-progress', title: `Auswahl im Konzept „${active.name || 'Unbenannt'}“` },
+          `${picks.length}/${n} gewählt` + (cost != null ? ` · ${formatMoney(cost)}` : ''))
+        : null,
+      editing
+        ? h('span', { class: 'cat-tools' },
+          h('button', { type: 'button', class: 'btn btn-small', onclick: () => addParameter(cid) }, icon('plus'), 'Parameter'),
+          k ? iconBtn('up', 'Kategorie nach oben', () => moveCategory(index, -1), { disabled: index <= 0 }) : null,
+          k ? iconBtn('down', 'Kategorie nach unten', () => moveCategory(index, 1), { disabled: index >= state.categories.length - 1 }) : null,
+          k ? iconBtn('trash', 'Kategorie löschen (Parameter bleiben erhalten)', () => deleteCategory(k.id), { danger: true }) : null)
+        : null));
+  }
+
+  function renderCategoryNav() {
+    const nav = $('#catNav');
+    if (!state.categories.length) {
+      nav.hidden = true;
+      return;
+    }
+    nav.hidden = false;
+    const active = activeConcept();
+    const groups = categoryGroups();
+    const allCollapsed = groups.every(g => isCollapsed(g.cat ? g.cat.id : null));
+    const allOpen = groups.every(g => !isCollapsed(g.cat ? g.cat.id : null));
+    nav.replaceChildren(
+      h('div', { class: 'cat-chips' }, groups.map(g => {
+        const cid = g.cat ? g.cat.id : null;
+        const { picks } = groupProgress(g, active);
+        return h('button', {
+          type: 'button',
+          class: `cat-chip${isCollapsed(cid) ? ' is-collapsed' : ''}`,
+          style: { '--k': g.cat ? g.cat.color : 'var(--muted)' },
+          title: `Zu „${g.cat ? g.cat.name || 'Unbenannt' : 'Ohne Kategorie'}“ springen`,
+          onclick: () => jumpToCategory(cid),
+        },
+        h('span', { class: 'cat-dot', 'aria-hidden': 'true' }),
+        g.cat ? g.cat.name || 'Unbenannt' : 'Ohne Kategorie',
+        active ? h('span', { class: 'cat-chip-count' }, `${picks.length}/${g.items.length}`) : null);
+      })),
+      h('div', { class: 'cat-nav-actions' },
+        h('button', { type: 'button', class: 'btn btn-small', disabled: allOpen, onclick: () => setAllCollapsed(false) }, 'Alle ausklappen'),
+        h('button', { type: 'button', class: 'btn btn-small', disabled: allCollapsed, onclick: () => setAllCollapsed(true) }, 'Alle einklappen')),
+    );
   }
 
   function currencySymbol() {
@@ -1121,13 +1390,19 @@
       box.replaceChildren(h('p', { class: 'summary-empty' }, 'Kein Konzept ausgewählt.'));
       return;
     }
-    const rows = state.parameters.flatMap((p, pi) => {
-      const text = optionText(p, c.selections[p.id]);
-      return [
-        h('dt', null, p.name || `Parameter ${pi + 1}`),
-        h('dd', text ? null : { class: 'none' }, text || 'nicht gewählt'),
-      ];
-    });
+    const showCats = state.categories.length > 0;
+    const rows = categoryGroups().flatMap(g => [
+      showCats && g.items.length
+        ? h('div', { class: 'summary-cat', style: { '--k': g.cat ? g.cat.color : 'var(--muted)' } }, g.cat ? g.cat.name || 'Unbenannt' : 'Ohne Kategorie')
+        : null,
+      ...g.items.flatMap(({ p, pi }) => {
+        const text = optionText(p, c.selections[p.id]);
+        return [
+          h('dt', null, p.name || `Parameter ${pi + 1}`),
+          h('dd', text ? null : { class: 'none' }, text || 'nicht gewählt'),
+        ];
+      }),
+    ]).filter(Boolean);
     const metrics = [];
     if (state.parameters.length && state.settings.costs) {
       const { total, missing } = conceptCost(c);
@@ -1171,12 +1446,19 @@
     const head = h('thead', null, h('tr', null,
       h('th', { scope: 'col' }, 'Parameter'),
       state.concepts.map(c => h('th', { scope: 'col', style: { '--c': c.color } }, h('span', { 'aria-hidden': 'true' }), c.name || 'Unbenannt'))));
-    const body = h('tbody', null, state.parameters.map((p, pi) => h('tr', null,
-      h('th', { scope: 'row' }, p.name || `Parameter ${pi + 1}`),
-      state.concepts.map(c => {
-        const text = optionText(p, c.selections[p.id]);
-        return h('td', text ? null : { class: 'none' }, text || '–');
-      }))));
+    const showCats = state.categories.length > 0;
+    const body = h('tbody', null, categoryGroups().flatMap(g => [
+      showCats && g.items.length
+        ? h('tr', { class: 'cat-row', style: { '--k': g.cat ? g.cat.color : 'var(--muted)' } },
+          h('th', { scope: 'colgroup', colspan: String(state.concepts.length + 1) }, g.cat ? g.cat.name || 'Unbenannt' : 'Ohne Kategorie'))
+        : null,
+      ...g.items.map(({ p, pi }) => h('tr', null,
+        h('th', { scope: 'row' }, p.name || `Parameter ${pi + 1}`),
+        state.concepts.map(c => {
+          const text = optionText(p, c.selections[p.id]);
+          return h('td', text ? null : { class: 'none' }, text || '–');
+        }))),
+    ]).filter(Boolean));
     const footRows = [];
     if (state.settings.costs) {
       const costs = state.concepts.map(conceptCost);
@@ -1241,6 +1523,11 @@
     for (const { c, ci } of order) {
       const pts = [];
       for (const p of state.parameters) {
+        // Eingeklappte Kategorie: Linie unterbrechen statt quer über die Kopfzeile zu führen
+        if (state.categories.length && isCollapsed(p.categoryId)) {
+          if (pts.length && pts[pts.length - 1] !== null) pts.push(null);
+          continue;
+        }
         const oid = c.selections[p.id];
         if (!oid) continue;
         const el = wrap.querySelector(`[data-cell="${CSS.escape(`${p.id}:${oid}`)}"]`);
@@ -1255,9 +1542,11 @@
       for (let i = 0; i < pts.length - 1; i++) {
         const a = pts[i];
         const b = pts[i + 1];
+        if (!a || !b) continue;
         const dy = (b.top - a.bottom) / 2;
         d += `M${a.x.toFixed(1)},${a.bottom.toFixed(1)} C${a.x.toFixed(1)},${(a.bottom + dy).toFixed(1)} ${b.x.toFixed(1)},${(b.top - dy).toFixed(1)} ${b.x.toFixed(1)},${b.top.toFixed(1)} `;
       }
+      if (!d) continue;
       const isActive = c.id === state.activeConceptId;
       const path = document.createElementNS(ns, 'path');
       path.setAttribute('d', d);
@@ -1331,24 +1620,27 @@
   function exportCsv() {
     const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const maxOptions = Math.max(0, ...state.parameters.map(p => p.options.length));
+    const withCats = state.categories.length > 0;
+    const catHead = withCats ? [cell('Kategorie')] : [];
+    const catCell = p => (withCats ? [cell((categoryById(p.categoryId) || { name: '' }).name)] : []);
     const lines = [
       [cell('Titel'), cell(state.title)],
       [cell('Beschreibung'), cell(state.description)],
       [],
-      [cell('Parameter'), ...Array.from({ length: maxOptions }, (_, i) => cell(`Ausprägung ${i + 1}`))],
-      ...state.parameters.map(p => [cell(p.name), ...p.options.map(o => cell(o.text))]),
+      [...catHead, cell('Parameter'), ...Array.from({ length: maxOptions }, (_, i) => cell(`Ausprägung ${i + 1}`))],
+      ...state.parameters.map(p => [...catCell(p), cell(p.name), ...p.options.map(o => cell(o.text))]),
     ];
     const { costs, utility } = state.settings;
     const csvNum = n => (n == null ? '' : String(Math.round(n * 100) / 100).replace('.', ','));
     if (costs || utility) {
-      lines.push([], [cell('Parameter'),
+      lines.push([], [...catHead, cell('Parameter'),
         ...(utility ? [cell('Gewicht')] : []),
         cell('Ausprägung'),
         ...(costs ? [cell(`Kosten (${state.settings.currency})`)] : []),
         ...(utility ? [cell(`Nutzwert (0–${state.settings.utilityMax})`)] : [])]);
       for (const p of state.parameters) {
         for (const o of p.options) {
-          lines.push([cell(p.name),
+          lines.push([...catCell(p), cell(p.name),
             ...(utility ? [csvNum(weightOf(p))] : []),
             cell(o.text),
             ...(costs ? [csvNum(o.cost)] : []),
@@ -1564,7 +1856,8 @@
     });
     $('#undoBtn').addEventListener('click', undo);
     $('#redoBtn').addEventListener('click', redo);
-    $('#addParamBtn').addEventListener('click', addParameter);
+    $('#addParamBtn').addEventListener('click', () => addParameter(null));
+    $('#addCategoryBtn').addEventListener('click', addCategory);
     $('#addConceptBtn').addEventListener('click', addConcept);
     $('#randomBtn').addEventListener('click', randomizeActive);
     document.querySelectorAll('[data-generate]').forEach(btn => {
@@ -1647,12 +1940,19 @@
     if ('ResizeObserver' in window) new ResizeObserver(scheduleLines).observe($('#matrix'));
     window.addEventListener('resize', scheduleLines);
     window.addEventListener('beforeprint', () => {
-      // Beim Drucken den Vergleich immer vollständig ausgeben
+      // Beim Drucken alle Kategorien und den Vergleich vollständig ausgeben
+      printing = true;
+      renderMatrix();
       buildCompareTable();
       $('#compareBody').hidden = false;
       drawLines();
     });
-    window.addEventListener('afterprint', renderCompare);
+    window.addEventListener('afterprint', () => {
+      printing = false;
+      renderMatrix();
+      renderCompare();
+      scheduleLines();
+    });
 
     // Nur wenn ein anderer Tab dieselbe Matrix bearbeitet, dessen Änderungen übernehmen.
     window.addEventListener('storage', e => {
@@ -1670,6 +1970,7 @@
     });
 
     loadFromHash();
+    save(); // auch eine neu erzeugte Startmatrix sofort sichern (stabile IDs nach Neuladen)
     render();
   }
 

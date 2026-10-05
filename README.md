@@ -15,6 +15,7 @@ python3 -m http.server 8000
 - **Bearbeiten-Modus:** Parameter (Zeilen) und Ausprägungen (Zellen) anlegen, umbenennen, verschieben und löschen.
   - `Enter` springt zur nächsten Ausprägung bzw. legt eine neue an, `Umschalt+Enter` erzeugt einen Zeilenumbruch.
   - `Rücktaste` in einer leeren Ausprägung löscht sie.
+- **Kategorien (optional):** Parameter lassen sich für große Matrizen in Kategorien gliedern (**Kategorie hinzufügen** im Bearbeiten-Modus, Zuordnung per Auswahlfeld in der Parameterzelle oder „+ Parameter“ direkt in einer Kategorie). Jede Kategorie erscheint als farbige, einklappbare Kopfzeile; eingeklappt zeigt sie die Auswahl des aktiven Konzepts. Über der Matrix springen Chips zu einer Kategorie, dazu „Alle ein-/ausklappen“. Der Einklappzustand gilt pro Tab, beim Drucken wird alles ausgeklappt. Konzeptvergleich, Zusammenfassung und CSV-Export sind nach Kategorien gegliedert.
 - **Kombinieren-Modus:** Lösungskonzepte bilden, indem je Parameter eine Ausprägung angeklickt wird. Jedes Konzept hat eine eigene Farbe; die Auswahl wird durch Verbindungslinien dargestellt.
 - Konzepte anlegen, duplizieren, umbenennen, umfärben, zufällig befüllen.
 - Kennzahlen: Anzahl Parameter, Ausprägungen und mögliche Kombinationen.
