@@ -103,8 +103,14 @@
     </aside>
 
     <section class="panel compare-section" id="compareSection" aria-labelledby="compareHeading">
-      <h2 id="compareHeading">Konzeptvergleich</h2>
-      <div class="compare-scroll">
+      <h2 id="compareHeading" class="collapsible-head">
+        <button type="button" class="collapse-toggle" id="compareToggle" aria-expanded="true" aria-controls="compareBody">
+          <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          Konzeptvergleich
+          <span class="collapse-meta" id="compareMeta"></span>
+        </button>
+      </h2>
+      <div class="compare-scroll" id="compareBody">
         <table class="compare" id="compareTable"></table>
       </div>
     </section>

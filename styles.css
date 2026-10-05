@@ -311,7 +311,19 @@ svg .fill { fill: currentColor; stroke: none; }
 .summary-empty { margin: 0; color: var(--muted); font-size: .88rem; }
 
 /* ===== Vergleich ===== */
-.compare-section h2 { margin-bottom: 10px; }
+.compare-section { padding: 0; }
+.collapsible-head { margin: 0; }
+.collapse-toggle {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 14px; border: 0; border-radius: var(--radius);
+  background: transparent; cursor: pointer;
+  font: inherit; font-weight: 650; text-align: left;
+}
+.collapse-toggle:hover { background: var(--surface-2); }
+.collapse-toggle .chevron { transition: transform .15s; }
+.collapse-toggle[aria-expanded="false"] .chevron { transform: rotate(-90deg); }
+.collapse-meta { margin-left: auto; font-size: .85rem; font-weight: 400; color: var(--muted); }
+.compare-section .compare-scroll { padding: 0 14px 14px; }
 .compare-scroll { overflow-x: auto; }
 .compare { border-collapse: collapse; width: 100%; font-size: .9rem; }
 .compare th, .compare td { padding: 8px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); overflow-wrap: break-word; hyphens: auto; min-width: 120px; }
@@ -373,6 +385,9 @@ svg .fill { fill: currentColor; stroke: none; }
   .concepts-panel { position: static; max-height: none; margin-top: 16px; }
   .concept { break-inside: avoid; }
   .compare-section { margin-top: 16px; break-inside: avoid; }
+  .compare-section .compare-scroll { padding: 0; }
+  .collapse-toggle { padding: 0 0 8px; }
+  .collapse-toggle .chevron, .collapse-meta { display: none; }
   .description { border: 0; padding: 0; }
   .opt-cell.pick, .concept, .compare tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
