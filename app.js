@@ -967,11 +967,12 @@
         h('strong', null, value == null ? '–' : `${numberFormat.format(value)} / ${state.settings.utilityMax}`),
         missing ? h('small', null, missingNote(missing).trim()) : null));
     }
-    box.replaceChildren(
+    // replaceChildren() würde null als Text „null“ einfügen – daher leere Teile herausfiltern.
+    box.replaceChildren(...[
       h('h3', { style: { '--c': c.color } }, c.name || 'Unbenanntes Konzept'),
       metrics.length ? h('div', { class: 'metrics' }, metrics) : null,
       rows.length ? h('dl', null, rows) : h('p', { class: 'summary-empty' }, 'Die Matrix enthält noch keine Parameter.'),
-    );
+    ].filter(Boolean));
   }
 
   function renderCompare() {
@@ -1021,7 +1022,7 @@
           title: x.missing ? missingNote(x.missing).trim().slice(1, -1) : null,
         }, x.value == null ? '–' : numberFormat.format(x.value) + (x.missing ? ' *' : '')))));
     }
-    table.replaceChildren(head, body, footRows.length ? h('tfoot', null, footRows) : '');
+    table.replaceChildren(...[head, body, footRows.length ? h('tfoot', null, footRows) : null].filter(Boolean));
   }
 
   // ---------- Verbindungslinien ----------
