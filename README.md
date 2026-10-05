@@ -20,7 +20,8 @@ python3 -m http.server 8000
 - Kennzahlen: Anzahl Parameter, Ausprägungen und mögliche Kombinationen.
 - Konzeptvergleich als Tabelle, ein- und ausklappbar (Zustand wird gemerkt; beim Drucken immer sichtbar).
 - Rückgängig / Wiederholen (`Strg+Z`, `Strg+Umschalt+Z`).
-- Automatisches Speichern im Browser (localStorage).
+- Automatisches Speichern im Browser (localStorage), beliebig viele Matrizen unter **Datei → Meine Matrizen**.
+- **Mehrere Tabs parallel:** Jeder Tab bearbeitet seine eigene Matrix und hat eigene Ansichtseinstellungen (Modus, Linien, Konzeptvergleich). „Neue Matrix“, „Beispiel laden“, Import und geteilte Links legen jeweils eine neue Matrix an, ohne andere Tabs zu verändern. Über „Neuer Tab“ in „Meine Matrizen“ lässt sich eine Matrix gezielt in einem weiteren Tab öffnen. Ist dieselbe Matrix in zwei Tabs geöffnet, werden Änderungen zwischen ihnen abgeglichen.
 - Export als JSON (`Strg+S`) und CSV (Excel-kompatibel), Import von JSON.
 - Teilen per Link (die Matrix steckt komplett in der URL).
 - Druckansicht bzw. PDF-Export über den Browser.

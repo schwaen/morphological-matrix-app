@@ -11,7 +11,12 @@
 (() => {
   'use strict';
 
-  const STORAGE_KEY = 'morphologische-matrix:v1';
+  // Jede Matrix liegt unter einem eigenen Schlüssel im localStorage. Welche Matrix
+  // ein Tab bearbeitet und wie er sie anzeigt, steht im sessionStorage des Tabs –
+  // so können mehrere Tabs unabhängig voneinander an verschiedenen Matrizen arbeiten.
+  const DOC_PREFIX = 'morphologische-matrix:doc:';
+  const LEGACY_KEY = 'morphologische-matrix:v1';
+  const TAB_DOC_KEY = 'morphologische-matrix:tab-doc';
   const PREFS_KEY = 'morphologische-matrix:prefs';
   const HISTORY_LIMIT = 200;
   const COLORS = ['#e8590c', '#1c7ed6', '#2b8a3e', '#ae3ec9', '#e03131', '#0c8599', '#f08c00', '#5f3dc4'];
@@ -188,32 +193,111 @@
     };
   }
 
-  function loadState() {
+  // ---------- Speicher ----------
+
+  const storage = {
+    get(area, key) {
+      try { return window[area].getItem(key); } catch (e) { return null; }
+    },
+    set(area, key, value) {
+      try { window[area].setItem(key, value); return true; } catch (e) { return false; }
+    },
+    remove(area, key) {
+      try { window[area].removeItem(key); } catch (e) { /* ignorieren */ }
+    },
+  };
+
+  function readDoc(id) {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return normalize(JSON.parse(raw));
-    } catch (e) { /* Speicher nicht verfügbar oder beschädigt */ }
-    return exampleState();
+      const raw = storage.get('localStorage', DOC_PREFIX + id);
+      if (!raw) return null;
+      const rec = JSON.parse(raw);
+      return { id, savedAt: Number(rec.savedAt) || 0, data: normalize(rec.data) };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** Alle gespeicherten Matrizen, zuletzt bearbeitete zuerst. */
+  function listDocs() {
+    const docs = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(DOC_PREFIX)) {
+          const doc = readDoc(key.slice(DOC_PREFIX.length));
+          if (doc) docs.push(doc);
+        }
+      }
+    } catch (e) { /* Speicher nicht verfügbar */ }
+    return docs.sort((a, b) => b.savedAt - a.savedAt);
+  }
+
+  /** Übernimmt die Daten aus der Version mit nur einer gespeicherten Matrix. */
+  function migrateLegacy() {
+    const raw = storage.get('localStorage', LEGACY_KEY);
+    if (!raw) return;
+    try {
+      const data = normalize(JSON.parse(raw));
+      if (storage.set('localStorage', DOC_PREFIX + uid(), JSON.stringify({ savedAt: Date.now(), data }))) {
+        storage.remove('localStorage', LEGACY_KEY);
+      }
+    } catch (e) {
+      storage.remove('localStorage', LEGACY_KEY);
+    }
+  }
+
+  /** Matrix für diesen Tab: die zuletzt hier geöffnete, sonst die zuletzt bearbeitete. */
+  function loadInitialDoc() {
+    migrateLegacy();
+    const params = new URLSearchParams(location.search);
+    const requested = params.get('doc');
+    if (requested != null) {
+      // Parameter entfernen, damit ein späteres Neuladen die aktuelle Tab-Matrix zeigt.
+      params.delete('doc');
+      const query = params.toString();
+      history.replaceState(null, '', location.pathname + (query ? `?${query}` : '') + location.hash);
+      const doc = readDoc(requested);
+      if (doc) return doc;
+    }
+    const tabDoc = readDoc(storage.get('sessionStorage', TAB_DOC_KEY) || '');
+    if (tabDoc) return tabDoc;
+    const [latest] = listDocs();
+    if (latest) return latest;
+    return { id: uid(), data: exampleState() };
   }
 
   function loadPrefs() {
     const defaults = { mode: 'select', showLines: true, compareOpen: true };
+    // Eigene Einstellungen des Tabs, für neue Tabs die zuletzt verwendeten.
+    const raw = storage.get('sessionStorage', PREFS_KEY) || storage.get('localStorage', PREFS_KEY);
     try {
-      return { ...defaults, ...JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') };
+      return { ...defaults, ...JSON.parse(raw || '{}') };
     } catch (e) {
       return defaults;
     }
   }
 
+  let lastSaved = null;
   function save() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignorieren */ }
+    const json = JSON.stringify(state);
+    if (json === lastSaved) return;
+    lastSaved = json;
+    storage.set('sessionStorage', TAB_DOC_KEY, docId);
+    if (!storage.set('localStorage', DOC_PREFIX + docId, JSON.stringify({ savedAt: Date.now(), data: state }))) {
+      toast('Speichern im Browser nicht möglich – bitte als JSON sichern.');
+    }
   }
 
   function savePrefs() {
-    try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) { /* ignorieren */ }
+    const json = JSON.stringify(prefs);
+    storage.set('sessionStorage', PREFS_KEY, json);
+    storage.set('localStorage', PREFS_KEY, json);
   }
 
-  let state = loadState();
+  const initialDoc = loadInitialDoc();
+  let docId = initialDoc.id;
+  let state = initialDoc.data;
   const prefs = loadPrefs();
   let pendingFocus = null;
 
@@ -399,12 +483,21 @@
     mutate(s => { s.concepts.find(x => x.id === s.activeConceptId).selections = {}; });
   }
 
-  function replaceState(next, message) {
-    mutate(s => {
-      Object.keys(s).forEach(k => delete s[k]);
-      Object.assign(s, next);
-    });
-    if (message) toast(message, true);
+  /** Öffnet in diesem Tab eine andere Matrix; andere Tabs bleiben unberührt. */
+  function openDoc(id, data, message) {
+    docId = id;
+    state = data;
+    lastSaved = null;
+    undoStack.length = 0;
+    redoStack.length = 0;
+    save();
+    render();
+    if (message) toast(message);
+  }
+
+  /** Legt eine neue Matrix an und öffnet sie in diesem Tab. */
+  function openNewDoc(data, message) {
+    openDoc(uid(), data, message);
   }
 
   function setMode(mode) {
@@ -837,7 +930,7 @@
     reader.onload = () => {
       try {
         const next = normalize(JSON.parse(String(reader.result)));
-        replaceState(next, `„${next.title || file.name}“ geöffnet.`);
+        openNewDoc(next, `„${next.title || file.name}“ geöffnet.`);
       } catch (e) {
         toast(`Datei konnte nicht gelesen werden: ${e.message}`);
       }
@@ -873,11 +966,10 @@
     if (!match) return;
     try {
       const next = normalize(JSON.parse(fromBase64Url(match[1])));
-      if (window.confirm(`Geteilte Matrix „${next.title}“ öffnen? Ihre aktuelle Matrix wird ersetzt (Rückgängig ist möglich).`)) {
-        pushHistory(snapshot());
-        state = next;
-        save();
-      }
+      docId = uid();
+      state = next;
+      save();
+      toast(`Geteilte Matrix „${next.title}“ als neue Matrix geöffnet.`);
     } catch (e) {
       toast('Der geteilte Link ist ungültig.');
     }
@@ -887,6 +979,58 @@
   function printMatrix() {
     if (prefs.mode !== 'select') setMode('select');
     requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+  }
+
+  // ---------- Bibliothek ----------
+
+  const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
+
+  function openLibrary() {
+    renderLibrary();
+    const dialog = $('#libraryDialog');
+    if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
+  }
+
+  function closeLibrary() {
+    const dialog = $('#libraryDialog');
+    if (dialog.close) dialog.close(); else dialog.removeAttribute('open');
+  }
+
+  function renderLibrary() {
+    const docs = listDocs();
+    if (!docs.some(d => d.id === docId)) docs.unshift({ id: docId, savedAt: Date.now(), data: state });
+    const items = docs.map(doc => {
+      const current = doc.id === docId;
+      const data = current ? state : doc.data;
+      const P = data.parameters.length;
+      const C = data.concepts.length;
+      return h('li', { class: `doc${current ? ' is-current' : ''}` },
+        h('div', { class: 'doc-info' },
+          h('span', { class: 'doc-title' }, data.title || 'Unbenannte Matrix',
+            current ? h('span', { class: 'badge' }, 'dieser Tab') : null),
+          h('span', { class: 'doc-meta' },
+            `${dateFormat.format(new Date(doc.savedAt))} · ${P} Parameter · ${C} ${C === 1 ? 'Konzept' : 'Konzepte'}`)),
+        h('div', { class: 'doc-actions' },
+          h('button', {
+            type: 'button', class: 'btn btn-small', disabled: current,
+            onclick: () => {
+              const fresh = readDoc(doc.id);
+              if (!fresh) { toast('Diese Matrix existiert nicht mehr.'); renderLibrary(); return; }
+              closeLibrary();
+              openDoc(fresh.id, fresh.data, `„${fresh.data.title || 'Unbenannte Matrix'}“ geöffnet.`);
+            },
+          }, 'Öffnen'),
+          h('a', {
+            class: 'btn btn-small', href: `?doc=${encodeURIComponent(doc.id)}`, target: '_blank', rel: 'noopener',
+            title: 'In einem neuen Tab öffnen',
+          }, 'Neuer Tab'),
+          iconBtn('trash', current ? 'Die Matrix dieses Tabs kann nicht gelöscht werden' : 'Matrix löschen', () => {
+            if (!window.confirm(`Matrix „${data.title || 'Unbenannte Matrix'}“ endgültig löschen?`)) return;
+            storage.remove('localStorage', DOC_PREFIX + doc.id);
+            renderLibrary();
+          }, { danger: true, disabled: current })));
+    });
+    $('#docList').replaceChildren(...items);
   }
 
   // ---------- Menü ----------
@@ -901,8 +1045,9 @@
   }
 
   const menuActions = {
-    new: () => { replaceState(blankState(), 'Neue Matrix angelegt.'); setMode('edit'); },
-    example: () => replaceState(exampleState(), 'Beispiel geladen.'),
+    new: () => { openNewDoc(blankState(), 'Neue Matrix angelegt.'); setMode('edit'); },
+    example: () => openNewDoc(exampleState(), 'Beispiel als neue Matrix geöffnet.'),
+    open: openLibrary,
     'export-json': exportJson,
     'import-json': () => $('#importFile').click(),
     'export-csv': exportCsv,
@@ -958,6 +1103,11 @@
       if (!e.target.closest('.menu')) toggleMenu(false);
     });
 
+    $('#libraryClose').addEventListener('click', closeLibrary);
+    $('#libraryDialog').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeLibrary();
+    });
+
     $('#importFile').addEventListener('change', e => {
       const file = e.target.files && e.target.files[0];
       if (file) importJson(file);
@@ -998,13 +1148,19 @@
     });
     window.addEventListener('afterprint', renderCompare);
 
-    // Änderungen aus anderen Tabs übernehmen
+    // Nur wenn ein anderer Tab dieselbe Matrix bearbeitet, dessen Änderungen übernehmen.
     window.addEventListener('storage', e => {
-      if (e.key !== STORAGE_KEY || !e.newValue) return;
-      try {
-        state = normalize(JSON.parse(e.newValue));
+      if (e.key === DOC_PREFIX + docId && e.newValue) {
+        const doc = readDoc(docId);
+        if (!doc) return;
+        state = doc.data;
+        lastSaved = JSON.stringify(state);
+        // Eigener Verlauf passt nicht mehr zum fremden Stand.
+        undoStack.length = 0;
+        redoStack.length = 0;
         render();
-      } catch (err) { /* ignorieren */ }
+      }
+      if ($('#libraryDialog').open) renderLibrary();
     });
 
     loadFromHash();
