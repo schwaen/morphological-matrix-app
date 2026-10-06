@@ -523,7 +523,8 @@
 
   .concept-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 2px; }
   .concept {
-    display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; align-items: center; gap: 4px;
+    position: relative;
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 4px;
     padding: 4px 4px 4px 8px;
     border: 1px solid transparent;
     border-radius: 9px;
@@ -536,12 +537,26 @@
     border-color: color-mix(in srgb, var(--c) 35%, transparent);
   }
   .concept-name {
-    min-width: 0; width: 100%; padding: 4px 6px;
+    display: block; min-width: 0; width: 100%; padding: 4px 6px;
     border: 1px solid transparent; border-radius: 6px; background: transparent;
-    font-weight: 600; font-size: .9rem;
+    font-weight: 600; font-size: .9rem; line-height: 1.3;
+    resize: none; overflow: hidden; overflow-wrap: anywhere;
+    field-sizing: content;
   }
   .concept-name:hover { border-color: var(--border); }
   .concept-name:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+  .concept-tools { display: flex; }
+  /* Mit Maus: Aktionen nur am aktiven Konzept, beim Darüberfahren und mit Tastaturfokus –
+     sonst schweben sie ausgeblendet über der Zeile und nehmen dem Namen keinen Platz weg. */
+  @media (hover: hover) {
+    .concept:not(.is-active):not(:focus-within) .concept-tools {
+      position: absolute; right: 4px; top: 50%; translate: 0 -50%;
+      background: var(--surface-2); border-radius: 8px;
+      box-shadow: -10px 0 8px -4px var(--surface-2);
+      opacity: 0; pointer-events: none; transition: opacity .12s;
+    }
+    .concept:not(.is-active):hover .concept-tools { opacity: 1; pointer-events: auto; }
+  }
   .concept-progress {
     padding: 1px 7px; border-radius: 999px; background: var(--surface-3);
     font-size: .72rem; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums;

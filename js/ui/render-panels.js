@@ -110,7 +110,7 @@ function renderConcepts() {
       style: { '--c': c.color },
       dataset: { cid: c.id },
       onclick: e => {
-        if (e.target.closest('button, input')) return;
+        if (e.target.closest('button, input, textarea')) return;
         setActiveConcept(c.id);
       },
     });
@@ -120,19 +120,25 @@ function renderConcepts() {
       renderMatrix();
       refreshLight();
     });
-    const name = h('input', {
-      type: 'text', class: 'concept-name', value: c.name,
+    // Mehrzeilig, damit lange Namen vollständig lesbar bleiben; Zeilenumbrüche gehören nicht zum Namen.
+    const name = h('textarea', {
+      class: 'concept-name autosize', rows: 1, value: c.name,
       placeholder: Texts.fallback.concept(ci + 1), 'aria-label': Texts.concept.nameLabel(ci + 1),
       onfocus: () => setActiveConceptLight(c.id),
-      onkeydown: e => { if (e.key === 'Enter') e.target.blur(); },
+      onkeydown: e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } },
     });
-    bindField(name, v => { c.name = v; });
+    bindField(name, v => {
+      const oneLine = v.replace(/[\r\n]+/g, ' ');
+      if (oneLine !== v) name.value = oneLine; // z. B. eingefügter Text mit Zeilenumbrüchen
+      c.name = oneLine;
+    }, () => { autosize(name); refreshLight(); });
     li.append(
       color,
       name,
       h('span', { class: 'concept-progress', dataset: { progress: c.id } }),
-      iconBtn('copy', Texts.concept.duplicate, () => duplicateConcept(c.id)),
-      iconBtn('trash', Texts.concept.delete, () => deleteConcept(c.id), { danger: true }),
+      h('span', { class: 'concept-tools' },
+        iconBtn('copy', Texts.concept.duplicate, () => duplicateConcept(c.id)),
+        iconBtn('trash', Texts.concept.delete, () => deleteConcept(c.id), { danger: true })),
     );
     return li;
   });
