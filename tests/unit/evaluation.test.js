@@ -1,0 +1,172 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { loadApp, plain } from './load.js';
+
+const { Model, Evaluation } = loadApp();
+
+/** Beispielmatrix mit aktivierter Bewertung. */
+function example() {
+  const m = Model.exampleState();
+  m.settings.costs = true;
+  m.settings.utility = true;
+  return m;
+}
+
+const round = (n, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
+
+test('Kosten, Nutzwert und Preis-Leistung der Beispielkonzepte', () => {
+  const m = example();
+  const rows = m.concepts.map(c => [
+    Evaluation.conceptCost(m, c).total,
+    round(Evaluation.conceptUtility(m, c).value),
+    round(Evaluation.priceValue(m, c).value),
+  ]);
+  assert.deepEqual(plain(rows), [[54, 7.25, 7.45], [57, 5.75, 9.91], [133, 7.58, 17.54]]);
+});
+
+test('Fehlende Werte werden gezählt; Preis-Leistung dann nicht berechenbar', () => {
+  const m = example();
+  const c = m.concepts[0];
+  Model.selectedOption(m.parameters[0], c).cost = null;
+  delete c.selections[m.parameters[1].id];
+  // Kompakt-Espresso ohne Thermoblock-Kosten und ohne Druckerzeugung: 3 + 4 + 3 + 10
+  assert.deepEqual(plain(Evaluation.conceptCost(m, c)), { total: 20, missing: 2 });
+  assert.equal(Evaluation.conceptUtility(m, c).missing, 1);
+  assert.equal(Evaluation.priceValue(m, c).value, null);
+  assert.match(Evaluation.priceValue(m, c).reason, /unvollständig/);
+});
+
+test('Gewichte: Standard 1, Gewicht 0 zählt nicht als fehlend, Anteil', () => {
+  const m = example();
+  for (const p of m.parameters) p.weight = null;
+  assert.equal(Evaluation.totalWeight(m), 6);
+  assert.equal(round(Evaluation.weightShare(m, m.parameters[0]), 4), round(1 / 6, 4));
+  m.parameters[0].weight = 0;
+  delete m.concepts[0].selections[m.parameters[0].id];
+  assert.equal(Evaluation.conceptUtility(m, m.concepts[0]).missing, 0);
+  for (const p of m.parameters) p.weight = 0;
+  assert.equal(Evaluation.weightShare(m, m.parameters[0]), null);
+  assert.equal(Evaluation.conceptUtility(m, m.concepts[0]).value, null);
+});
+
+test('Nutzwerte werden auf die Skala begrenzt', () => {
+  const m = example();
+  m.settings.utilityMax = 5;
+  assert.equal(Evaluation.clampScore(m, 9), 5);
+  assert.equal(Evaluation.clampScore(m, -2), 0);
+});
+
+// ---------- Automatische Konzepte ----------
+
+/** Alle Kombinationen durchrechnen (Referenz). */
+function bruteForce(m) {
+  const r = { minC: Infinity, maxC: -Infinity, minU: Infinity, maxU: -Infinity, bestRatio: Infinity };
+  const rec = (i, sel) => {
+    if (i === m.parameters.length) {
+      const c = { selections: sel };
+      const C = Evaluation.conceptCost(m, c).total;
+      const U = Evaluation.conceptUtility(m, c).value;
+      r.minC = Math.min(r.minC, C); r.maxC = Math.max(r.maxC, C);
+      r.minU = Math.min(r.minU, U); r.maxU = Math.max(r.maxU, U);
+      if (U > 0) r.bestRatio = Math.min(r.bestRatio, C / U);
+      return;
+    }
+    for (const o of m.parameters[i].options) rec(i + 1, { ...sel, [m.parameters[i].id]: o.id });
+  };
+  rec(0, {});
+  return r;
+}
+
+/** Wert eines erzeugten Konzepts. */
+function evaluate(m, key) {
+  const { selections, error } = Evaluation.GENERATORS[key].build(m);
+  assert.equal(error, undefined, `${key}: ${error}`);
+  const c = { selections };
+  return { C: Evaluation.conceptCost(m, c).total, U: Evaluation.conceptUtility(m, c).value };
+}
+
+/** Kleiner deterministischer Zufallsgenerator (Mulberry32) für reproduzierbare Tests. */
+function rng(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function randomMatrix(rand) {
+  const m = Model.blankState();
+  m.settings.costs = true;
+  m.settings.utility = true;
+  m.parameters = Array.from({ length: 2 + Math.floor(rand() * 4) }, (_, i) => ({
+    id: `p${i}`, name: `P${i}`, categoryId: null,
+    weight: rand() < 0.3 ? null : Math.round(rand() * 5),
+    options: Array.from({ length: 1 + Math.floor(rand() * 4) }, (_, j) => ({
+      id: `p${i}o${j}`, text: `O${j}`,
+      cost: Math.round(rand() * 100), score: Math.round(rand() * 10),
+    })),
+  }));
+  return m;
+}
+
+const close = (a, b) => Math.abs(a - b) < 1e-9;
+
+test('Generatoren treffen auf das Beispiel die Optima der vollständigen Durchrechnung', () => {
+  const m = example();
+  const ref = bruteForce(m);
+  assert.equal(evaluate(m, 'min-cost').C, ref.minC);
+  assert.equal(evaluate(m, 'max-cost').C, ref.maxC);
+  assert.ok(close(evaluate(m, 'max-utility').U, ref.maxU));
+  assert.ok(close(evaluate(m, 'min-utility').U, ref.minU));
+  const best = evaluate(m, 'best-value');
+  assert.ok(close(best.C / best.U, ref.bestRatio));
+});
+
+test('Beste Preis-Leistung ist auf 300 Zufallsmatrizen optimal (Dinkelbach vs. Durchrechnung)', () => {
+  const rand = rng(42);
+  let checked = 0;
+  for (let n = 0; n < 300; n++) {
+    const m = randomMatrix(rand);
+    const ref = bruteForce(m);
+    const res = Evaluation.GENERATORS['best-value'].build(m);
+    if (res.error) {
+      // Nur erlaubt, wenn wirklich kein Konzept mit Nutzwert > 0 existiert bzw. alle Gewichte 0 sind
+      assert.ok(ref.bestRatio === Infinity || Evaluation.totalWeight(m) === 0, res.error);
+      continue;
+    }
+    const c = { selections: res.selections };
+    const ratio = Evaluation.conceptCost(m, c).total / Evaluation.conceptUtility(m, c).value;
+    assert.ok(close(ratio, ref.bestRatio), `Matrix ${n}: ${ratio} statt ${ref.bestRatio}`);
+    checked++;
+  }
+  assert.ok(checked > 200);
+});
+
+test('Gleichstand: höchster Nutzwert wählt die günstigere Ausprägung', () => {
+  const m = example();
+  const p = m.parameters[0];
+  p.options[0].score = 9; p.options[0].cost = 50;
+  p.options[3].score = 9; p.options[3].cost = 40;
+  const { selections } = Evaluation.GENERATORS['max-utility'].build(m);
+  assert.equal(selections[p.id], p.options[3].id);
+});
+
+test('Fehlende Werte: Parameter wird übersprungen bzw. Fehlermeldung', () => {
+  const m = example();
+  for (const o of m.parameters[0].options) o.cost = null;
+  const res = Evaluation.GENERATORS['min-cost'].build(m);
+  assert.equal(res.skipped, 1);
+  assert.equal(res.selections[m.parameters[0].id], undefined);
+  assert.match(Evaluation.GENERATORS['best-value'].build(m).error, /in jedem Parameter/);
+});
+
+test('Verfügbarkeit hängt von den Einstellungen ab', () => {
+  const m = Model.exampleState();
+  const avail = () => Object.keys(Evaluation.GENERATORS).filter(k => Evaluation.GENERATORS[k].available(m));
+  assert.deepEqual(plain(avail()), []);
+  m.settings.utility = true;
+  assert.deepEqual(plain(avail()), ['max-utility', 'min-utility']);
+  m.settings.costs = true;
+  assert.deepEqual(plain(avail()), ['max-utility', 'min-utility', 'min-cost', 'max-cost', 'best-value']);
+});
