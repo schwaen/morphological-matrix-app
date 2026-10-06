@@ -2,10 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadApp, plain } from './load.js';
 
-const { Model } = loadApp();
+const { Model, example: kaffeemaschine } = loadApp();
 
 test('Beispiel ist bereits normalisiert (Normalisierung ändert nichts)', () => {
-  const m = Model.exampleState();
+  const m = kaffeemaschine();
   assert.deepEqual(plain(Model.normalize(plain(m))), plain(m));
 });
 
@@ -55,7 +55,7 @@ test('sortedByCategory: Reihenfolge der Kategorien, ohne Kategorie zuletzt, sons
 });
 
 test('categoryGroups: Gruppen und Indizes in Anzeigereihenfolge', () => {
-  const m = Model.exampleState();
+  const m = kaffeemaschine();
   const groups = Model.categoryGroups(m);
   assert.deepEqual(plain(groups.map(g => g.cat && g.cat.name)), ['Brühsystem', 'Nutzung & Betrieb']);
   assert.deepEqual(plain(groups.flatMap(g => g.items.map(x => x.pi))), [0, 1, 2, 3, 4, 5]);
@@ -65,7 +65,7 @@ test('categoryGroups: Gruppen und Indizes in Anzeigereihenfolge', () => {
 });
 
 test('canMoveParameter: nur innerhalb der Kategorie', () => {
-  const m = Model.exampleState();
+  const m = kaffeemaschine();
   assert.equal(Model.canMoveParameter(m, 0, -1), false);
   assert.equal(Model.canMoveParameter(m, 0, 1), true);
   assert.equal(Model.canMoveParameter(m, 2, 1), false); // Grenze zwischen den Kategorien
@@ -73,7 +73,7 @@ test('canMoveParameter: nur innerhalb der Kategorie', () => {
 });
 
 test('Farben und Namen: nächste freie Farbe, eindeutige Namen', () => {
-  const m = Model.exampleState();
+  const m = kaffeemaschine();
   assert.equal(Model.nextConceptColor(m.concepts), Model.COLORS[3]);
   assert.equal(Model.nextCategoryColor(m.categories), Model.CATEGORY_COLORS[2]);
   assert.equal(Model.uniqueName(['A', 'A 2'], 'A'), 'A 3');
@@ -91,7 +91,7 @@ test('optionText und sameSelections', () => {
 });
 
 test('Datenformat: aktuelle Version wird geschrieben', () => {
-  assert.equal(Model.exampleState().version, Model.SCHEMA_VERSION);
+  assert.equal(kaffeemaschine().version, Model.SCHEMA_VERSION);
   assert.equal(Model.blankState().version, Model.SCHEMA_VERSION);
   assert.equal(Model.normalize({ parameters: [] }).version, Model.SCHEMA_VERSION);
 });

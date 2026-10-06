@@ -57,10 +57,11 @@ function bindEvents() {
   });
 
   // Dialoge (Klick auf den Hintergrund schließt)
-  for (const id of ['#libraryDialog', '#settingsDialog']) {
+  for (const id of ['#libraryDialog', '#examplesDialog', '#settingsDialog']) {
     $(id).addEventListener('click', e => { if (e.target === e.currentTarget) closeDialog(e.currentTarget); });
   }
   $('#libraryClose').addEventListener('click', () => closeDialog($('#libraryDialog')));
+  $('#examplesClose').addEventListener('click', () => closeDialog($('#examplesDialog')));
   $('#settingsClose').addEventListener('click', () => closeDialog($('#settingsDialog')));
   $('#settingsDone').addEventListener('click', () => closeDialog($('#settingsDialog')));
   $('#setCosts').addEventListener('change', e => changeSetting('costs', e.target.checked));

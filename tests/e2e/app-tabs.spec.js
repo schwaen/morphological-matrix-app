@@ -151,6 +151,7 @@ test('Umstieg: bisher in diesem Browser-Tab bearbeitete Matrix wird zum ersten A
 test('Handybreite: Tabs ohne seitliches Scrollen der Seite', async ({ page }) => {
   await tabMenu(page, 'Neue leere Matrix');
   await tabMenu(page, 'Beispiel öffnen');
+  await page.locator('#exampleList .doc', { hasText: 'Kaffeemaschine' }).getByRole('button', { name: 'Öffnen' }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await expect(page.locator('.app-tab.is-active')).toBeInViewport();

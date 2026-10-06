@@ -62,10 +62,21 @@ function loadInitialTabs() {
 
   if (!list.length) {
     const doc = Store.readDoc(Store.legacyTabDocId()) || Store.listDocs()[0]
-      || { id: Util.uid(), data: Model.exampleState() };
+      || { id: Util.uid(), data: startExample() };
     list.push({ docId: doc.id, view: {}, state: doc.data });
   }
   return { list, active: active || list[0].docId, closed: (ws && Array.isArray(ws.closed)) ? ws.closed : [] };
+}
+
+/** Matrix für den allerersten Start: das erste eingebundene Beispiel, sonst eine leere Matrix. */
+function startExample() {
+  const first = Examples.all()[0];
+  try {
+    return (first && Examples.load(first.id)) || Model.blankState();
+  } catch (e) {
+    console.warn(`Beispiel „${first.id}“ ist ungültig:`, e.message);
+    return Model.blankState();
+  }
 }
 
 const initial = loadInitialTabs();

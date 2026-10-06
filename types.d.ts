@@ -55,6 +55,18 @@ interface Matrix {
   activeConceptId: string | null;
 }
 
+/** Mitgeliefertes Beispiel (eine Datei je Beispiel unter examples/) */
+interface ExampleDef {
+  /** Eindeutiger Kurzname, z. B. Dateiname ohne Endung */
+  id: string;
+  /** Anzeigename in der Auswahl */
+  name: string;
+  /** Kurze Beschreibung in der Auswahl */
+  description?: string;
+  /** Matrix im Format des JSON-Exports (docs/DATENFORMAT.md) */
+  data: object;
+}
+
 /** Ansichtseinstellungen pro Tab (sessionStorage) */
 interface TabPrefs {
   mode: 'edit' | 'select';

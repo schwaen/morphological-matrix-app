@@ -118,48 +118,6 @@ const Model = (() => {
     };
   }
 
-  /** @returns {Matrix} */
-  function exampleState() {
-    // [Parameter, Gewicht, [[Ausprägung, Kosten, Nutzwert 0–10], …]]
-    /** @type {Array<[string, number, Array<[string, number, number]>]>} */
-    const rows = [
-      ['Wassererwärmung', 3, [['Durchlauferhitzer', 18, 6], ['Boiler', 25, 5], ['Thermoblock', 22, 8], ['Induktion', 40, 9]]],
-      ['Druckerzeugung', 3, [['Schwerkraft', 2, 3], ['Vibrationspumpe', 12, 7], ['Rotationspumpe', 45, 9], ['Handhebel', 8, 6]]],
-      ['Kaffeezufuhr', 2, [['Pulver (lose)', 3, 6], ['Kapsel', 10, 8], ['Pad', 6, 5], ['Bohnen mit Mahlwerk', 35, 9]]],
-      ['Bedienung', 1, [['Drehknopf', 2, 5], ['Tasten', 4, 6], ['Touch-Display', 20, 8], ['Smartphone-App', 15, 7]]],
-      ['Energieversorgung', 2, [['Netzstrom', 3, 8], ['Akku', 30, 6], ['Gaskartusche', 15, 5], ['Muskelkraft', 1, 3]]],
-      ['Reinigung', 1, [['Manuell', 0, 3], ['Automatische Spülung', 10, 8], ['Spülmaschinenfest', 5, 7]]],
-    ];
-    const categories = [
-      { id: uid(), name: 'Brühsystem', color: CATEGORY_COLORS[0] },
-      { id: uid(), name: 'Nutzung & Betrieb', color: CATEGORY_COLORS[1] },
-    ];
-    const parameters = rows.map(([name, weight, opts], i) => ({
-      id: uid(),
-      name,
-      weight,
-      categoryId: categories[i < 3 ? 0 : 1].id,
-      options: opts.map(([text, cost, score]) => ({ id: uid(), text, cost, score })),
-    }));
-    const pick = idx => Object.fromEntries(parameters.map((p, i) => [p.id, p.options[idx[i]].id]));
-    const concepts = [
-      { id: uid(), name: 'Kompakt-Espresso', color: COLORS[0], selections: pick([2, 1, 0, 1, 0, 1]) },
-      { id: uid(), name: 'Outdoor', color: COLORS[1], selections: pick([3, 3, 2, 0, 3, 0]) },
-      { id: uid(), name: 'Smart Home', color: COLORS[2], selections: pick([1, 2, 3, 3, 0, 1]) },
-    ];
-    return {
-      version: SCHEMA_VERSION,
-      title: 'Beispiel: Kaffeemaschine',
-      description: 'Gesamtfunktion: Aus Wasser und Kaffee ein heißes Getränk zubereiten.',
-      // Kosten und Nutzwerte sind hinterlegt, aber zunächst ausgeblendet.
-      settings: defaultSettings(),
-      categories,
-      parameters,
-      concepts,
-      activeConceptId: concepts[0].id,
-    };
-  }
-
   /**
    * Prüft, migriert (siehe `migrate`) und bereinigt beliebige – z. B. importierte – Daten.
    * Wirft bei unbrauchbarem Format oder Daten aus einer neueren App-Version.
@@ -312,7 +270,7 @@ const Model = (() => {
   return {
     COLORS, CATEGORY_COLORS, CURRENCIES, SCALES, NO_CATEGORY, SCHEMA_VERSION, migrate,
     defaultSettings, newOption, newParameter, newConcept, nextConceptColor, nextCategoryColor, uniqueName,
-    blankState, exampleState, normalize, sortedByCategory, resort,
+    blankState, normalize, sortedByCategory, resort,
     categoryById, categoryGroups, canMoveParameter, selectedOption, optionText, sameSelections,
     parameterLabel, categoryLabel, nameOrUnnamed,
   };

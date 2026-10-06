@@ -9,5 +9,5 @@
     "noImplicitAny": false,
     "skipLibCheck": true
   },
-  "include": ["js/**/*.js", "types.d.ts"]
+  "include": ["js/**/*.js", "examples/**/*.js", "types.d.ts"]
 }

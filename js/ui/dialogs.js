@@ -1,5 +1,5 @@
 /*
- * Menü „Datei“ und Dialoge: Bibliothek („Meine Matrizen“), Bewertungseinstellungen,
+ * Menü „Datei“ und Dialoge: Bibliothek („Meine Matrizen“), Beispiele, Bewertungseinstellungen,
  * Import/Export, Teilen und Drucken.
  */
 'use strict';
@@ -102,6 +102,44 @@ function renderLibrary() {
   $('#docList').replaceChildren(...items);
 }
 
+// ---------- Beispiele ----------
+
+function openExamples() {
+  renderExamples();
+  openDialog($('#examplesDialog'));
+}
+
+function renderExamples() {
+  const examples = Examples.all();
+  const items = examples.map(ex => {
+    const d = /** @type {any} */ (ex.data);
+    const count = v => (Array.isArray(v) ? v.length : 0);
+    return h('li', { class: 'doc' },
+      h('div', { class: 'doc-info' },
+        h('span', { class: 'doc-title' }, ex.name),
+        ex.description ? h('span', { class: 'doc-desc' }, ex.description) : null,
+        h('span', { class: 'doc-meta' }, Texts.examples.meta(count(d.parameters), count(d.categories), count(d.concepts)))),
+      h('div', { class: 'doc-actions' },
+        h('button', {
+          type: 'button', class: 'btn btn-small',
+          onclick: () => { closeDialog($('#examplesDialog')); openExample(ex.id); },
+        }, Texts.examples.open)));
+  });
+  $('#exampleList').replaceChildren(...(items.length ? items : [h('li', { class: 'doc-empty' }, Texts.examples.empty)]));
+}
+
+/** Beispiel als neue Matrix in einem neuen Tab öffnen. @param {string} id */
+function openExample(id) {
+  let data;
+  try {
+    data = Examples.load(id);
+  } catch (e) {
+    toast(Texts.errors.fileInvalid(e.message));
+    return;
+  }
+  if (data) openNewDoc(data, Texts.toast.exampleOpened(Examples.get(id).name));
+}
+
 // ---------- Bewertungseinstellungen ----------
 
 function syncSettingsForm() {
@@ -133,7 +171,7 @@ function toggleMenu(open) {
 /** Aktionen der Menüeinträge (`data-action` in index.html). */
 const MENU_ACTIONS = {
   new: () => { openNewDoc(Model.blankState(), Texts.toast.newMatrix); setMode('edit'); },
-  example: () => openNewDoc(Model.exampleState(), Texts.toast.exampleOpened),
+  example: openExamples,
   open: openLibrary,
   settings: openSettings,
   'export-json': exportJson,
