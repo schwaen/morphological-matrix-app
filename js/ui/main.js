@@ -61,6 +61,13 @@ function bindEvents() {
     $(id).addEventListener('click', e => { if (e.target === e.currentTarget) closeDialog(e.currentTarget); });
   }
   $('#libraryClose').addEventListener('click', () => closeDialog($('#libraryDialog')));
+  $('#backupExportBtn').addEventListener('click', exportBackup);
+  $('#backupRestoreBtn').addEventListener('click', () => $('#backupFile').click());
+  $('#backupFile').addEventListener('change', e => {
+    const files = [...e.target.files];
+    e.target.value = '';
+    if (files.length) restoreBackup(files);
+  });
   $('#examplesClose').addEventListener('click', () => closeDialog($('#examplesDialog')));
   $('#settingsClose').addEventListener('click', () => closeDialog($('#settingsDialog')));
   $('#settingsDone').addEventListener('click', () => closeDialog($('#settingsDialog')));

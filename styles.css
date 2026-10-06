@@ -711,6 +711,7 @@
   .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .dialog-head h2 { margin: 0; font-size: 1.05rem; letter-spacing: -.01em; }
   .dialog-hint { margin: 6px 0 12px; font-size: .85rem; color: var(--muted); }
+  .library-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 12px; }
   .dialog-foot { display: flex; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--border); }
 
   .setting { padding: 12px 0; border-top: 1px solid var(--border); }

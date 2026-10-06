@@ -44,8 +44,9 @@ const Store = (() => {
   }
 
   /** @param {string} id @param {Matrix} data @returns {boolean} */
-  function writeDoc(id, data) {
-    return set('localStorage', DOC_PREFIX + id, JSON.stringify({ savedAt: Date.now(), data }));
+  /** @param {string} id @param {Matrix} data @param {number} [savedAt] z. B. beim Wiederherstellen eines Backups */
+  function writeDoc(id, data, savedAt = Date.now()) {
+    return set('localStorage', DOC_PREFIX + id, JSON.stringify({ savedAt, data }));
   }
 
   /** @param {string} id */

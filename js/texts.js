@@ -39,6 +39,8 @@ const Texts = (() => {
 
     errors: {
       invalidFormat: 'Ungültiges Dateiformat: „parameters“ fehlt.',
+      zipInvalid: 'Das ZIP-Archiv ist beschädigt oder unvollständig.',
+      zipMethod: 'Das ZIP-Archiv verwendet ein nicht unterstütztes Kompressionsverfahren.',
       newerFormat: (version, supported) =>
         `Die Daten stammen aus einer neueren Version der App (Format ${version}, unterstützt bis ${supported}).`,
       fileUnreadable: 'Datei konnte nicht gelesen werden.',
@@ -236,6 +238,22 @@ const Texts = (() => {
       ].filter(Boolean).join(' · '),
       open: 'Öffnen',
       empty: 'Es sind keine Beispiele eingebunden.',
+    },
+
+    backup: {
+      copyTitle: title => `${title || 'Matrix'} (aus Backup)`,
+      saved: n => `Backup mit ${plural(n, 'Matrix', 'Matrizen')} gespeichert.`,
+      empty: 'Es gibt noch keine Matrizen für ein Backup.',
+      restored: ({ added, copies, unchanged, failed }) => [
+        added - copies ? `${added - copies} neu` : null,
+        copies ? `${copies} als Kopie (abweichender Stand)` : null,
+        unchanged ? `${unchanged} bereits vorhanden` : null,
+        failed ? `${failed} ${failed === 1 ? 'Datei' : 'Dateien'} nicht lesbar` : null,
+      ].filter(Boolean).join(', '),
+      restoredTitle: summary => `Wiederhergestellt: ${summary}.`,
+      nothing: 'Im Backup wurden keine Matrizen gefunden.',
+      failed: message => `Backup konnte nicht gelesen werden: ${message}`,
+      storageFull: n => `Speicher voll – ${plural(n, 'Matrix konnte', 'Matrizen konnten')} nicht wiederhergestellt werden.`,
     },
 
     library: {

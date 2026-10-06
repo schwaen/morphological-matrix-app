@@ -14,6 +14,7 @@
   <script src="js/model.js" defer></script>
   <script src="js/evaluation.js" defer></script>
   <script src="js/io.js" defer></script>
+  <script src="js/zip.js" defer></script>
   <script src="js/storage.js" defer></script>
   <script src="js/examples.js" defer></script>
   <!-- Mitgelieferte Beispiele: je Beispiel eine Datei (Anleitung: examples/README.md) -->
@@ -172,6 +173,17 @@
       </button>
     </div>
     <p class="dialog-hint">Alle Matrizen werden in diesem Browser gespeichert. Jeder Tab bearbeitet seine eigene Matrix – öffnen Sie eine Matrix in einem neuen Tab, um parallel zu arbeiten.</p>
+    <div class="library-actions">
+      <button type="button" class="btn btn-small" id="backupExportBtn" title="Alle Matrizen als ZIP-Archiv mit je einer JSON-Datei speichern">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+        Backup herunterladen
+      </button>
+      <button type="button" class="btn btn-small" id="backupRestoreBtn" title="ZIP-Archiv oder JSON-Dateien einlesen – vorhandene Matrizen werden nie überschrieben">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>
+        Backup wiederherstellen …
+      </button>
+      <input type="file" id="backupFile" accept=".zip,application/zip,.json,application/json" multiple hidden>
+    </div>
     <ul class="doc-list" id="docList"></ul>
   </dialog>
 
