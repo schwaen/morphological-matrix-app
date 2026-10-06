@@ -8,6 +8,8 @@ const IO = (() => {
   const { categoryById, optionText } = Model;
   const { weightOf, conceptCost, conceptUtility, priceValue } = Evaluation;
 
+  const L = Texts.csv;
+
   /** @param {Matrix} m @param {'json' | 'csv'} ext */
   const fileName = (m, ext) => `${Util.slugify(m.title)}.${ext}`;
 
@@ -27,22 +29,22 @@ const IO = (() => {
   function toCsv(m) {
     const maxOptions = Math.max(0, ...m.parameters.map(p => p.options.length));
     const withCats = m.categories.length > 0;
-    const catHead = withCats ? [cell('Kategorie')] : [];
+    const catHead = withCats ? [cell(L.category)] : [];
     const catCell = p => (withCats ? [cell((categoryById(m, p.categoryId) || { name: '' }).name)] : []);
     const lines = [
-      [cell('Titel'), cell(m.title)],
-      [cell('Beschreibung'), cell(m.description)],
+      [cell(L.title), cell(m.title)],
+      [cell(L.description), cell(m.description)],
       [],
-      [...catHead, cell('Parameter'), ...Array.from({ length: maxOptions }, (_, i) => cell(`Ausprägung ${i + 1}`))],
+      [...catHead, cell(L.parameter), ...Array.from({ length: maxOptions }, (_, i) => cell(L.option(i + 1)))],
       ...m.parameters.map(p => [...catCell(p), cell(p.name), ...p.options.map(o => cell(o.text))]),
     ];
     const { costs, utility, currency, utilityMax } = m.settings;
     if (costs || utility) {
-      lines.push([], [...catHead, cell('Parameter'),
-        ...(utility ? [cell('Gewicht')] : []),
-        cell('Ausprägung'),
-        ...(costs ? [cell(`Kosten (${currency})`)] : []),
-        ...(utility ? [cell(`Nutzwert (0–${utilityMax})`)] : [])]);
+      lines.push([], [...catHead, cell(L.parameter),
+        ...(utility ? [cell(L.weight)] : []),
+        cell(L.optionSingle),
+        ...(costs ? [cell(L.cost(currency))] : []),
+        ...(utility ? [cell(L.utility(utilityMax))] : [])]);
       for (const p of m.parameters) {
         for (const o of p.options) {
           lines.push([...catCell(p), cell(p.name),
@@ -54,10 +56,10 @@ const IO = (() => {
       }
     }
     if (m.concepts.length) {
-      lines.push([], [cell('Konzept'), ...m.parameters.map(p => cell(p.name)),
-        ...(costs ? [cell(`Gesamtkosten (${currency})`)] : []),
-        ...(utility ? [cell('Nutzwert')] : []),
-        ...(costs && utility ? [cell(`Kosten je Nutzwertpunkt (${currency})`)] : [])]);
+      lines.push([], [cell(L.concept), ...m.parameters.map(p => cell(p.name)),
+        ...(costs ? [cell(L.totalCost(currency))] : []),
+        ...(utility ? [cell(L.utilityTotal)] : []),
+        ...(costs && utility ? [cell(L.priceValue(currency))] : [])]);
       for (const c of m.concepts) {
         lines.push([cell(c.name), ...m.parameters.map(p => cell(optionText(p, c.selections[p.id]) || '')),
           ...(costs ? [csvNum(conceptCost(m, c).total)] : []),
@@ -65,7 +67,7 @@ const IO = (() => {
           ...(costs && utility ? [csvNum(priceValue(m, c).value)] : [])]);
       }
     }
-    return '﻿' + lines.map(l => l.join(';')).join('\r\n');
+    return '\ufeff' + lines.map(l => l.join(';')).join('\r\n');
   }
 
   /** Teil hinter `#m=` eines Teilen-Links. @param {Matrix} m */

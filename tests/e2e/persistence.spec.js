@@ -18,6 +18,14 @@ test('Import einer ungültigen Datei meldet einen Fehler', async ({ page }, info
   await expect(page.locator('#title')).toHaveValue('Beispiel: Kaffeemaschine');
 });
 
+test('Import einer Datei aus einer neueren App-Version wird abgelehnt', async ({ page }, info) => {
+  const file = info.outputPath('neu.json');
+  fs.writeFileSync(file, JSON.stringify({ version: 999, title: 'Zukunft', parameters: [] }));
+  await page.setInputFiles('#importFile', file);
+  await expect(page.locator('#toast')).toContainText('neueren Version der App');
+  await expect(page.locator('#title')).toHaveValue('Beispiel: Kaffeemaschine');
+});
+
 test('CSV-Export enthält Matrix und Konzepte (Excel-kompatibel)', async ({ page }) => {
   const { name, text } = await downloadText(page, 'export-csv');
   expect(name).toBe('beispiel-kaffeemaschine.csv');

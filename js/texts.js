@@ -1,0 +1,214 @@
+/*
+ * Texts – alle Texte, die das JavaScript anzeigt (Hinweise, Beschriftungen, Fehlermeldungen,
+ * Export-Spaltenköpfe). Statische Texte der Seite stehen in index.html.
+ * Gesammelt an einer Stelle, damit Formulierungen einheitlich bleiben und eine spätere
+ * Übersetzung nur diese Datei (und index.html) betrifft. Stellt den Namensraum `Texts` bereit.
+ */
+'use strict';
+
+const Texts = (() => {
+  /** Einzahl/Mehrzahl: `plural(1, 'Konzept', 'Konzepte')` → „1 Konzept“. */
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  /** Anführungszeichen wie in der Oberfläche üblich. */
+  const q = s => `„${s}“`;
+
+  return {
+    plural,
+
+    app: {
+      /** @param {string} title */
+      documentTitle: title => (title ? `${title} – Morphologische Matrix` : 'Morphologische Matrix'),
+    },
+
+    // Ersatznamen für leere Felder – Anzeige und Export verwenden dieselben
+    fallback: {
+      unnamed: 'Unbenannt',
+      unnamedMatrix: 'Unbenannte Matrix',
+      unnamedConcept: 'Unbenanntes Konzept',
+      noCategory: 'Ohne Kategorie',
+      matrixTitle: 'Morphologische Matrix',
+      newMatrixTitle: 'Neue morphologische Matrix',
+      parameter: n => `Parameter ${n}`,
+      option: n => `Ausprägung ${n}`,
+      /** Leere Ausprägung in Listen, Vergleich und Export */
+      emptyOption: n => `(Ausprägung ${n})`,
+      concept: n => `Konzept ${n}`,
+      category: n => `Kategorie ${n}`,
+      copyOf: name => `${name} (Kopie)`,
+    },
+
+    errors: {
+      invalidFormat: 'Ungültiges Dateiformat: „parameters“ fehlt.',
+      newerFormat: (version, supported) =>
+        `Die Daten stammen aus einer neueren Version der App (Format ${version}, unterstützt bis ${supported}).`,
+      fileUnreadable: 'Datei konnte nicht gelesen werden.',
+      fileInvalid: message => `Datei konnte nicht gelesen werden: ${message}`,
+      shareInvalid: 'Der geteilte Link ist ungültig.',
+      storageFull: 'Speichern im Browser nicht möglich – bitte als JSON sichern.',
+      docMissing: 'Diese Matrix existiert nicht mehr.',
+    },
+
+    toast: {
+      undo: 'Rückgängig',
+      parameterDeleted: name => `Parameter ${q(name)} gelöscht.`,
+      categoryDeleted: name => `Kategorie ${q(name)} gelöscht – ihre Parameter bleiben erhalten.`,
+      conceptDeleted: name => `Konzept ${q(name)} gelöscht.`,
+      noOptions: 'Es gibt noch keine Ausprägungen.',
+      newMatrix: 'Neue Matrix angelegt.',
+      exampleOpened: 'Beispiel als neue Matrix geöffnet.',
+      opened: title => `${q(title)} geöffnet.`,
+      sharedOpened: title => `Geteilte Matrix ${q(title)} als neue Matrix geöffnet.`,
+      linkCopied: 'Link in die Zwischenablage kopiert.',
+      generated: name => `Konzept ${q(name)} erstellt.`,
+      generatedPartial: (name, skipped, missing) =>
+        `Konzept ${q(name)} erstellt – ${skipped} ${skipped === 1 ? 'Parameter blieb' : 'Parameter blieben'} ohne Auswahl, da dort ${missing} fehlt.`,
+      generatedExists: (label, name) =>
+        `Diese Kombination (${q(label)}) gibt es bereits als Konzept ${q(name)} – es wurde ausgewählt.`,
+      notGenerated: reason => `Kein Konzept erstellt. ${reason}`,
+      missingValues: missing => `Bitte zuerst ${missing} an den Ausprägungen erfassen.`,
+    },
+
+    prompt: {
+      newCategory: 'Name der neuen Kategorie:',
+      shareLink: 'Link zum Teilen (kopieren mit Strg+C):',
+      rescale: (oldMax, max) => `Vorhandene Nutzwerte von der Skala 0–${oldMax} auf 0–${max} umrechnen?\n\n`
+        + 'OK: umrechnen (z. B. wird 7 von 10 zu 3,5 von 5)\nAbbrechen: Werte unverändert lassen',
+      deleteMatrix: title => `Matrix ${q(title)} endgültig löschen?`,
+    },
+
+    hint: {
+      edit: 'Tipp: Mit Enter springen Sie zur nächsten Ausprägung bzw. legen eine neue an. Zum Kombinieren oben auf „Kombinieren“ wechseln.',
+      select: name => `Klicken Sie je Parameter auf eine Ausprägung, um sie dem Konzept ${q(name)} zuzuordnen. Erneuter Klick hebt die Auswahl auf.`,
+      noConcept: 'Legen Sie ein Konzept an und wählen Sie dann je Parameter eine Ausprägung.',
+    },
+
+    stats: {
+      parameters: 'Parameter',
+      options: n => (n === 1 ? 'Ausprägung' : 'Ausprägungen'),
+      combinations: one => (one ? 'mögliche Kombination' : 'mögliche Kombinationen'),
+      concepts: n => (n === 1 ? 'Konzept' : 'Konzepte'),
+    },
+
+    matrix: {
+      label: 'Morphologische Matrix',
+      emptyEdit: 'Noch keine Parameter – fügen Sie unten den ersten hinzu.',
+      emptySelect: 'Noch keine Parameter. Wechseln Sie in den Modus „Bearbeiten“, um die Matrix aufzubauen.',
+      parameterName: n => `Name von Parameter ${n}`,
+      optionField: (param, n) => `${param}: Ausprägung ${n}`,
+      optionCount: n => plural(n, 'Ausprägung', 'Ausprägungen'),
+      weight: 'Gewicht',
+      weightOf: param => `Gewichtung von ${param}`,
+      weightShare: percent => `Gewicht\u00a0${percent}`,
+      moveUp: 'Nach oben verschieben',
+      moveDown: 'Nach unten verschieben',
+      moveLeft: 'Nach links verschieben (Alt+←)',
+      moveRight: 'Nach rechts verschieben (Alt+→)',
+      deleteParameter: 'Parameter löschen',
+      deleteOption: 'Ausprägung löschen',
+      addOption: 'Ausprägung hinzufügen',
+      addOptionTo: param => `Ausprägung zu ${param} hinzufügen`,
+      costPlaceholder: 'Kosten',
+      costOf: option => `Kosten von ${option}`,
+      utilityUnit: 'NW',
+      utilityUnitTitle: 'Nutzwert (Erfüllungsgrad)',
+      utilityOf: (option, max) => `Nutzwert von ${option} (0 bis ${max})`,
+      utilityShort: value => `NW ${value}`,
+      selectedIn: names => `Gewählt in: ${names}`,
+    },
+
+    category: {
+      select: param => `Kategorie von ${param}`,
+      selectTitle: 'Kategorie',
+      newOption: '+ Neue Kategorie …',
+      expand: 'Ausklappen',
+      collapse: 'Einklappen',
+      toggle: (name, collapsed) => `${name} ${collapsed ? 'ausklappen' : 'einklappen'}`,
+      color: name => `Farbe von ${name}`,
+      changeColor: 'Farbe ändern',
+      namePlaceholder: 'Kategorie',
+      nameLabel: 'Name der Kategorie',
+      count: n => `${n} Parameter`,
+      progress: (picked, total) => `${picked}/${total} gewählt`,
+      progressTitle: concept => `Auswahl im Konzept ${q(concept)}`,
+      addParameter: 'Parameter',
+      moveUp: 'Kategorie nach oben',
+      moveDown: 'Kategorie nach unten',
+      delete: 'Kategorie löschen (Parameter bleiben erhalten)',
+      jumpTo: name => `Zu ${q(name)} springen`,
+      expandAll: 'Alle ausklappen',
+      collapseAll: 'Alle einklappen',
+    },
+
+    concept: {
+      color: name => `Farbe von ${name}`,
+      changeColor: 'Farbe ändern',
+      nameLabel: n => `Name von Konzept ${n}`,
+      duplicate: 'Konzept duplizieren',
+      delete: 'Konzept löschen',
+      progressTitle: (filled, total) => `${filled} von ${total} Parametern gewählt`,
+      none: 'Noch keine Konzepte.',
+    },
+
+    summary: {
+      noConcept: 'Kein Konzept ausgewählt.',
+      noParameters: 'Die Matrix enthält noch keine Parameter.',
+      notSelected: 'nicht gewählt',
+      totalCost: 'Gesamtkosten',
+      utility: 'Nutzwert',
+      utilityValue: (value, max) => `${value} / ${max}`,
+      missing: n => `${n} ${n === 1 ? 'Wert fehlt' : 'Werte fehlen'}`,
+    },
+
+    compare: {
+      parameter: 'Parameter',
+      conceptCount: n => plural(n, 'Konzept', 'Konzepte'),
+      totalCost: 'Gesamtkosten',
+      utility: max => `Nutzwert (max. ${max})`,
+      priceValue: 'Preis-Leistung',
+      priceValueNote: 'Kosten je Nutzwertpunkt',
+      priceValueTitle: 'Gesamtkosten geteilt durch Nutzwert – je niedriger, desto besser',
+    },
+
+    evaluation: {
+      incomplete: 'Nicht berechenbar: Kosten oder Nutzwerte sind unvollständig.',
+      zeroUtility: 'Nicht berechenbar: Der Nutzwert ist 0.',
+      needsAllValues: 'Dafür müssen in jedem Parameter Ausprägungen mit Kosten und Nutzwert gepflegt sein.',
+      zeroWeights: 'Die Summe der Gewichte ist 0.',
+      allScoresZero: 'Alle gepflegten Nutzwerte sind 0.',
+      generators: {
+        'max-utility': { label: 'Höchster Nutzwert', missing: 'Nutzwert' },
+        'min-utility': { label: 'Geringster Nutzwert', missing: 'Nutzwert' },
+        'min-cost': { label: 'Geringste Kosten', missing: 'Kosten' },
+        'max-cost': { label: 'Höchste Kosten', missing: 'Kosten' },
+        'best-value': { label: 'Beste Preis-Leistung', missing: 'Kosten und Nutzwert' },
+      },
+    },
+
+    library: {
+      currentTab: 'dieser Tab',
+      meta: (date, parameters, concepts) => `${date} · ${parameters} Parameter · ${plural(concepts, 'Konzept', 'Konzepte')}`,
+      open: 'Öffnen',
+      newTab: 'Neuer Tab',
+      newTabTitle: 'In einem neuen Tab öffnen',
+      delete: 'Matrix löschen',
+      deleteCurrent: 'Die Matrix dieses Tabs kann nicht gelöscht werden',
+    },
+
+    // Spaltenköpfe des CSV-Exports
+    csv: {
+      title: 'Titel',
+      description: 'Beschreibung',
+      category: 'Kategorie',
+      parameter: 'Parameter',
+      option: n => `Ausprägung ${n}`,
+      optionSingle: 'Ausprägung',
+      weight: 'Gewicht',
+      cost: currency => `Kosten (${currency})`,
+      utility: max => `Nutzwert (0–${max})`,
+      concept: 'Konzept',
+      totalCost: currency => `Gesamtkosten (${currency})`,
+      utilityTotal: 'Nutzwert',
+      priceValue: currency => `Kosten je Nutzwertpunkt (${currency})`,
+    },
+  };
+})();

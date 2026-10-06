@@ -33,7 +33,7 @@ function deleteParameter(pid) {
     m.parameters = m.parameters.filter(x => x.id !== pid);
     m.concepts.forEach(c => { delete c.selections[pid]; });
   });
-  toast(`Parameter „${Model.nameOrUnnamed(p)}“ gelöscht.`, true);
+  toast(Texts.toast.parameterDeleted(Model.nameOrUnnamed(p)), true);
 }
 
 // ---------- Ausprägungen ----------
@@ -74,7 +74,7 @@ function deleteOption(pid, oid) {
 // ---------- Kategorien ----------
 
 function addCategory() {
-  const k = { id: Util.uid(), name: `Kategorie ${state.categories.length + 1}`, color: Model.nextCategoryColor(state.categories) };
+  const k = { id: Util.uid(), name: Texts.fallback.category(state.categories.length + 1), color: Model.nextCategoryColor(state.categories) };
   pendingFocus = `cat:${k.id}`;
   if (prefs.mode !== 'edit') setPref('mode', 'edit');
   mutate(m => { m.categories.push(k); });
@@ -95,13 +95,13 @@ function deleteCategory(cid) {
     m.parameters.forEach(p => { if (p.categoryId === cid) p.categoryId = null; });
     Model.resort(m);
   });
-  toast(`Kategorie „${Model.nameOrUnnamed(k)}“ gelöscht – ihre Parameter bleiben erhalten.`, true);
+  toast(Texts.toast.categoryDeleted(Model.nameOrUnnamed(k)), true);
 }
 
 /** @param {string} pid @param {string} cid Kategorie-ID, '' (ohne) oder NEW_CATEGORY */
 function setParameterCategory(pid, cid) {
   if (cid === NEW_CATEGORY) {
-    const name = window.prompt('Name der neuen Kategorie:', `Kategorie ${state.categories.length + 1}`);
+    const name = window.prompt(Texts.prompt.newCategory, Texts.fallback.category(state.categories.length + 1));
     if (name == null) { renderMatrix(); return; } // Auswahlfeld zurücksetzen
     const k = { id: Util.uid(), name: name.trim(), color: Model.nextCategoryColor(state.categories) };
     mutate(m => {
@@ -174,7 +174,7 @@ function duplicateConcept(cid) {
   mutate(m => {
     const idx = m.concepts.findIndex(x => x.id === cid);
     const src = m.concepts[idx];
-    const copy = { ...Model.newConcept(m, `${src.name} (Kopie)`), selections: { ...src.selections } };
+    const copy = { ...Model.newConcept(m, Texts.fallback.copyOf(src.name)), selections: { ...src.selections } };
     m.concepts.splice(idx + 1, 0, copy);
     m.activeConceptId = copy.id;
   });
@@ -190,7 +190,7 @@ function deleteConcept(cid) {
       m.activeConceptId = next ? next.id : null;
     }
   });
-  toast(`Konzept „${Model.nameOrUnnamed(c)}“ gelöscht.`, true);
+  toast(Texts.toast.conceptDeleted(Model.nameOrUnnamed(c)), true);
 }
 
 /** Aktives Konzept wechseln (Ansichtsänderung, kein Verlaufseintrag). */
@@ -213,7 +213,7 @@ function setActiveConceptLight(cid) {
 
 function randomizeActive() {
   if (!state.parameters.some(p => p.options.length)) {
-    toast('Es gibt noch keine Ausprägungen.');
+    toast(Texts.toast.noOptions);
     return;
   }
   mutate(m => {
@@ -238,14 +238,14 @@ function generateConcept(key) {
   if (!gen || !gen.available(state)) return;
   const { selections, skipped, error } = gen.build(state);
   if (error || !selections || !Object.keys(selections).length) {
-    toast(`Kein Konzept erstellt. ${error || `Bitte zuerst ${gen.missing} an den Ausprägungen erfassen.`}`);
+    toast(Texts.toast.notGenerated(error || Texts.toast.missingValues(gen.missing)));
     return;
   }
   const existing = state.concepts.find(c => Model.sameSelections(c.selections, selections));
   if (existing) {
     setActiveConcept(existing.id);
     if (prefs.mode !== 'select') setMode('select');
-    toast(`Diese Kombination („${gen.label}“) gibt es bereits als Konzept „${Model.nameOrUnnamed(existing)}“ – es wurde ausgewählt.`);
+    toast(Texts.toast.generatedExists(gen.label, Model.nameOrUnnamed(existing)));
     return;
   }
   const c = { ...Model.newConcept(state, gen.label), selections };
@@ -254,9 +254,7 @@ function generateConcept(key) {
     m.activeConceptId = c.id;
   });
   if (prefs.mode !== 'select') setMode('select');
-  toast(skipped
-    ? `Konzept „${c.name}“ erstellt – ${skipped} ${skipped === 1 ? 'Parameter blieb' : 'Parameter blieben'} ohne Auswahl, da dort ${gen.missing} fehlt.`
-    : `Konzept „${c.name}“ erstellt.`, true);
+  toast(skipped ? Texts.toast.generatedPartial(c.name, skipped, gen.missing) : Texts.toast.generated(c.name), true);
 }
 
 // ---------- Bewertungseinstellungen ----------
@@ -272,9 +270,7 @@ function changeScale(max) {
   const oldMax = state.settings.utilityMax;
   if (max === oldMax) return;
   const hasScores = state.parameters.some(p => p.options.some(o => o.score != null));
-  const rescale = hasScores && window.confirm(
-    `Vorhandene Nutzwerte von der Skala 0–${oldMax} auf 0–${max} umrechnen?\n\n`
-    + 'OK: umrechnen (z. B. wird 7 von 10 zu 3,5 von 5)\nAbbrechen: Werte unverändert lassen');
+  const rescale = hasScores && window.confirm(Texts.prompt.rescale(oldMax, max));
   mutate(m => {
     m.settings.utilityMax = max;
     if (!rescale) return;

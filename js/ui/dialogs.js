@@ -20,12 +20,12 @@ function importJson(file) {
   reader.onload = () => {
     try {
       const next = Model.normalize(JSON.parse(String(reader.result)));
-      openNewDoc(next, `„${next.title || file.name}“ geöffnet.`);
+      openNewDoc(next, Texts.toast.opened(next.title || file.name));
     } catch (e) {
-      toast(`Datei konnte nicht gelesen werden: ${e.message}`);
+      toast(Texts.errors.fileInvalid(e.message));
     }
   };
-  reader.onerror = () => toast('Datei konnte nicht gelesen werden.');
+  reader.onerror = () => toast(Texts.errors.fileUnreadable);
   reader.readAsText(file);
 }
 
@@ -33,9 +33,9 @@ async function shareLink() {
   const url = `${location.href.split('#')[0]}#m=${IO.encodeShare(state)}`;
   try {
     await navigator.clipboard.writeText(url);
-    toast('Link in die Zwischenablage kopiert.');
+    toast(Texts.toast.linkCopied);
   } catch (e) {
-    window.prompt('Link zum Teilen (kopieren mit Strg+C):', url);
+    window.prompt(Texts.prompt.shareLink, url);
   }
 }
 
@@ -47,9 +47,9 @@ function loadFromHash() {
     docId = Util.uid();
     state = next;
     save();
-    toast(`Geteilte Matrix „${next.title}“ als neue Matrix geöffnet.`);
+    toast(Texts.toast.sharedOpened(next.title));
   } catch (e) {
-    toast('Der geteilte Link ist ungültig.');
+    toast(Texts.errors.shareInvalid);
   }
   history.replaceState(null, '', location.pathname + location.search);
 }
@@ -74,30 +74,29 @@ function renderLibrary() {
   const items = docs.map(doc => {
     const current = doc.id === docId;
     const data = current ? state : doc.data;
-    const title = data.title || 'Unbenannte Matrix';
+    const title = data.title || Texts.fallback.unnamedMatrix;
     const P = data.parameters.length;
     const C = data.concepts.length;
     return h('li', { class: `doc${current ? ' is-current' : ''}` },
       h('div', { class: 'doc-info' },
-        h('span', { class: 'doc-title' }, title, current ? h('span', { class: 'badge' }, 'dieser Tab') : null),
-        h('span', { class: 'doc-meta' },
-          `${dateFormat.format(new Date(doc.savedAt))} · ${P} Parameter · ${C} ${C === 1 ? 'Konzept' : 'Konzepte'}`)),
+        h('span', { class: 'doc-title' }, title, current ? h('span', { class: 'badge' }, Texts.library.currentTab) : null),
+        h('span', { class: 'doc-meta' }, Texts.library.meta(dateFormat.format(new Date(doc.savedAt)), P, C))),
       h('div', { class: 'doc-actions' },
         h('button', {
           type: 'button', class: 'btn btn-small', disabled: current,
           onclick: () => {
             const fresh = Store.readDoc(doc.id);
-            if (!fresh) { toast('Diese Matrix existiert nicht mehr.'); renderLibrary(); return; }
+            if (!fresh) { toast(Texts.errors.docMissing); renderLibrary(); return; }
             closeDialog($('#libraryDialog'));
-            openDoc(fresh.id, fresh.data, `„${fresh.data.title || 'Unbenannte Matrix'}“ geöffnet.`);
+            openDoc(fresh.id, fresh.data, Texts.toast.opened(fresh.data.title || Texts.fallback.unnamedMatrix));
           },
-        }, 'Öffnen'),
+        }, Texts.library.open),
         h('a', {
           class: 'btn btn-small', href: `?doc=${encodeURIComponent(doc.id)}`, target: '_blank', rel: 'noopener',
-          title: 'In einem neuen Tab öffnen',
-        }, 'Neuer Tab'),
-        iconBtn('trash', current ? 'Die Matrix dieses Tabs kann nicht gelöscht werden' : 'Matrix löschen', () => {
-          if (!window.confirm(`Matrix „${title}“ endgültig löschen?`)) return;
+          title: Texts.library.newTabTitle,
+        }, Texts.library.newTab),
+        iconBtn('trash', current ? Texts.library.deleteCurrent : Texts.library.delete, () => {
+          if (!window.confirm(Texts.prompt.deleteMatrix(title))) return;
           Store.removeDoc(doc.id);
           renderLibrary();
         }, { danger: true, disabled: current })));
@@ -135,8 +134,8 @@ function toggleMenu(open) {
 
 /** Aktionen der Menüeinträge (`data-action` in index.html). */
 const MENU_ACTIONS = {
-  new: () => { openNewDoc(Model.blankState(), 'Neue Matrix angelegt.'); setMode('edit'); },
-  example: () => openNewDoc(Model.exampleState(), 'Beispiel als neue Matrix geöffnet.'),
+  new: () => { openNewDoc(Model.blankState(), Texts.toast.newMatrix); setMode('edit'); },
+  example: () => openNewDoc(Model.exampleState(), Texts.toast.exampleOpened),
   open: openLibrary,
   settings: openSettings,
   'export-json': exportJson,

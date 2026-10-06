@@ -6,7 +6,7 @@
 
 /** Komplettes Neuzeichnen nach strukturellen Änderungen. */
 function render() {
-  document.title = state.title ? `${state.title} – Morphologische Matrix` : 'Morphologische Matrix';
+  document.title = Texts.app.documentTitle(state.title);
   const title = $('#title');
   if (document.activeElement !== title) title.value = state.title;
   const desc = $('#description');
@@ -67,20 +67,18 @@ function renderStats() {
   const C = state.concepts.length;
   const stat = (value, label) => h('span', { class: 'stat' }, h('strong', null, value), ` ${label}`);
   $('#stats').replaceChildren(
-    stat(P.toLocaleString('de-DE'), 'Parameter'),
-    stat(O.toLocaleString('de-DE'), O === 1 ? 'Ausprägung' : 'Ausprägungen'),
-    stat(combos.toLocaleString('de-DE'), combos === 1n ? 'mögliche Kombination' : 'mögliche Kombinationen'),
-    stat(C.toLocaleString('de-DE'), C === 1 ? 'Konzept' : 'Konzepte'),
+    stat(P.toLocaleString('de-DE'), Texts.stats.parameters),
+    stat(O.toLocaleString('de-DE'), Texts.stats.options(O)),
+    stat(combos.toLocaleString('de-DE'), Texts.stats.combinations(combos === 1n)),
+    stat(C.toLocaleString('de-DE'), Texts.stats.concepts(C)),
   );
 }
 
 function renderHint() {
   const c = activeConcept();
   $('#hint').textContent = prefs.mode === 'edit'
-    ? 'Tipp: Mit Enter springen Sie zur nächsten Ausprägung bzw. legen eine neue an. Zum Kombinieren oben auf „Kombinieren“ wechseln.'
-    : (c
-      ? `Klicken Sie je Parameter auf eine Ausprägung, um sie dem Konzept „${Model.nameOrUnnamed(c)}“ zuzuordnen. Erneuter Klick hebt die Auswahl auf.`
-      : 'Legen Sie ein Konzept an und wählen Sie dann je Parameter eine Ausprägung.');
+    ? Texts.hint.edit
+    : (c ? Texts.hint.select(Model.nameOrUnnamed(c)) : Texts.hint.noConcept);
 }
 
 // ---------- Konzepte ----------
@@ -97,7 +95,7 @@ function renderConcepts() {
         setActiveConcept(c.id);
       },
     });
-    const color = h('input', { type: 'color', class: 'swatch', value: c.color, 'aria-label': `Farbe von ${c.name}`, title: 'Farbe ändern' });
+    const color = h('input', { type: 'color', class: 'swatch', value: c.color, 'aria-label': Texts.concept.color(c.name), title: Texts.concept.changeColor });
     bindField(color, v => { c.color = v; }, () => {
       li.style.setProperty('--c', c.color);
       renderMatrix();
@@ -105,7 +103,7 @@ function renderConcepts() {
     });
     const name = h('input', {
       type: 'text', class: 'concept-name', value: c.name,
-      placeholder: `Konzept ${ci + 1}`, 'aria-label': `Name von Konzept ${ci + 1}`,
+      placeholder: Texts.fallback.concept(ci + 1), 'aria-label': Texts.concept.nameLabel(ci + 1),
       onfocus: () => setActiveConceptLight(c.id),
       onkeydown: e => { if (e.key === 'Enter') e.target.blur(); },
     });
@@ -114,12 +112,12 @@ function renderConcepts() {
       color,
       name,
       h('span', { class: 'concept-progress', dataset: { progress: c.id } }),
-      iconBtn('copy', 'Konzept duplizieren', () => duplicateConcept(c.id)),
-      iconBtn('trash', 'Konzept löschen', () => deleteConcept(c.id), { danger: true }),
+      iconBtn('copy', Texts.concept.duplicate, () => duplicateConcept(c.id)),
+      iconBtn('trash', Texts.concept.delete, () => deleteConcept(c.id), { danger: true }),
     );
     return li;
   });
-  if (!items.length) items.push(h('li', { class: 'summary-empty' }, 'Noch keine Konzepte.'));
+  if (!items.length) items.push(h('li', { class: 'summary-empty' }, Texts.concept.none));
   $('#conceptList').replaceChildren(...items);
 }
 
@@ -130,7 +128,7 @@ function updateProgress() {
     if (!el) continue;
     const filled = state.parameters.filter(p => c.selections[p.id]).length;
     el.textContent = `${filled}/${total}`;
-    el.title = `${filled} von ${total} Parametern gewählt`;
+    el.title = Texts.concept.progressTitle(filled, total);
   }
 }
 
@@ -145,16 +143,16 @@ function renderGenerators() {
   $('#autoConcepts').hidden = !any;
 }
 
-/** „(2 Werte fehlen)“ bzw. leer. @param {number} missing */
+/** „2 Werte fehlen“ bzw. leer. @param {number} missing */
 function missingNote(missing) {
-  return missing ? `${missing} ${missing === 1 ? 'Wert fehlt' : 'Werte fehlen'}` : '';
+  return missing ? Texts.summary.missing(missing) : '';
 }
 
 function renderSummary() {
   const box = $('#conceptSummary');
   const c = activeConcept();
   if (!c) {
-    box.replaceChildren(h('p', { class: 'summary-empty' }, 'Kein Konzept ausgewählt.'));
+    box.replaceChildren(h('p', { class: 'summary-empty' }, Texts.summary.noConcept));
     return;
   }
   const showCats = state.categories.length > 0;
@@ -166,7 +164,7 @@ function renderSummary() {
       const text = Model.optionText(p, c.selections[p.id]);
       return [
         h('dt', null, Model.parameterLabel(p, pi)),
-        h('dd', text ? null : { class: 'none' }, text || 'nicht gewählt'),
+        h('dd', text ? null : { class: 'none' }, text || Texts.summary.notSelected),
       ];
     }),
   ]);
@@ -174,21 +172,21 @@ function renderSummary() {
   if (state.parameters.length && state.settings.costs) {
     const { total, missing } = Evaluation.conceptCost(state, c);
     metrics.push(h('div', { class: 'metric' },
-      h('span', null, 'Gesamtkosten'),
+      h('span', null, Texts.summary.totalCost),
       h('strong', null, money(total)),
       missing ? h('small', null, `(${missingNote(missing)})`) : null));
   }
   if (state.parameters.length && state.settings.utility) {
     const { value, missing } = Evaluation.conceptUtility(state, c);
     metrics.push(h('div', { class: 'metric' },
-      h('span', null, 'Nutzwert'),
-      h('strong', null, value == null ? '–' : `${Util.formatNumber(value)} / ${state.settings.utilityMax}`),
+      h('span', null, Texts.summary.utility),
+      h('strong', null, value == null ? '–' : Texts.summary.utilityValue(Util.formatNumber(value), state.settings.utilityMax)),
       missing ? h('small', null, `(${missingNote(missing)})`) : null));
   }
   replaceWith(box,
-    h('h3', { style: { '--c': c.color } }, c.name || 'Unbenanntes Konzept'),
+    h('h3', { style: { '--c': c.color } }, c.name || Texts.fallback.unnamedConcept),
     metrics.length ? h('div', { class: 'metrics' }, metrics) : null,
-    rows.some(Boolean) ? h('dl', null, rows) : h('p', { class: 'summary-empty' }, 'Die Matrix enthält noch keine Parameter.'),
+    rows.some(Boolean) ? h('dl', null, rows) : h('p', { class: 'summary-empty' }, Texts.summary.noParameters),
   );
 }
 
@@ -205,7 +203,7 @@ function renderCompare() {
   $('#compareToggle').setAttribute('aria-expanded', String(open));
   $('#compareBody').hidden = !open;
   const n = state.concepts.length;
-  $('#compareMeta').textContent = `${n} ${n === 1 ? 'Konzept' : 'Konzepte'}`;
+  $('#compareMeta').textContent = Texts.compare.conceptCount(n);
   if (open) buildCompareTable();
 }
 
@@ -215,7 +213,7 @@ const metricClass = (incomplete, best) => [incomplete ? 'incomplete' : '', best 
 function buildCompareTable() {
   const m = state;
   const head = h('thead', null, h('tr', null,
-    h('th', { scope: 'col' }, 'Parameter'),
+    h('th', { scope: 'col' }, Texts.compare.parameter),
     m.concepts.map(c => h('th', { scope: 'col', style: { '--c': c.color } }, h('span', { 'aria-hidden': 'true' }), Model.nameOrUnnamed(c)))));
   const showCats = m.categories.length > 0;
   const body = h('tbody', null, Model.categoryGroups(m).flatMap(g => [
@@ -236,7 +234,7 @@ function buildCompareTable() {
     const costs = m.concepts.map(c => Evaluation.conceptCost(m, c));
     const complete = costs.filter(x => !x.missing).map(x => x.total);
     const best = complete.length > 1 ? Math.min(...complete) : null;
-    footRows.push(h('tr', null, h('th', { scope: 'row' }, 'Gesamtkosten'),
+    footRows.push(h('tr', null, h('th', { scope: 'row' }, Texts.compare.totalCost),
       costs.map(x => h('td', {
         class: metricClass(x.missing, !x.missing && x.total === best),
         title: x.missing ? missingNote(x.missing) : null,
@@ -246,7 +244,7 @@ function buildCompareTable() {
     const utils = m.concepts.map(c => Evaluation.conceptUtility(m, c));
     const values = utils.filter(x => x.value != null).map(x => x.value);
     const best = values.length > 1 ? Math.max(...values) : null;
-    footRows.push(h('tr', null, h('th', { scope: 'row' }, `Nutzwert (max. ${m.settings.utilityMax})`),
+    footRows.push(h('tr', null, h('th', { scope: 'row' }, Texts.compare.utility(m.settings.utilityMax)),
       utils.map(x => h('td', {
         class: metricClass(x.missing, x.value != null && x.value === best),
         title: x.missing ? missingNote(x.missing) : null,
@@ -257,8 +255,8 @@ function buildCompareTable() {
     const values = ratios.filter(x => x.value != null).map(x => x.value);
     const best = values.length > 1 ? Math.min(...values) : null;
     footRows.push(h('tr', null,
-      h('th', { scope: 'row', title: 'Gesamtkosten geteilt durch Nutzwert – je niedriger, desto besser' },
-        'Preis-Leistung', h('small', { class: 'th-note' }, 'Kosten je Nutzwertpunkt')),
+      h('th', { scope: 'row', title: Texts.compare.priceValueTitle },
+        Texts.compare.priceValue, h('small', { class: 'th-note' }, Texts.compare.priceValueNote)),
       ratios.map(x => h('td', {
         class: x.value == null ? 'incomplete' : (x.value === best ? 'best' : null),
         title: x.reason,
