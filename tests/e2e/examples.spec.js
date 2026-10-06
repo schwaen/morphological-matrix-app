@@ -44,3 +44,15 @@ test('Beispielauswahl schließt mit Escape bzw. Klick auf ×', async ({ page }) 
   await expect(page.locator('#examplesDialog')).toBeHidden();
   await expect(page.locator('.app-tab')).toHaveCount(1);
 });
+
+test('Beispiel „Skill-Matrix“: Skills als Parameter, Personen als Konzepte, Nutzwert aktiv', async ({ page }) => {
+  await menu(page, 'example');
+  await expect(page.locator('#exampleList .doc')).toHaveCount(2);
+  await page.locator('#exampleList .doc', { hasText: 'Skill-Matrix' }).getByRole('button', { name: 'Öffnen' }).click();
+  await expect(page.locator('#title')).toHaveValue('Beispiel: Skill-Matrix Frontend-Team');
+  await expect(page.locator('#stats')).toContainText('16 Parameter');
+  await expect(page.locator('#catNav')).toContainText('Softskills');
+  const names = await page.locator('#conceptList input[type=text]').evaluateAll(els => els.map(el => el.value));
+  expect(names).toEqual(['Anna (Senior)', 'Ben (UI-Fokus)', 'Clara (Junior)']);
+  await expect(page.locator('#compareTable')).toContainText('Nutzwert');
+});
