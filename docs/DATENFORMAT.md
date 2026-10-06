@@ -45,6 +45,26 @@ Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON
 }
 ```
 
+## Backup (ZIP-Archiv)
+
+„Meine Matrizen → Backup herunterladen“ erzeugt `morphologische-matrizen-backup-JJJJ-MM-TT.zip` mit
+
+- je Matrix einer JSON-Datei im obigen Format (Dateiname aus dem Titel, bei Gleichheit `-2`, `-3` …),
+- `backup.json` als Inhaltsübersicht:
+
+```jsonc
+{
+  "format": "morphologische-matrix-backup",
+  "version": 1,
+  "created": "2026-10-06T10:00:00.000Z",
+  "matrices": [
+    { "file": "kaffeemaschine.json", "id": "k3x…", "savedAt": 1791280000000, "title": "Beispiel: Kaffeemaschine" }
+  ]
+}
+```
+
+Beim Wiederherstellen (`IO.parseBackup`, `IO.planRestore`) werden vorhandene Matrizen nie überschrieben: Matrizen mit unbekannter Kennung werden mit ihrer Kennung und ihrem Speicherzeitpunkt übernommen, inhaltsgleiche übersprungen; weicht eine vorhandene Matrix gleicher Kennung ab, wird das Backup als Kopie mit neuer Kennung angelegt. Fehlt `backup.json` (z. B. selbst gepackte Archive oder einzelne JSON-Dateien), gelten alle Matrizen als neu.
+
 ## Regeln beim Einlesen (`Model.normalize`)
 
 - `parameters` muss eine Liste sein, sonst wird die Datei abgelehnt.

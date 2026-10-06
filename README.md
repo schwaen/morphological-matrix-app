@@ -32,6 +32,7 @@ python3 -m http.server 8000
 - Konzeptvergleich als Tabelle, ein- und ausklappbar (Zustand wird gemerkt; beim Drucken immer sichtbar).
 - Rückgängig / Wiederholen (`Strg+Z`, `Strg+Umschalt+Z`).
 - Automatisches Speichern im Browser (localStorage), beliebig viele Matrizen unter **Datei → Meine Matrizen**.
+- **Backup und Wiederherstellung** in „Meine Matrizen“: *Backup herunterladen* speichert alle Matrizen als ZIP-Archiv mit je einer JSON-Datei (jede einzeln wie mit „Als JSON speichern“ nutzbar). *Backup wiederherstellen* liest ein solches Archiv oder einzelne JSON-Dateien ein – ohne Datenverlust: neue Matrizen werden hinzugefügt, identische übersprungen, bei abweichendem Stand wird das Backup als Kopie „(aus Backup)“ angelegt.
 - **Beispiele:** Mitgelieferte Beispiele lassen sich über **Datei → Beispiele …** oder **+ → Beispiel öffnen …** auswählen und öffnen sich als eigene Matrix in einem neuen Tab – derzeit *Kaffeemaschine* (Produktentwicklung mit Kosten und Nutzwerten), *Skill-Matrix Frontend-Team* (Kompetenzen von Mitarbeitenden: Skills als Parameter, Stufen 0–3 als Ausprägungen, Personen als Konzepte), *Firmen-Event planen* (Event-Varianten nach Gesamtkosten und Zufriedenheit 0–5) und *Elektro-Lastenrad* (umfangreich: 30 Parameter, 115 Ausprägungen, 7 Konzepte – gut zum Testen großer Matrizen). Jedes Beispiel steht in einer eigenen Datei unter `examples/` – siehe [`examples/README.md`](examples/README.md).
 - **Tabs in der App:** Mehrere Matrizen sind gleichzeitig in Tabs in der Kopfzeile geöffnet. Jeder Tab behält Ansicht (Modus, Konzeptvergleich, eingeklappte Kategorien), Rückgängig-Verlauf und Scroll-Position. Über **+** lassen sich eine neue leere Matrix, ein Beispiel, ein JSON-Import, eine Matrix aus „Meine Matrizen“ oder ein zuletzt geschlossener Tab öffnen. Doppelklick auf den aktiven Tab benennt die Matrix um; Tabs lassen sich per Ziehen umsortieren und mit × oder der mittleren Maustaste schließen (die Matrix bleibt gespeichert). Geöffnete Tabs werden nach dem Neuladen wiederhergestellt; eine bereits geöffnete Matrix wird nicht doppelt geöffnet.
 - **Mehrere Browser-Tabs:** Weiterhin möglich – jeder Browser-Tab hat seine eigenen App-Tabs. Ändert ein anderer Browser-Tab eine hier geöffnete Matrix, wird sie übernommen; inaktive Tabs werden dabei mit einem Punkt markiert.
@@ -50,7 +51,8 @@ python3 -m http.server 8000
 | `js/util.js` | `Util` – Zahlen, Texte, Kodierung (ohne DOM) |
 | `js/model.js` | `Model` – Datenmodell, Normalisierung, Abfragen (ohne DOM) |
 | `js/evaluation.js` | `Evaluation` – Kosten, Nutzwert, Preis-Leistung, automatische Konzepte (ohne DOM) |
-| `js/io.js` | `IO` – JSON, CSV, Teilen-Links (ohne DOM) |
+| `js/io.js` | `IO` – JSON, CSV, Teilen-Links, Backup (ohne DOM) |
+| `js/zip.js` | `Zip` – ZIP-Archive schreiben und lesen, ohne Bibliothek (ohne DOM) |
 | `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, geöffnete Tabs, Einstellungen pro Browser-Tab) |
 | `js/examples.js` | `Examples` – Verzeichnis der mitgelieferten Beispiele |
 | `examples/` | Mitgelieferte Beispiele, je Beispiel eine Datei (Anleitung in `examples/README.md`) |
@@ -82,6 +84,6 @@ npm test            # alles zusammen
 ```
 
 - **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). Die Skripte nutzen diese Typen über JSDoc-Kommentare; `tsc` prüft auch die Bezüge zwischen den Dateien.
-- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, MoSCoW, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
+- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Backup, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, MoSCoW, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
 - **Unit-Tests:** `tests/unit/` lädt die DOM-freien Skripte in einen isolierten Node-Kontext (`tests/unit/load.js`) – so, wie der Browser sie ausführt. Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft.
 - **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung, Unit- und Browser-Tests bei jedem Pull Request aus.

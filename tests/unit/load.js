@@ -7,17 +7,20 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 
-const FILES = ['js/texts.js', 'js/util.js', 'js/model.js', 'js/evaluation.js', 'js/io.js', 'js/examples.js'];
+const FILES = ['js/texts.js', 'js/util.js', 'js/model.js', 'js/evaluation.js', 'js/io.js', 'js/zip.js', 'js/examples.js'];
 /** Mitgelieferte Beispiele: alle in index.html eingebundenen Dateien unter examples/. */
 export const EXAMPLE_FILES = [...fs.readFileSync(path.resolve('index.html'), 'utf8')
   .matchAll(/<script src="(examples\/[^"]+\.js)"/g)].map(m => m[1]);
 
 export function loadApp() {
-  const context = vm.createContext({ TextEncoder, TextDecoder, btoa, atob, console });
+  const context = vm.createContext({
+    TextEncoder, TextDecoder, btoa, atob, console,
+    Blob, Response, CompressionStream, DecompressionStream, Uint8Array, ArrayBuffer, DataView,
+  });
   for (const file of [...FILES, ...EXAMPLE_FILES]) {
     vm.runInContext(fs.readFileSync(path.resolve(file), 'utf8'), context, { filename: file });
   }
-  const app = vm.runInContext('({ Texts, Util, Model, Evaluation, IO, Examples })', context);
+  const app = vm.runInContext('({ Texts, Util, Model, Evaluation, IO, Zip, Examples })', context);
   /** Beispiel „Kaffeemaschine“ als frische Matrix (Grundlage vieler Tests). */
   app.example = () => app.Examples.load('kaffeemaschine');
   return app;

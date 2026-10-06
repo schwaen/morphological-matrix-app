@@ -140,6 +140,58 @@ function openExample(id) {
   if (data) openNewDoc(data, Texts.toast.exampleOpened(Examples.get(id).name));
 }
 
+// ---------- Backup ----------
+
+/** Alle Matrizen als ZIP-Archiv herunterladen (je Matrix eine JSON-Datei). */
+async function exportBackup() {
+  save();
+  const docs = Store.listDocs();
+  if (!docs.length) { toast(Texts.backup.empty); return; }
+  const now = new Date();
+  const zip = await Zip.create(IO.backupFiles(docs, now), now);
+  download(IO.backupFileName(now), /** @type {BlobPart} */ (zip), 'application/zip');
+  toast(Texts.backup.saved(docs.length));
+}
+
+/**
+ * Backup wiederherstellen: ZIP-Archive und/oder einzelne JSON-Dateien. Vorhandene Matrizen
+ * werden nie überschrieben (siehe `IO.planRestore`).
+ * @param {File[]} files
+ */
+async function restoreBackup(files) {
+  /** @type {Array<{ name: string, text: string }>} */
+  const texts = [];
+  const dec = new TextDecoder();
+  try {
+    for (const file of files) {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      if (Zip.isZip(bytes)) {
+        for (const e of await Zip.read(bytes)) texts.push({ name: e.name, text: dec.decode(e.data) });
+      } else {
+        texts.push({ name: file.name, text: dec.decode(bytes) });
+      }
+    }
+  } catch (e) {
+    toast(Texts.backup.failed(e.message));
+    return;
+  }
+  const { items, errors } = IO.parseBackup(texts);
+  if (!items.length) {
+    toast(errors.length ? Texts.backup.failed(errors[0].message) : Texts.backup.nothing);
+    return;
+  }
+  save();
+  const plan = IO.planRestore(items, Store.listDocs(), Util.uid);
+  const written = plan.add.filter(doc => Store.writeDoc(doc.id, doc.data, doc.savedAt));
+  if (written.length < plan.add.length) toast(Texts.backup.storageFull(plan.add.length - written.length));
+  else {
+    toast(Texts.backup.restoredTitle(Texts.backup.restored({
+      added: written.length, copies: plan.copies, unchanged: plan.unchanged, failed: errors.length,
+    })));
+  }
+  renderLibrary();
+}
+
 // ---------- Bewertungseinstellungen ----------
 
 function syncSettingsForm() {

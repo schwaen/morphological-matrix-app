@@ -103,6 +103,10 @@ let toastTimer = 0;
 function toast(message, withUndo = false) {
   const el = $('#toast');
   clearTimeout(toastTimer);
+  // Ein offener Dialog liegt in der obersten Ebene über allem anderen – die Meldung muss
+  // dann in den Dialog, sonst läge sie hinter dessen abgedunkeltem Hintergrund.
+  const host = $('dialog[open]') || document.body;
+  if (el.parentElement !== host) host.append(el);
   el.replaceChildren(h('span', null, message));
   if (withUndo) {
     el.append(h('button', { type: 'button', onclick: () => { undo(); el.hidden = true; } }, Texts.toast.undo));
@@ -112,6 +116,7 @@ function toast(message, withUndo = false) {
 }
 
 /** @param {string} filename @param {string} content @param {string} type */
+/** @param {string} filename @param {BlobPart} content @param {string} type */
 function download(filename, content, type) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
