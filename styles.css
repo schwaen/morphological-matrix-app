@@ -304,7 +304,7 @@
   /* Kennzahlen als Kacheln */
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
   .stat {
-    display: flex; flex-direction: column-reverse; gap: 0;
+    display: flex; flex-direction: column-reverse; gap: 0; min-width: 0;
     padding: 8px 12px;
     border: 1px solid var(--border); border-radius: 10px;
     background: var(--surface); box-shadow: var(--shadow-xs);
@@ -312,7 +312,7 @@
   }
   .stat strong {
     font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.25;
-    color: var(--text); font-variant-numeric: tabular-nums;
+    color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
   }
 
   /* ===== Matrix ===== */
@@ -398,6 +398,8 @@
     min-height: 32px; padding: 6px 4px 6px 9px;
     border: 0; background: transparent;
     field-sizing: content;
+    /* Textbreite zählt nicht zur Spaltenbreite (sonst zieht ein langer Text alle Spalten auf) */
+    contain: inline-size;
   }
   .opt-cell.edit textarea:focus { outline: none; }
   .opt-tools { display: flex; gap: 0; }
@@ -608,13 +610,15 @@
   .num-input:hover { border-color: var(--border-strong); }
   .num-input:focus { outline: none; background: var(--surface); border-color: var(--accent); }
   .num-input[aria-invalid] { border-color: var(--danger); color: var(--danger); }
-  .opt-metrics { display: flex; gap: 6px; padding: 0 6px 6px 9px; }
+  /* contain: Standardbreite der Eingabefelder zählt nicht zur Spaltenbreite */
+  .opt-metrics { display: flex; gap: 6px; padding: 0 6px 6px 9px; contain: inline-size; }
   .metric-field { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 4px; }
   .metric-unit { font-size: .72rem; font-weight: 600; color: var(--muted); }
   .weight-field { display: flex; align-items: center; gap: 5px; padding: 0 2px 0 6px; font-size: .74rem; color: var(--muted); }
   .weight-field .num-input { width: 44px; flex: none; }
   .weight-pct { font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .opt-label { display: flex; flex-direction: column; gap: 1px; }
+  /* Obergrenze: Ein langer Text bricht um, statt alle Spalten auf seine Einzeilenbreite aufzuziehen */
+  .opt-label { display: flex; flex-direction: column; gap: 1px; max-inline-size: 15rem; }
   .opt-metrics-view { font-size: .72rem; font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; }
   .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .metric { display: flex; flex-direction: column; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }

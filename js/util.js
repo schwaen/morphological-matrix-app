@@ -50,6 +50,19 @@ const Util = (() => {
     return numberFormat.format(n);
   }
 
+  /**
+   * Große Ganzzahl in Tausenderstufen zerlegen: 118_881_339_310_080_000n → { value: 118.88…, power: 15 }.
+   * Exakt auch jenseits von Number.MAX_SAFE_INTEGER (nur `value` wird gerundet).
+   * @param {bigint} n @returns {{ value: number, power: number }}
+   */
+  function scaleBigInt(n) {
+    const digits = (n < 0n ? -n : n).toString().length;
+    const power = Math.max(0, Math.floor((digits - 1) / 3) * 3);
+    const factor = 10n ** BigInt(power);
+    // Ganzzahliger Anteil exakt, Nachkommastellen über die nächsten drei Ziffern
+    return { value: Number(n / factor) + Number((n % factor) * 1000n / factor) / 1000, power };
+  }
+
   /** @param {number} n @param {string} currency */
   function formatMoney(n, currency) {
     try {
@@ -103,7 +116,7 @@ const Util = (() => {
   }
 
   return {
-    uid, str, num, isColor, parseNumber, numberToInput, formatNumber, formatMoney, currencySymbol,
+    uid, str, num, isColor, parseNumber, numberToInput, formatNumber, scaleBigInt, formatMoney, currencySymbol,
     slugify, lexLess, toBase64Url, fromBase64Url,
   };
 })();

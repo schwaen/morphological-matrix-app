@@ -60,16 +60,35 @@ function updateWeightPercents() {
   }
 }
 
+/**
+ * Anzahl für die Kennzahl-Kachel: bis unter eine Billion exakt, darüber gerundet in Worten
+ * (bzw. als Zehnerpotenz), damit die Zahl in die Kachel passt. Die exakte Zahl steht im Tooltip.
+ * @param {bigint} n @returns {{ text: string, title: string | null }}
+ */
+function formatCount(n) {
+  const exact = n.toLocaleString('de-DE');
+  if (n < 10n ** 12n) return { text: exact, title: null };
+  const { value, power } = Util.scaleBigInt(n);
+  const unit = Texts.stats.bigUnits[power];
+  if (unit) {
+    return { text: Texts.stats.approx(Util.formatNumber(Math.round(value * 10) / 10), unit), title: Texts.stats.exact(exact) };
+  }
+  const digits = n.toString();
+  const mantissa = Number(`${digits[0]}.${digits.slice(1, 3)}`);
+  return { text: Texts.stats.approxPower(Util.formatNumber(mantissa), digits.length - 1), title: Texts.stats.exact(exact) };
+}
+
 function renderStats() {
   const P = state.parameters.length;
   const O = state.parameters.reduce((n, p) => n + p.options.length, 0);
   const combos = P ? state.parameters.reduce((n, p) => n * BigInt(p.options.length), 1n) : 0n;
   const C = state.concepts.length;
-  const stat = (value, label) => h('span', { class: 'stat' }, h('strong', null, value), ` ${label}`);
+  const stat = (value, label, title = null) => h('span', { class: 'stat', title }, h('strong', null, value), ` ${label}`);
+  const count = formatCount(combos);
   $('#stats').replaceChildren(
     stat(P.toLocaleString('de-DE'), Texts.stats.parameters),
     stat(O.toLocaleString('de-DE'), Texts.stats.options(O)),
-    stat(combos.toLocaleString('de-DE'), Texts.stats.combinations(combos === 1n)),
+    stat(count.text, Texts.stats.combinations(combos === 1n), count.title),
     stat(C.toLocaleString('de-DE'), Texts.stats.concepts(C)),
   );
 }

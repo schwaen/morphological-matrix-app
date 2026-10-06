@@ -86,6 +86,14 @@ const Texts = (() => {
       parameters: 'Parameter',
       options: n => (n === 1 ? 'Ausprägung' : 'Ausprägungen'),
       combinations: one => (one ? 'mögliche Kombination' : 'mögliche Kombinationen'),
+      /** Zahlwörter für sehr große Anzahlen (lange Skala), Schlüssel = Zehnerpotenz */
+      bigUnits: {
+        12: 'Billionen', 15: 'Billiarden', 18: 'Trillionen', 21: 'Trilliarden',
+        24: 'Quadrillionen', 27: 'Quadrilliarden', 30: 'Quintillionen', 33: 'Quintilliarden',
+      },
+      approx: (value, unit) => `≈ ${value} ${unit}`,
+      approxPower: (value, power) => `≈ ${value} · 10${String(power).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(d)])}`,
+      exact: n => `Genau: ${n}`,
       concepts: n => (n === 1 ? 'Konzept' : 'Konzepte'),
     },
 

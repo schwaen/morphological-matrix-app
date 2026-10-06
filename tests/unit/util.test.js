@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadApp } from './load.js';
+import { loadApp, plain } from './load.js';
 
 const { Util } = loadApp();
 
@@ -53,4 +53,13 @@ test('Base64url: Rundreise mit Umlauten und Sonderzeichen', () => {
 test('uid: kurze, eindeutige IDs', () => {
   const ids = new Set(Array.from({ length: 1000 }, () => Util.uid()));
   assert.equal(ids.size, 1000);
+});
+
+test('scaleBigInt zerlegt große Zahlen exakt in Tausenderstufen', () => {
+  assert.deepEqual(plain(Util.scaleBigInt(0n)), { value: 0, power: 0 });
+  assert.deepEqual(plain(Util.scaleBigInt(999n)), { value: 999, power: 0 });
+  assert.deepEqual(plain(Util.scaleBigInt(1_500_000n)), { value: 1.5, power: 6 });
+  // Jenseits von Number.MAX_SAFE_INTEGER (≈ 9 · 10¹⁵)
+  assert.deepEqual(plain(Util.scaleBigInt(118_881_339_310_080_000n)), { value: 118.881, power: 15 });
+  assert.deepEqual(plain(Util.scaleBigInt(10n ** 40n)), { value: 10, power: 39 });
 });
