@@ -51,7 +51,7 @@ test('Beispiel „Skill-Matrix“: Skills als Parameter, Personen als Konzepte, 
   await expect(page.locator('#title')).toHaveValue('Beispiel: Skill-Matrix Frontend-Team');
   await expect(page.locator('#stats')).toContainText('16 Parameter');
   await expect(page.locator('#catNav')).toContainText('Softskills');
-  const names = await page.locator('#conceptList input[type=text]').evaluateAll(els => els.map(el => el.value));
+  const names = await page.locator('#conceptList .concept-name').evaluateAll(els => els.map(el => el.value));
   expect(names).toEqual(['Anna (Senior)', 'Ben (UI-Fokus)', 'Clara (Junior)']);
   await expect(page.locator('#compareTable')).toContainText('Nutzwert');
 });

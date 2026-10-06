@@ -57,3 +57,31 @@ test('Handybreite: kein horizontales Scrollen der Seite', async ({ page }) => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   }
 });
+
+test('Lange Konzeptnamen brechen um und bleiben vollständig lesbar', async ({ page }) => {
+  const name = page.locator('.concept').first().locator('.concept-name');
+  const singleLine = await name.evaluate(el => el.offsetHeight);
+  await name.fill('Hybrider Jahresauftakt mit Kundinnen und Kunden');
+  await name.press('Enter');
+  await expect(name).toHaveValue('Hybrider Jahresauftakt mit Kundinnen und Kunden'); // Enter fügt keinen Umbruch ein
+  const box = await name.evaluate(el => ({ h: el.offsetHeight, scrollH: el.scrollHeight, clientH: el.clientHeight, scrollW: el.scrollWidth, clientW: el.clientWidth }));
+  expect(box.h).toBeGreaterThan(singleLine);
+  expect(box.scrollH).toBeLessThanOrEqual(box.clientH + 1);
+  expect(box.scrollW).toBeLessThanOrEqual(box.clientW + 1);
+  // Nach dem Neuladen bleibt der Name einzeilig gespeichert
+  await page.reload();
+  await expect(page.locator('.concept-name').first()).toHaveValue('Hybrider Jahresauftakt mit Kundinnen und Kunden');
+});
+
+test('Konzept-Aktionen: am aktiven Konzept sichtbar, sonst beim Darüberfahren', async ({ page }) => {
+  const opacity = loc => loc.evaluate(el => Number(getComputedStyle(el).opacity));
+  const active = page.locator('.concept.is-active .concept-tools');
+  const other = page.locator('.concept:not(.is-active)').first();
+  expect(await opacity(active)).toBe(1);
+  await page.mouse.move(0, 0);
+  await expect.poll(() => opacity(other.locator('.concept-tools'))).toBe(0);
+  await other.hover();
+  await expect.poll(() => opacity(other.locator('.concept-tools'))).toBe(1);
+  await other.getByRole('button', { name: 'Konzept duplizieren' }).click();
+  await expect(page.locator('.concept')).toHaveCount(4);
+});

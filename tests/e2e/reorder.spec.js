@@ -38,6 +38,10 @@ test('Touch-Geräte: Werkzeuge immer sichtbar', async ({ browser }) => {
   await page.goto(APP_URL);
   await page.click('[data-mode=edit]');
   await expect(page.locator('.opt-tools').first()).toHaveCSS('opacity', '1');
+  // Auch die Konzept-Aktionen (ohne Maus kein Darüberfahren)
+  const inactive = page.locator('.concept:not(.is-active) .concept-tools').first();
+  await expect(inactive).toHaveCSS('opacity', '1');
+  await expect(inactive).toHaveCSS('position', 'static');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await context.close();
 });
