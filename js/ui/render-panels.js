@@ -7,8 +7,8 @@
 /** Komplettes Neuzeichnen nach strukturellen Änderungen. */
 function render() {
   document.title = Texts.app.documentTitle(state.title);
-  const title = $('#title');
-  if (document.activeElement !== title) title.value = state.title;
+  // Tab-Leiste nicht neu zeichnen, während der Titel bearbeitet wird (Fokus bliebe sonst nicht erhalten)
+  if (!(document.activeElement && document.activeElement.id === 'title')) renderTabs();
   const desc = $('#description');
   if (document.activeElement !== desc) desc.value = state.description;
 

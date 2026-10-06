@@ -39,15 +39,12 @@ async function shareLink() {
   }
 }
 
-/** Öffnet eine per Link geteilte Matrix als neue Matrix in diesem Tab. */
+/** Öffnet eine per Link geteilte Matrix als neue Matrix in einem neuen App-Tab. */
 function loadFromHash() {
   try {
     const next = IO.decodeShareHash(location.hash);
     if (!next) return;
-    docId = Util.uid();
-    state = next;
-    save();
-    toast(Texts.toast.sharedOpened(next.title));
+    openNewDoc(next, Texts.toast.sharedOpened(next.title));
   } catch (e) {
     toast(Texts.errors.shareInvalid);
   }
@@ -73,33 +70,34 @@ function renderLibrary() {
   if (!docs.some(d => d.id === docId)) docs.unshift({ id: docId, savedAt: Date.now(), data: state });
   const items = docs.map(doc => {
     const current = doc.id === docId;
+    const open = !!tabById(doc.id);
     const data = current ? state : doc.data;
     const title = data.title || Texts.fallback.unnamedMatrix;
     const P = data.parameters.length;
     const C = data.concepts.length;
-    return h('li', { class: `doc${current ? ' is-current' : ''}` },
+    return h('li', { class: `doc${current ? ' is-current' : ''}${open ? ' is-open' : ''}` },
       h('div', { class: 'doc-info' },
-        h('span', { class: 'doc-title' }, title, current ? h('span', { class: 'badge' }, Texts.library.currentTab) : null),
+        h('span', { class: 'doc-title' }, title,
+          open ? h('span', { class: 'badge' }, current ? Texts.library.currentTab : Texts.library.openTab) : null),
         h('span', { class: 'doc-meta' }, Texts.library.meta(dateFormat.format(new Date(doc.savedAt)), P, C))),
       h('div', { class: 'doc-actions' },
         h('button', {
           type: 'button', class: 'btn btn-small', disabled: current,
           onclick: () => {
-            const fresh = Store.readDoc(doc.id);
-            if (!fresh) { toast(Texts.errors.docMissing); renderLibrary(); return; }
             closeDialog($('#libraryDialog'));
-            openDoc(fresh.id, fresh.data, Texts.toast.opened(fresh.data.title || Texts.fallback.unnamedMatrix));
+            if (open) { activateTab(doc.id); return; }
+            const fresh = Store.readDoc(doc.id);
+            if (!fresh) { toast(Texts.errors.docMissing); return; }
+            openInTab(fresh.id, fresh.data, Texts.toast.opened(fresh.data.title || Texts.fallback.unnamedMatrix));
           },
-        }, Texts.library.open),
-        h('a', {
-          class: 'btn btn-small', href: `?doc=${encodeURIComponent(doc.id)}`, target: '_blank', rel: 'noopener',
-          title: Texts.library.newTabTitle,
-        }, Texts.library.newTab),
-        iconBtn('trash', current ? Texts.library.deleteCurrent : Texts.library.delete, () => {
+        }, open ? Texts.library.show : Texts.library.open),
+        iconBtn('trash', open ? Texts.library.deleteOpen : Texts.library.delete, () => {
           if (!window.confirm(Texts.prompt.deleteMatrix(title))) return;
           Store.removeDoc(doc.id);
+          closedTabs = closedTabs.filter(x => x !== doc.id);
+          saveWorkspace();
           renderLibrary();
-        }, { danger: true, disabled: current })));
+        }, { danger: true, disabled: open })));
   });
   $('#docList').replaceChildren(...items);
 }

@@ -35,6 +35,19 @@ export async function menu(page, action) {
   await page.click(`[data-action="${action}"]`);
 }
 
+/** Titel der aktiven Matrix ändern (Doppelklick auf den Tab, eintippen, Enter). */
+export async function setTitle(page, text) {
+  await page.locator('#title').dblclick();
+  await page.locator('#title').fill(text);
+  await page.locator('#title').press('Enter');
+}
+
+/** Eintrag im Menü „+“ der Tab-Leiste wählen. */
+export async function tabMenu(page, label) {
+  await page.click('#tabAddBtn');
+  await page.locator('#tabMenu button', { hasText: label }).first().click();
+}
+
 /** Schaltet Kosten und/oder Nutzwert im Bewertungsdialog. */
 export async function setEvaluation(page, { costs, utility, scale } = {}) {
   await menu(page, 'settings');
@@ -56,10 +69,10 @@ export function compareFooter(page) {
     .map(r => r.innerText.replace(/\s+/g, ' ').trim()));
 }
 
-/** Gespeicherte Daten der Matrix dieses Tabs. */
+/** Gespeicherte Daten der Matrix im aktiven App-Tab. */
 export function storedMatrix(page) {
   return page.evaluate(() => {
-    const id = sessionStorage.getItem('morphologische-matrix:tab-doc');
+    const id = JSON.parse(sessionStorage.getItem('morphologische-matrix:workspace')).active;
     return JSON.parse(localStorage.getItem('morphologische-matrix:doc:' + id)).data;
   });
 }

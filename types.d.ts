@@ -63,3 +63,18 @@ interface TabPrefs {
   /** Kategorie-ID (bzw. `__none`) → eingeklappt */
   collapsed?: Record<string, boolean>;
 }
+
+/** Ansicht eines App-Tabs (wird beim Wechsel gemerkt) */
+interface TabView {
+  mode: TabPrefs['mode'];
+  compareOpen: boolean;
+  collapsed?: Record<string, boolean>;
+}
+
+/** Geöffnete App-Tabs eines Browser-Tabs (sessionStorage, Vorgabe für neue Browser-Tabs im localStorage) */
+interface Workspace {
+  tabs: Array<{ docId: string, view?: Partial<TabView> }>;
+  active: string | null;
+  /** Zuletzt geschlossene Matrizen (neueste zuerst) */
+  closed?: string[];
+}
