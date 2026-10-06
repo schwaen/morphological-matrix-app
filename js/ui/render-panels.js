@@ -198,25 +198,23 @@ function renderSummary() {
       ];
     }),
   ]);
-  const metrics = [];
-  if (state.parameters.length && state.settings.costs) {
-    const { total, missing } = Evaluation.conceptCost(state, c);
-    metrics.push(h('div', { class: 'metric' },
-      h('span', null, Texts.summary.totalCost),
-      h('strong', null, money(total)),
-      missing ? h('small', null, `(${missingNote(missing)})`) : null));
-  }
-  if (state.parameters.length && state.settings.utility) {
-    const { value, missing } = Evaluation.conceptUtility(state, c);
-    metrics.push(h('div', { class: 'metric' },
-      h('span', null, Texts.summary.utility),
-      h('strong', null, value == null ? '–' : Texts.summary.utilityValue(Util.formatNumber(value), state.settings.utilityMax)),
-      missing ? h('small', null, `(${missingNote(missing)})`) : null));
-  }
+  const fig = state.parameters.length ? Evaluation.conceptReport(state).find(r => r.concept === c) : null;
+  const metric = (label, value, missing) => h('div', { class: 'metric' },
+    h('span', null, label),
+    h('strong', null, value),
+    missing ? h('small', null, `(${missingNote(missing)})`) : null);
+  const metrics = fig ? [
+    fig.cost ? metric(Texts.summary.totalCost, money(fig.cost.total), fig.cost.missing) : null,
+    fig.utility
+      ? metric(Texts.summary.utility,
+        fig.utility.value == null ? '–' : Texts.summary.utilityValue(Util.formatNumber(fig.utility.value), state.settings.utilityMax),
+        fig.utility.missing)
+      : null,
+  ].filter(Boolean) : [];
   replaceWith(box,
     h('h3', { style: { '--c': c.color } }, c.name || Texts.fallback.unnamedConcept),
     metrics.length ? h('div', { class: 'metrics' }, metrics) : null,
-    state.parameters.length && state.settings.moscow ? priorityProfileView(Evaluation.priorityProfile(state, c), true) : null,
+    fig && fig.priority ? priorityProfileView(fig.priority, true) : null,
     rows.some(Boolean) ? h('dl', null, rows) : h('p', { class: 'summary-empty' }, Texts.summary.noParameters),
   );
 }
@@ -273,46 +271,24 @@ function buildCompareTable() {
       }))),
   ]));
 
-  const footRows = [];
-  if (m.settings.costs) {
-    const costs = m.concepts.map(c => Evaluation.conceptCost(m, c));
-    const complete = costs.filter(x => !x.missing).map(x => x.total);
-    const best = complete.length > 1 ? Math.min(...complete) : null;
-    footRows.push(h('tr', null, h('th', { scope: 'row' }, Texts.compare.totalCost),
-      costs.map(x => h('td', {
-        class: metricClass(x.missing, !x.missing && x.total === best),
-        title: x.missing ? missingNote(x.missing) : null,
-      }, money(x.total) + (x.missing ? ' *' : '')))));
-  }
-  if (m.settings.utility) {
-    const utils = m.concepts.map(c => Evaluation.conceptUtility(m, c));
-    const values = utils.filter(x => x.value != null).map(x => x.value);
-    const best = values.length > 1 ? Math.max(...values) : null;
-    footRows.push(h('tr', null, h('th', { scope: 'row' }, Texts.compare.utility(m.settings.utilityMax)),
-      utils.map(x => h('td', {
-        class: metricClass(x.missing, x.value != null && x.value === best),
-        title: x.missing ? missingNote(x.missing) : null,
-      }, x.value == null ? '–' : Util.formatNumber(x.value) + (x.missing ? ' *' : '')))));
-  }
-  if (m.settings.costs && m.settings.utility) {
-    const ratios = m.concepts.map(c => Evaluation.priceValue(m, c));
-    const values = ratios.filter(x => x.value != null).map(x => x.value);
-    const best = values.length > 1 ? Math.min(...values) : null;
-    footRows.push(h('tr', null,
-      h('th', { scope: 'row', title: Texts.compare.priceValueTitle },
-        Texts.compare.priceValue, h('small', { class: 'th-note' }, Texts.compare.priceValueNote)),
-      ratios.map(x => h('td', {
-        class: x.value == null ? 'incomplete' : (x.value === best ? 'best' : null),
-        title: x.reason,
-      }, x.value == null ? '–' : money(x.value)))));
-  }
-  if (m.settings.moscow) {
-    footRows.unshift(h('tr', null, h('th', { scope: 'row', title: Texts.moscow.profileTitle }, Texts.compare.priority),
-      m.concepts.map(c => {
-        const counts = Evaluation.priorityProfile(m, c);
-        return h('td', null, priorityProfileView(counts, false),
-          counts.wont ? h('small', { class: 'prio-note' }, Texts.moscow.wontNote(counts.wont)) : null);
-      })));
-  }
+  const report = Evaluation.conceptReport(m);
+  /** Eine Kennzahl-Zeile, falls die Bewertung aktiv ist. @param {(r: ConceptFigures) => any} cellOf */
+  const row = (th, active, cellOf) => (active ? h('tr', null, th, report.map(cellOf)) : null);
+  const footRows = [
+    row(h('th', { scope: 'row', title: Texts.moscow.profileTitle }, Texts.compare.priority), m.settings.moscow, ({ priority }) =>
+      h('td', null, priorityProfileView(priority, false),
+        priority.wont ? h('small', { class: 'prio-note' }, Texts.moscow.wontNote(priority.wont)) : null)),
+    row(h('th', { scope: 'row' }, Texts.compare.totalCost), m.settings.costs, ({ cost }) =>
+      h('td', { class: metricClass(cost.missing, cost.best), title: cost.missing ? missingNote(cost.missing) : null },
+        money(cost.total) + (cost.missing ? ' *' : ''))),
+    row(h('th', { scope: 'row' }, Texts.compare.utility(m.settings.utilityMax)), m.settings.utility, ({ utility }) =>
+      h('td', { class: metricClass(utility.missing, utility.best), title: utility.missing ? missingNote(utility.missing) : null },
+        utility.value == null ? '–' : Util.formatNumber(utility.value) + (utility.missing ? ' *' : ''))),
+    row(h('th', { scope: 'row', title: Texts.compare.priceValueTitle },
+      Texts.compare.priceValue, h('small', { class: 'th-note' }, Texts.compare.priceValueNote)),
+    m.settings.costs && m.settings.utility, ({ priceValue }) =>
+      h('td', { class: priceValue.value == null ? 'incomplete' : (priceValue.best ? 'best' : null), title: priceValue.reason },
+        priceValue.value == null ? '–' : money(priceValue.value))),
+  ].filter(Boolean);
   replaceWith($('#compareTable'), head, body, footRows.length ? h('tfoot', null, footRows) : null);
 }

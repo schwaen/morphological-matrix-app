@@ -50,7 +50,8 @@ python3 -m http.server 8000
 | `js/texts.js` | `Texts` – alle Texte, die das JavaScript anzeigt (Hinweise, Beschriftungen, Fehlermeldungen, CSV-Spalten) |
 | `js/util.js` | `Util` – Zahlen, Texte, Kodierung (ohne DOM) |
 | `js/model.js` | `Model` – Datenmodell, Normalisierung, Abfragen (ohne DOM) |
-| `js/evaluation.js` | `Evaluation` – Kosten, Nutzwert, Preis-Leistung, automatische Konzepte (ohne DOM) |
+| `js/evaluation.js` | `Evaluation` – Kosten, Nutzwert, Preis-Leistung, Prioritätsprofil, Kennzahlenbericht, automatische Konzepte (ohne DOM) |
+| `js/ops.js` | `Ops` – strukturelle Änderungen an einer Matrix: Parameter, Ausprägungen, Kategorien, Konzepte (ohne DOM) |
 | `js/io.js` | `IO` – JSON, CSV, Teilen-Links, Backup (ohne DOM) |
 | `js/zip.js` | `Zip` – ZIP-Archive schreiben und lesen, ohne Bibliothek (ohne DOM) |
 | `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, geöffnete Tabs, Einstellungen pro Browser-Tab) |
@@ -66,7 +67,7 @@ python3 -m http.server 8000
 
 **Datenformat:** Gespeicherte Matrizen, JSON-Export und Teilen-Links tragen eine Formatversion; ältere Daten werden beim Öffnen automatisch umgewandelt, Daten aus einer neueren App-Version werden abgelehnt. Details in [`docs/DATENFORMAT.md`](docs/DATENFORMAT.md).
 
-**Aufbau ohne Build:** Alle Dateien sind klassische Skripte (keine ES-Module), damit die App weiterhin per Doppelklick über `file://` läuft. Die Logik-Dateien stellen je genau einen Namensraum bereit (`Util`, `Model`, `Evaluation`, `IO`, `Store`) und arbeiten auf einer übergebenen Matrix statt auf globalem Zustand. Die Dateien unter `js/ui/` teilen sich ihre Funktionen über den globalen Gültigkeitsbereich; Änderungen am Zustand laufen über `mutate()` (strukturell, mit Rückgängig), `bindField()` (Texteingaben) bzw. `setPref()` (Ansicht pro Tab) – siehe Kopfkommentar in `js/ui/core.js`.
+**Aufbau ohne Build:** Alle Dateien sind klassische Skripte (keine ES-Module), damit die App weiterhin per Doppelklick über `file://` läuft. Die Logik-Dateien stellen je genau einen Namensraum bereit (`Util`, `Model`, `Evaluation`, `Ops`, `IO`, `Zip`, `Store`) und arbeiten auf einer übergebenen Matrix statt auf globalem Zustand – so sind sie ohne Browser unit-testbar. Die Dateien unter `js/ui/` teilen sich ihre Funktionen über den globalen Gültigkeitsbereich; Änderungen am Zustand laufen über `mutate()` (strukturell, mit Rückgängig; die eigentliche Änderung erledigt eine Funktion aus `Ops`), `bindField()` (Texteingaben) bzw. `setPref()` (Ansicht pro Tab) – siehe Kopfkommentar in `js/ui/core.js`.
 
 ## Entwicklung
 

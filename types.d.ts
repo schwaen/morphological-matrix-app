@@ -97,3 +97,16 @@ interface Workspace {
   /** Zuletzt geschlossene Matrizen (neueste zuerst) */
   closed?: string[];
 }
+
+/** Kennzahlen eines Konzepts (`Evaluation.conceptReport`); `null` = Bewertung nicht aktiv */
+interface ConceptFigures {
+  concept: MatrixConcept;
+  /** Gesamtkosten; `missing` = gewählte Ausprägungen ohne Kosten */
+  cost: { total: number, missing: number, best: boolean } | null;
+  /** Gewichteter Nutzwert; `missing` = gewählte Ausprägungen ohne Nutzwert */
+  utility: { value: number | null, missing: number, best: boolean } | null;
+  /** Kosten je Nutzwertpunkt; `reason` erklärt, warum nicht berechenbar */
+  priceValue: { value: number | null, reason: string | null, best: boolean } | null;
+  /** Anzahl gewählter Ausprägungen je Priorität (MoSCoW) */
+  priority: Record<MatrixPriority | 'none', number> | null;
+}

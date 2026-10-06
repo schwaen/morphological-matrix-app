@@ -94,6 +94,36 @@ const Evaluation = (() => {
     return counts;
   }
 
+  /**
+   * Alle Kennzahlen aller Konzepte – einmal berechnet für Zusammenfassung, Konzeptvergleich
+   * und CSV-Export. Nur aktivierte Bewertungen werden berechnet (sonst `null`).
+   * „Bester Wert“ wird nur bei mindestens zwei vergleichbaren Konzepten markiert:
+   * geringste vollständige Gesamtkosten, höchster Nutzwert, geringste Kosten je Nutzwertpunkt.
+   * @param {Matrix} m
+   * @returns {ConceptFigures[]}
+   */
+  function conceptReport(m) {
+    const { costs, utility, moscow } = m.settings;
+    const rows = m.concepts.map(c => ({
+      concept: c,
+      cost: costs ? { ...conceptCost(m, c), best: false } : null,
+      utility: utility ? { ...conceptUtility(m, c), best: false } : null,
+      priceValue: costs && utility ? { ...priceValue(m, c), best: false } : null,
+      priority: moscow ? priorityProfile(m, c) : null,
+    }));
+    /** Bestwert markieren, falls mindestens zwei Konzepte vergleichbar sind (Gleichstand: alle). */
+    const markBest = (figures, value, better) => {
+      const comparable = figures.filter(f => f && value(f) != null);
+      if (comparable.length < 2) return;
+      const bestValue = comparable.map(value).reduce((a, b) => (better(b, a) ? b : a));
+      comparable.forEach(f => { f.best = value(f) === bestValue; });
+    };
+    markBest(rows.map(r => r.cost), f => (f.missing ? null : f.total), (a, b) => a < b);
+    markBest(rows.map(r => r.utility), f => f.value, (a, b) => a > b);
+    markBest(rows.map(r => r.priceValue), f => f.value, (a, b) => a < b);
+    return rows;
+  }
+
   // ---------- Automatische Konzepte ----------
 
   /** Wählt die Ausprägung mit dem lexikografisch kleinsten Schlüssel; Kandidaten per Filter. */
@@ -228,7 +258,7 @@ const Evaluation = (() => {
 
   return {
     weightOf, totalWeight, clampScore, isEnabled, weightShare,
-    conceptCost, conceptUtility, priceValue, priorityProfile,
+    conceptCost, conceptUtility, priceValue, priorityProfile, conceptReport,
     GENERATORS,
   };
 })();
