@@ -73,3 +73,14 @@ test('Beispiel „Lastenrad“: große Matrix bleibt bedienbar und lesbar', asyn
   await page.click('[data-mode=edit]');
   expect(await widths()).toBeLessThan(320);
 });
+
+test('Beispiel „Firmen-Event“: Kosten und Nutzwert (Skala 0–5) im Konzeptvergleich', async ({ page }) => {
+  await menu(page, 'example');
+  await page.locator('#exampleList .doc', { hasText: 'Firmen-Event' }).getByRole('button', { name: 'Öffnen' }).click();
+  await expect(page.locator('#title')).toHaveValue('Beispiel: Firmen-Event planen');
+  // Unter einer Billion bleibt die Kombinationszahl exakt
+  await expect(page.locator('#stats')).toContainText('17.915.904.000');
+  await expect(page.locator('#compareTable')).toContainText('Gesamtkosten');
+  await expect(page.locator('#compareTable')).toContainText('Nutzwert (max. 5)');
+  await expect(page.locator('#conceptList .concept-name')).toHaveCount(5);
+});
