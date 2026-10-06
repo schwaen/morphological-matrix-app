@@ -58,7 +58,7 @@ function save() {
   if (json === lastSaved) return;
   lastSaved = json;
   Store.setTabDocId(docId);
-  if (!Store.writeDoc(docId, state)) toast('Speichern im Browser nicht möglich – bitte als JSON sichern.');
+  if (!Store.writeDoc(docId, state)) toast(Texts.errors.storageFull);
 }
 
 /**

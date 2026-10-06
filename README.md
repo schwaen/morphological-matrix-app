@@ -41,7 +41,8 @@ python3 -m http.server 8000
 | Datei / Ordner | Inhalt |
 |---|---|
 | `index.html` | Seitengerüst, lädt die Skripte in fester Reihenfolge |
-| `styles.css` | Design, Layout, responsive Regeln, Druck |
+| `styles.css` | Design in Kaskaden-Ebenen (`@layer`): Tokens, Grundstile, Bausteine, Bereiche, Druck |
+| `js/texts.js` | `Texts` – alle Texte, die das JavaScript anzeigt (Hinweise, Beschriftungen, Fehlermeldungen, CSV-Spalten) |
 | `js/util.js` | `Util` – Zahlen, Texte, Kodierung (ohne DOM) |
 | `js/model.js` | `Model` – Datenmodell, Beispiel, Normalisierung, Abfragen (ohne DOM) |
 | `js/evaluation.js` | `Evaluation` – Kosten, Nutzwert, Preis-Leistung, automatische Konzepte (ohne DOM) |
@@ -49,8 +50,13 @@ python3 -m http.server 8000
 | `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, Einstellungen pro Tab) |
 | `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `actions`, `render-matrix`, `render-panels`, `lines`, `dialogs`, `main` (Start) |
 | `types.d.ts` | Typen des Datenmodells (nur Entwicklung) |
+| `docs/DATENFORMAT.md` | Datenformat (JSON, Speicherung, Teilen-Links), Versionen und Migrationen |
 | `tests/unit/` | Unit-Tests der Logik (`node:test`) |
 | `tests/e2e/` | Browser-Tests (Playwright) |
+
+**Texte:** Statische Texte stehen in `index.html`, alle vom JavaScript erzeugten Texte in `js/texts.js` – Formulierungen ändern oder übersetzen betrifft nur diese beiden Dateien. Inhalte des Beispiels („Kaffeemaschine“) sind Daten und stehen in `js/model.js`.
+
+**Datenformat:** Gespeicherte Matrizen, JSON-Export und Teilen-Links tragen eine Formatversion; ältere Daten werden beim Öffnen automatisch umgewandelt, Daten aus einer neueren App-Version werden abgelehnt. Details in [`docs/DATENFORMAT.md`](docs/DATENFORMAT.md).
 
 **Aufbau ohne Build:** Alle Dateien sind klassische Skripte (keine ES-Module), damit die App weiterhin per Doppelklick über `file://` läuft. Die Logik-Dateien stellen je genau einen Namensraum bereit (`Util`, `Model`, `Evaluation`, `IO`, `Store`) und arbeiten auf einer übergebenen Matrix statt auf globalem Zustand. Die Dateien unter `js/ui/` teilen sich ihre Funktionen über den globalen Gültigkeitsbereich; Änderungen am Zustand laufen über `mutate()` (strukturell, mit Rückgängig), `bindField()` (Texteingaben) bzw. `setPref()` (Ansicht pro Tab) – siehe Kopfkommentar in `js/ui/core.js`.
 

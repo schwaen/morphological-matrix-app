@@ -64,9 +64,9 @@ const Evaluation = (() => {
     const cost = conceptCost(m, c);
     const util = conceptUtility(m, c);
     if (cost.missing || util.missing) {
-      return { value: null, reason: 'Nicht berechenbar: Kosten oder Nutzwerte sind unvollständig.' };
+      return { value: null, reason: Texts.evaluation.incomplete };
     }
-    if (!util.value) return { value: null, reason: 'Nicht berechenbar: Der Nutzwert ist 0.' };
+    if (!util.value) return { value: null, reason: Texts.evaluation.zeroUtility };
     return { value: cost.total / util.value, reason: null };
   }
 
@@ -136,9 +136,9 @@ const Evaluation = (() => {
     const W = totalWeight(m);
     const cands = m.parameters.map(p => p.options.filter(o => hasCost(o) && hasScore(o)));
     if (!m.parameters.length || cands.some(list => !list.length)) {
-      return { error: 'Dafür müssen in jedem Parameter Ausprägungen mit Kosten und Nutzwert gepflegt sein.' };
+      return { error: Texts.evaluation.needsAllValues };
     }
-    if (W <= 0) return { error: 'Die Summe der Gewichte ist 0.' };
+    if (W <= 0) return { error: Texts.evaluation.zeroWeights };
     const util = (p, o) => (weightOf(p) * clampScore(m, o.score)) / W;
     const solve = objective => m.parameters.map((p, i) => cands[i].reduce((best, o) => {
       const d = objective(p, o) - objective(p, best);
@@ -149,7 +149,7 @@ const Evaluation = (() => {
     // Start: höchster Nutzwert
     let x = solve((p, o) => -util(p, o));
     const { C, U } = totals(x);
-    if (U <= 0) return { error: 'Alle gepflegten Nutzwerte sind 0.' };
+    if (U <= 0) return { error: Texts.evaluation.allScoresZero };
     let lambda = C / U;
     for (let iter = 0; iter < 100; iter++) {
       const next = solve((p, o) => o.cost - lambda * util(p, o));
@@ -167,32 +167,27 @@ const Evaluation = (() => {
    */
   const GENERATORS = {
     'max-utility': {
-      label: 'Höchster Nutzwert',
-      missing: 'Nutzwert',
+      ...Texts.evaluation.generators['max-utility'],
       available: m => m.settings.utility,
       build: separable(hasScore, (m, o) => [-clampScore(m, o.score), tieCost(m, o)]),
     },
     'min-utility': {
-      label: 'Geringster Nutzwert',
-      missing: 'Nutzwert',
+      ...Texts.evaluation.generators['min-utility'],
       available: m => m.settings.utility,
       build: separable(hasScore, (m, o) => [clampScore(m, o.score), tieCost(m, o)]),
     },
     'min-cost': {
-      label: 'Geringste Kosten',
-      missing: 'Kosten',
+      ...Texts.evaluation.generators['min-cost'],
       available: m => m.settings.costs,
       build: separable(hasCost, (m, o) => [o.cost, tieScore(m, o)]),
     },
     'max-cost': {
-      label: 'Höchste Kosten',
-      missing: 'Kosten',
+      ...Texts.evaluation.generators['max-cost'],
       available: m => m.settings.costs,
       build: separable(hasCost, (m, o) => [-o.cost, tieScore(m, o)]),
     },
     'best-value': {
-      label: 'Beste Preis-Leistung',
-      missing: 'Kosten und Nutzwert',
+      ...Texts.evaluation.generators['best-value'],
       available: m => m.settings.costs && m.settings.utility,
       build: buildBestValue,
     },

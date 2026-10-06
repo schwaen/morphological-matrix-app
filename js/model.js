@@ -16,6 +16,47 @@ const Model = (() => {
   /** Schlüssel der Gruppe „Ohne Kategorie“ (z. B. für den Einklappzustand). */
   const NO_CATEGORY = '__none';
 
+  /**
+   * Aktuelle Version des Datenformats (gespeicherte Matrizen, JSON-Export, Teilen-Links).
+   * Beschreibung: docs/DATENFORMAT.md. Bei inkompatiblen Änderungen erhöhen und in
+   * MIGRATIONS eine Umwandlung von der Vorgängerversion ergänzen.
+   */
+  const SCHEMA_VERSION = 2;
+
+  /**
+   * Umwandlungen von Version n auf n + 1. Sie erhalten die Rohdaten und liefern Rohdaten;
+   * fehlende optionale Felder ergänzt anschließend `normalize()`.
+   * @type {Record<number, (data: any) => any>}
+   */
+  const MIGRATIONS = {
+    // 1 → 2: In der ersten Fassung waren Ausprägungen reine Texte. Version 1 umfasst außerdem
+    // alle Stände vor der Versionierung (ohne Bewertung/Kategorien – diese Felder sind optional).
+    1: data => ({
+      ...data,
+      parameters: data.parameters.map(p => (p && Array.isArray(p.options)
+        ? { ...p, options: p.options.map(o => (typeof o === 'string' ? { text: o } : o)) }
+        : p)),
+    }),
+  };
+
+  /**
+   * Bringt Rohdaten auf die aktuelle Formatversion. Fehlt die Version, gilt 1.
+   * Wirft bei Dateien aus einer neueren App-Version, statt unbekannte Felder still zu verwerfen.
+   * @param {any} data
+   */
+  function migrate(data) {
+    let version = Number.isInteger(data.version) && data.version >= 1 ? data.version : 1;
+    if (version > SCHEMA_VERSION) {
+      throw new Error(Texts.errors.newerFormat(version, SCHEMA_VERSION));
+    }
+    let result = data;
+    while (version < SCHEMA_VERSION) {
+      result = MIGRATIONS[version](result);
+      version++;
+    }
+    return result;
+  }
+
   /** @returns {MatrixSettings} */
   function defaultSettings() {
     return { costs: false, utility: false, currency: 'EUR', utilityMax: 10 };
@@ -46,7 +87,7 @@ const Model = (() => {
   function newConcept(m, base) {
     return {
       id: uid(),
-      name: uniqueName(m.concepts.map(c => c.name), base || `Konzept ${m.concepts.length + 1}`),
+      name: uniqueName(m.concepts.map(c => c.name), base || Texts.fallback.concept(m.concepts.length + 1)),
       color: nextConceptColor(m.concepts),
       selections: {},
     };
@@ -63,11 +104,11 @@ const Model = (() => {
 
   /** @returns {Matrix} */
   function blankState() {
-    const parameters = [1, 2, 3].map(i => newParameter(null, `Parameter ${i}`));
-    const concept = { id: uid(), name: 'Konzept 1', color: COLORS[0], selections: {} };
+    const parameters = [1, 2, 3].map(i => newParameter(null, Texts.fallback.parameter(i)));
+    const concept = { id: uid(), name: Texts.fallback.concept(1), color: COLORS[0], selections: {} };
     return {
-      version: 1,
-      title: 'Neue morphologische Matrix',
+      version: SCHEMA_VERSION,
+      title: Texts.fallback.newMatrixTitle,
       description: '',
       settings: defaultSettings(),
       categories: [],
@@ -107,7 +148,7 @@ const Model = (() => {
       { id: uid(), name: 'Smart Home', color: COLORS[2], selections: pick([1, 2, 3, 3, 0, 1]) },
     ];
     return {
-      version: 1,
+      version: SCHEMA_VERSION,
       title: 'Beispiel: Kaffeemaschine',
       description: 'Gesamtfunktion: Aus Wasser und Kaffee ein heißes Getränk zubereiten.',
       // Kosten und Nutzwerte sind hinterlegt, aber zunächst ausgeblendet.
@@ -120,14 +161,16 @@ const Model = (() => {
   }
 
   /**
-   * Prüft und bereinigt beliebige (z. B. importierte) Daten. Wirft bei unbrauchbarem Format.
+   * Prüft, migriert (siehe `migrate`) und bereinigt beliebige – z. B. importierte – Daten.
+   * Wirft bei unbrauchbarem Format oder Daten aus einer neueren App-Version.
    * @param {any} data
    * @returns {Matrix}
    */
   function normalize(data) {
     if (!data || typeof data !== 'object' || !Array.isArray(data.parameters)) {
-      throw new Error('Ungültiges Dateiformat: „parameters“ fehlt.');
+      throw new Error(Texts.errors.invalidFormat);
     }
+    data = migrate(data);
     const seen = new Set();
     const id = v => {
       let s = str(v);
@@ -143,9 +186,7 @@ const Model = (() => {
         weight: weight != null && weight >= 0 ? weight : null,
         categoryId: str(p && p.categoryId) || null,
         options: (Array.isArray(p && p.options) ? p.options : []).map(o =>
-          typeof o === 'string'
-            ? { id: id(), text: o, cost: null, score: null }
-            : { id: id(o && o.id), text: str(o && o.text), cost: num(o && o.cost), score: num(o && o.score) }),
+          ({ id: id(o && o.id), text: str(o && o.text), cost: num(o && o.cost), score: num(o && o.score) })),
       };
     });
     const categories = (Array.isArray(data.categories) ? data.categories : []).map((k, i) => ({
@@ -172,7 +213,7 @@ const Model = (() => {
       }
       return {
         id: id(c && c.id),
-        name: str(c && c.name, `Konzept ${i + 1}`),
+        name: str(c && c.name, Texts.fallback.concept(i + 1)),
         color: isColor(c && c.color) ? c.color : COLORS[i % COLORS.length],
         selections,
       };
@@ -181,8 +222,8 @@ const Model = (() => {
       ? data.activeConceptId
       : (concepts[0] ? concepts[0].id : null);
     return {
-      version: 1,
-      title: str(data.title, 'Morphologische Matrix'),
+      version: SCHEMA_VERSION,
+      title: str(data.title, Texts.fallback.matrixTitle),
       description: str(data.description),
       settings,
       categories,
@@ -251,7 +292,7 @@ const Model = (() => {
   function optionText(p, oid) {
     const idx = p.options.findIndex(o => o.id === oid);
     if (idx < 0) return null;
-    return p.options[idx].text.trim() || `(Ausprägung ${idx + 1})`;
+    return p.options[idx].text.trim() || Texts.fallback.emptyOption(idx + 1);
   }
 
   /** @param {Record<string, string>} a @param {Record<string, string>} b */
@@ -262,14 +303,14 @@ const Model = (() => {
 
   // Ersatznamen für leere Felder – an einer Stelle, damit Anzeige und Export übereinstimmen
   /** @param {MatrixParameter} p @param {number} index */
-  const parameterLabel = (p, index) => p.name || `Parameter ${index + 1}`;
+  const parameterLabel = (p, index) => p.name || Texts.fallback.parameter(index + 1);
   /** @param {MatrixCategory | null} k */
-  const categoryLabel = k => (k ? k.name || 'Unbenannt' : 'Ohne Kategorie');
+  const categoryLabel = k => (k ? k.name || Texts.fallback.unnamed : Texts.fallback.noCategory);
   /** @param {{ name: string } | null | undefined} x */
-  const nameOrUnnamed = x => (x && x.name) || 'Unbenannt';
+  const nameOrUnnamed = x => (x && x.name) || Texts.fallback.unnamed;
 
   return {
-    COLORS, CATEGORY_COLORS, CURRENCIES, SCALES, NO_CATEGORY,
+    COLORS, CATEGORY_COLORS, CURRENCIES, SCALES, NO_CATEGORY, SCHEMA_VERSION, migrate,
     defaultSettings, newOption, newParameter, newConcept, nextConceptColor, nextCategoryColor, uniqueName,
     blankState, exampleState, normalize, sortedByCategory, resort,
     categoryById, categoryGroups, canMoveParameter, selectedOption, optionText, sameSelections,

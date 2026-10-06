@@ -105,7 +105,7 @@ function toast(message, withUndo = false) {
   clearTimeout(toastTimer);
   el.replaceChildren(h('span', null, message));
   if (withUndo) {
-    el.append(h('button', { type: 'button', onclick: () => { undo(); el.hidden = true; } }, 'Rückgängig'));
+    el.append(h('button', { type: 'button', onclick: () => { undo(); el.hidden = true; } }, Texts.toast.undo));
   }
   el.hidden = false;
   toastTimer = setTimeout(() => { el.hidden = true; }, withUndo ? 6000 : 3500);

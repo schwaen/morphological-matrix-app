@@ -13,13 +13,12 @@ function renderMatrix() {
   matrix.classList.toggle('is-editing', editing);
   matrix.classList.toggle('is-selecting', !editing);
   matrix.setAttribute('role', 'group');
-  matrix.setAttribute('aria-label', 'Morphologische Matrix');
+  matrix.setAttribute('aria-label', Texts.matrix.label);
 
   const cells = [];
   if (!state.parameters.length) {
     cells.push(h('div', { class: 'matrix-empty' },
-      editing ? 'Noch keine Parameter – fügen Sie unten den ersten hinzu.'
-        : 'Noch keine Parameter. Wechseln Sie in den Modus „Bearbeiten“, um die Matrix aufzubauen.'));
+      editing ? Texts.matrix.emptyEdit : Texts.matrix.emptySelect));
   }
 
   const ctx = { editing, cols, active: activeConcept(), showBands: state.categories.length > 0 };
@@ -47,7 +46,7 @@ function renderParameterRow(p, pi, ctx) {
   if (ctx.editing) {
     cells.push(h('button', {
       type: 'button', class: 'add-opt',
-      title: 'Ausprägung hinzufügen', 'aria-label': `Ausprägung zu ${Model.parameterLabel(p, pi)} hinzufügen`,
+      title: Texts.matrix.addOption, 'aria-label': Texts.matrix.addOptionTo(Model.parameterLabel(p, pi)),
       onclick: () => addOption(p.id),
     }, icon('plus')));
     used += 1;
@@ -59,7 +58,7 @@ function renderParameterRow(p, pi, ctx) {
 function renderParameterEdit(p, pi, showBands) {
   const name = h('textarea', {
     class: 'param-name autosize', rows: 1, value: p.name,
-    placeholder: `Parameter ${pi + 1}`, 'aria-label': `Name von Parameter ${pi + 1}`,
+    placeholder: Texts.fallback.parameter(pi + 1), 'aria-label': Texts.matrix.parameterName(pi + 1),
     dataset: { fid: `param:${p.id}` },
     onkeydown: e => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -76,18 +75,18 @@ function renderParameterEdit(p, pi, showBands) {
     h('div', { class: 'param-foot' },
       state.settings.utility
         ? h('label', { class: 'weight-field' },
-          h('span', null, 'Gewicht'),
+          h('span', null, Texts.matrix.weight),
           numberField({
-            value: p.weight, placeholder: '1', label: `Gewichtung von ${Model.parameterLabel(p, pi)}`,
+            value: p.weight, placeholder: '1', label: Texts.matrix.weightOf(Model.parameterLabel(p, pi)),
             apply: n => { p.weight = n != null && n >= 0 ? n : null; },
             validate: n => n >= 0,
           }),
           h('span', { class: 'weight-pct', dataset: { weightPct: p.id } }, weightPercent(p)))
         : null,
       h('div', { class: 'row-tools' },
-        iconBtn('up', 'Nach oben verschieben', () => moveParameter(pi, -1), { disabled: !Model.canMoveParameter(state, pi, -1) }),
-        iconBtn('down', 'Nach unten verschieben', () => moveParameter(pi, 1), { disabled: !Model.canMoveParameter(state, pi, 1) }),
-        iconBtn('trash', 'Parameter löschen', () => deleteParameter(p.id), { danger: true }),
+        iconBtn('up', Texts.matrix.moveUp, () => moveParameter(pi, -1), { disabled: !Model.canMoveParameter(state, pi, -1) }),
+        iconBtn('down', Texts.matrix.moveDown, () => moveParameter(pi, 1), { disabled: !Model.canMoveParameter(state, pi, 1) }),
+        iconBtn('trash', Texts.matrix.deleteParameter, () => deleteParameter(p.id), { danger: true }),
       )));
 }
 
@@ -95,15 +94,15 @@ function renderParameterView(p, pi) {
   return h('div', { class: 'param-cell', style: categoryStyle(p) },
     h('span', { class: 'param-label' }, Model.parameterLabel(p, pi)),
     h('span', { class: 'param-meta' },
-      `${p.options.length} ${p.options.length === 1 ? 'Ausprägung' : 'Ausprägungen'}`
-      + (state.settings.utility ? ` · Gewicht\u00a0${weightPercent(p)}` : '')));
+      Texts.matrix.optionCount(p.options.length)
+      + (state.settings.utility ? ` · ${Texts.matrix.weightShare(weightPercent(p))}` : '')));
 }
 
 function renderOptionEdit(p, pi, o, oi) {
   const ta = h('textarea', {
     class: 'autosize', rows: 1, value: o.text,
-    placeholder: `Ausprägung ${oi + 1}`,
-    'aria-label': `${Model.parameterLabel(p, pi)}: Ausprägung ${oi + 1}`,
+    placeholder: Texts.fallback.option(oi + 1),
+    'aria-label': Texts.matrix.optionField(Model.parameterLabel(p, pi), oi + 1),
     dataset: { fid: `opt:${o.id}` },
     onkeydown: e => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -128,27 +127,27 @@ function renderOptionEdit(p, pi, o, oi) {
     },
   });
   bindField(ta, v => { o.text = v; });
-  const optLabel = o.text.trim() || `Ausprägung ${oi + 1}`;
+  const optLabel = o.text.trim() || Texts.fallback.option(oi + 1);
   const { costs, utility, currency, utilityMax } = state.settings;
   return h('div', { class: 'opt-cell edit' },
     h('div', { class: 'opt-main' }, ta),
     h('div', { class: 'opt-tools' },
-      iconBtn('left', 'Nach links verschieben (Alt+←)', () => moveOption(p.id, oi, -1), { disabled: oi === 0 }),
-      iconBtn('right', 'Nach rechts verschieben (Alt+→)', () => moveOption(p.id, oi, 1), { disabled: oi === p.options.length - 1 }),
-      iconBtn('x', 'Ausprägung löschen', () => deleteOption(p.id, o.id), { danger: true })),
+      iconBtn('left', Texts.matrix.moveLeft, () => moveOption(p.id, oi, -1), { disabled: oi === 0 }),
+      iconBtn('right', Texts.matrix.moveRight, () => moveOption(p.id, oi, 1), { disabled: oi === p.options.length - 1 }),
+      iconBtn('x', Texts.matrix.deleteOption, () => deleteOption(p.id, o.id), { danger: true })),
     costs || utility
       ? h('div', { class: 'opt-metrics' },
         costs
           ? h('label', { class: 'metric-field' },
             h('span', { class: 'metric-unit' }, Util.currencySymbol(currency)),
-            numberField({ value: o.cost, placeholder: 'Kosten', label: `Kosten von ${optLabel}`, apply: n => { o.cost = n; } }))
+            numberField({ value: o.cost, placeholder: Texts.matrix.costPlaceholder, label: Texts.matrix.costOf(optLabel), apply: n => { o.cost = n; } }))
           : null,
         utility
           ? h('label', { class: 'metric-field' },
-            h('span', { class: 'metric-unit', title: 'Nutzwert (Erfüllungsgrad)' }, 'NW'),
+            h('span', { class: 'metric-unit', title: Texts.matrix.utilityUnitTitle }, Texts.matrix.utilityUnit),
             numberField({
               value: o.score, placeholder: `0–${utilityMax}`,
-              label: `Nutzwert von ${optLabel} (0 bis ${utilityMax})`,
+              label: Texts.matrix.utilityOf(optLabel, utilityMax),
               apply: n => { o.score = n; },
               validate: n => n >= 0 && n <= utilityMax,
             }))
@@ -164,13 +163,13 @@ function renderOptionPick(p, o, oi, active) {
     type: 'button',
     class: `opt-cell pick${isActive ? ' is-active' : ''}${o.text.trim() ? '' : ' is-empty'}`,
     'aria-pressed': String(isActive),
-    title: selectedBy.length ? `Gewählt in: ${selectedBy.map(Model.nameOrUnnamed).join(', ')}` : null,
+    title: selectedBy.length ? Texts.matrix.selectedIn(selectedBy.map(Model.nameOrUnnamed).join(', ')) : null,
     style: isActive ? { '--c': active.color } : null,
     dataset: { cell: `${p.id}:${o.id}` },
     onclick: () => toggleSelection(p.id, o.id),
   },
   h('span', { class: 'opt-label' },
-    h('span', null, o.text.trim() || `(Ausprägung ${oi + 1})`),
+    h('span', null, o.text.trim() || Texts.fallback.emptyOption(oi + 1)),
     metrics ? h('span', { class: 'opt-metrics-view' }, metrics) : null),
   selectedBy.length
     ? h('span', { class: 'markers', 'aria-hidden': 'true' },
@@ -182,7 +181,7 @@ function renderOptionPick(p, o, oi, active) {
 function optionMetricsText(o) {
   const parts = [];
   if (state.settings.costs && o.cost != null) parts.push(money(o.cost));
-  if (state.settings.utility && o.score != null) parts.push(`NW ${Util.formatNumber(o.score)}`);
+  if (state.settings.utility && o.score != null) parts.push(Texts.matrix.utilityShort(Util.formatNumber(o.score)));
   return parts.join(' · ');
 }
 
@@ -234,12 +233,12 @@ const categoryColor = k => (k ? k.color : 'var(--muted)');
 /** @param {MatrixParameter} p */
 function categorySelect(p) {
   return h('select', {
-    class: 'cat-select', 'aria-label': `Kategorie von ${p.name || 'Parameter'}`, title: 'Kategorie',
+    class: 'cat-select', 'aria-label': Texts.category.select(p.name || Texts.compare.parameter), title: Texts.category.selectTitle,
     onchange: e => setParameterCategory(p.id, e.target.value),
   },
-  h('option', { value: '', selected: !p.categoryId }, 'Ohne Kategorie'),
+  h('option', { value: '', selected: !p.categoryId }, Texts.fallback.noCategory),
   state.categories.map(k => h('option', { value: k.id, selected: k.id === p.categoryId }, Model.nameOrUnnamed(k))),
-  h('option', { value: NEW_CATEGORY }, '+ Neue Kategorie …'));
+  h('option', { value: NEW_CATEGORY }, Texts.category.newOption));
 }
 
 /** Auswahl des aktiven Konzepts innerhalb einer Gruppe (und deren Kosten, falls vollständig). */
@@ -260,18 +259,18 @@ function renderBand(group, editing, active) {
   const label = Model.categoryLabel(k);
   const toggle = h('button', {
     type: 'button', class: 'cat-toggle', 'aria-expanded': String(!collapsed),
-    title: collapsed ? 'Ausklappen' : 'Einklappen',
-    'aria-label': `${label} ${collapsed ? 'ausklappen' : 'einklappen'}`,
+    title: collapsed ? Texts.category.expand : Texts.category.collapse,
+    'aria-label': Texts.category.toggle(label, collapsed),
     onclick: () => toggleCategory(cid),
   }, h('span', { class: 'cat-chevron', 'aria-hidden': 'true' }));
 
   let title;
   if (editing && k) {
-    const color = h('input', { type: 'color', class: 'swatch cat-swatch', value: k.color, 'aria-label': `Farbe von ${k.name}`, title: 'Farbe ändern' });
+    const color = h('input', { type: 'color', class: 'swatch cat-swatch', value: k.color, 'aria-label': Texts.category.color(k.name), title: Texts.category.changeColor });
     bindField(color, v => { k.color = v; }, () => { renderMatrix(); refreshLight(); });
     const name = h('input', {
-      type: 'text', class: 'cat-name', value: k.name, placeholder: 'Kategorie',
-      'aria-label': 'Name der Kategorie', dataset: { fid: `cat:${k.id}` },
+      type: 'text', class: 'cat-name', value: k.name, placeholder: Texts.category.namePlaceholder,
+      'aria-label': Texts.category.nameLabel, dataset: { fid: `cat:${k.id}` },
       onkeydown: e => { if (e.key === 'Enter') e.target.blur(); },
     });
     bindField(name, v => { k.name = v; });
@@ -288,21 +287,21 @@ function renderBand(group, editing, active) {
   },
   toggle,
   title,
-  h('span', { class: 'cat-meta' }, `${n} Parameter`),
+  h('span', { class: 'cat-meta' }, Texts.category.count(n)),
   collapsed && !editing && picks.length
     ? h('span', { class: 'cat-picks' }, picks.map(o => h('span', null, o.text.trim() || '–')))
     : null,
   h('span', { class: 'cat-end' },
     !editing && active
-      ? h('span', { class: 'cat-progress', title: `Auswahl im Konzept „${Model.nameOrUnnamed(active)}“` },
-        `${picks.length}/${n} gewählt` + (cost != null ? ` · ${money(cost)}` : ''))
+      ? h('span', { class: 'cat-progress', title: Texts.category.progressTitle(Model.nameOrUnnamed(active)) },
+        Texts.category.progress(picks.length, n) + (cost != null ? ` · ${money(cost)}` : ''))
       : null,
     editing
       ? h('span', { class: 'cat-tools' },
-        h('button', { type: 'button', class: 'btn btn-small', onclick: () => addParameter(cid) }, icon('plus'), 'Parameter'),
-        k ? iconBtn('up', 'Kategorie nach oben', () => moveCategory(index, -1), { disabled: index <= 0 }) : null,
-        k ? iconBtn('down', 'Kategorie nach unten', () => moveCategory(index, 1), { disabled: index >= state.categories.length - 1 }) : null,
-        k ? iconBtn('trash', 'Kategorie löschen (Parameter bleiben erhalten)', () => deleteCategory(k.id), { danger: true }) : null)
+        h('button', { type: 'button', class: 'btn btn-small', onclick: () => addParameter(cid) }, icon('plus'), Texts.category.addParameter),
+        k ? iconBtn('up', Texts.category.moveUp, () => moveCategory(index, -1), { disabled: index <= 0 }) : null,
+        k ? iconBtn('down', Texts.category.moveDown, () => moveCategory(index, 1), { disabled: index >= state.categories.length - 1 }) : null,
+        k ? iconBtn('trash', Texts.category.delete, () => deleteCategory(k.id), { danger: true }) : null)
       : null));
 }
 
@@ -325,7 +324,7 @@ function renderCategoryNav() {
         type: 'button',
         class: `cat-chip${isCollapsed(cid) ? ' is-collapsed' : ''}`,
         style: { '--k': categoryColor(g.cat) },
-        title: `Zu „${Model.categoryLabel(g.cat)}“ springen`,
+        title: Texts.category.jumpTo(Model.categoryLabel(g.cat)),
         onclick: () => jumpToCategory(cid),
       },
       h('span', { class: 'cat-dot', 'aria-hidden': 'true' }),
@@ -333,7 +332,7 @@ function renderCategoryNav() {
       active ? h('span', { class: 'cat-chip-count' }, `${picks.length}/${g.items.length}`) : null);
     })),
     h('div', { class: 'cat-nav-actions' },
-      h('button', { type: 'button', class: 'btn btn-small', disabled: allOpen, onclick: () => setAllCollapsed(false) }, 'Alle ausklappen'),
-      h('button', { type: 'button', class: 'btn btn-small', disabled: allCollapsed, onclick: () => setAllCollapsed(true) }, 'Alle einklappen')),
+      h('button', { type: 'button', class: 'btn btn-small', disabled: allOpen, onclick: () => setAllCollapsed(false) }, Texts.category.expandAll),
+      h('button', { type: 'button', class: 'btn btn-small', disabled: allCollapsed, onclick: () => setAllCollapsed(true) }, Texts.category.collapseAll)),
   );
 }

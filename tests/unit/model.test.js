@@ -89,3 +89,28 @@ test('optionText und sameSelections', () => {
   assert.equal(Model.sameSelections({ a: '1', b: '2' }, { b: '2', a: '1' }), true);
   assert.equal(Model.sameSelections({ a: '1' }, { a: '1', b: '2' }), false);
 });
+
+test('Datenformat: aktuelle Version wird geschrieben', () => {
+  assert.equal(Model.exampleState().version, Model.SCHEMA_VERSION);
+  assert.equal(Model.blankState().version, Model.SCHEMA_VERSION);
+  assert.equal(Model.normalize({ parameters: [] }).version, Model.SCHEMA_VERSION);
+});
+
+test('Datenformat: Version 1 (Ausprägungen als Texte) wird migriert', () => {
+  const v1 = { version: 1, parameters: [{ id: 'p', options: ['a', { id: 'o2', text: 'b' }] }] };
+  const m = Model.normalize(v1);
+  assert.deepEqual(plain(m.parameters[0].options.map(o => o.text)), ['a', 'b']);
+  assert.equal(m.parameters[0].options[1].id, 'o2');
+  // Ohne Versionsangabe gilt Version 1
+  assert.equal(Model.normalize({ parameters: [{ options: ['x'] }] }).parameters[0].options[0].text, 'x');
+});
+
+test('Datenformat: Daten aus einer neueren Version werden abgelehnt', () => {
+  assert.throws(() => Model.normalize({ version: Model.SCHEMA_VERSION + 1, parameters: [] }), /neueren Version/);
+});
+
+test('Datenformat: jede Version hat eine Migration bis zur aktuellen', () => {
+  for (let v = 1; v < Model.SCHEMA_VERSION; v++) {
+    assert.doesNotThrow(() => Model.migrate({ version: v, parameters: [] }), `Migration ${v} → ${v + 1}`);
+  }
+});

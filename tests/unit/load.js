@@ -7,14 +7,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 
-const FILES = ['js/util.js', 'js/model.js', 'js/evaluation.js', 'js/io.js'];
+const FILES = ['js/texts.js', 'js/util.js', 'js/model.js', 'js/evaluation.js', 'js/io.js'];
 
 export function loadApp() {
   const context = vm.createContext({ TextEncoder, TextDecoder, btoa, atob });
   for (const file of FILES) {
     vm.runInContext(fs.readFileSync(path.resolve(file), 'utf8'), context, { filename: file });
   }
-  return vm.runInContext('({ Util, Model, Evaluation, IO })', context);
+  return vm.runInContext('({ Texts, Util, Model, Evaluation, IO })', context);
 }
 
 /** Objekte aus dem fremden Kontext für deepStrictEqual vergleichbar machen. */

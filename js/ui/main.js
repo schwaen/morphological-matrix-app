@@ -6,7 +6,7 @@
 
 function bindEvents() {
   bindField($('#title'), v => { state.title = v; }, () => {
-    document.title = state.title ? `${state.title} – Morphologische Matrix` : 'Morphologische Matrix';
+    document.title = Texts.app.documentTitle(state.title);
     refreshLight();
   });
   const desc = $('#description');
