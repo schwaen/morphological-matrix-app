@@ -38,13 +38,21 @@ python3 -m http.server 8000
 
 ## Dateien
 
-| Datei        | Inhalt                         |
-|--------------|--------------------------------|
-| `index.html` | Seitengerüst                   |
+| Datei / Ordner | Inhalt |
+|---|---|
+| `index.html` | Seitengerüst, lädt die Skripte in fester Reihenfolge |
 | `styles.css` | Design, Layout, responsive Regeln, Druck |
-| `app.js`     | Datenmodell, Rendering, Logik  |
+| `js/util.js` | `Util` – Zahlen, Texte, Kodierung (ohne DOM) |
+| `js/model.js` | `Model` – Datenmodell, Beispiel, Normalisierung, Abfragen (ohne DOM) |
+| `js/evaluation.js` | `Evaluation` – Kosten, Nutzwert, Preis-Leistung, automatische Konzepte (ohne DOM) |
+| `js/io.js` | `IO` – JSON, CSV, Teilen-Links (ohne DOM) |
+| `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, Einstellungen pro Tab) |
+| `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `actions`, `render-matrix`, `render-panels`, `lines`, `dialogs`, `main` (Start) |
 | `types.d.ts` | Typen des Datenmodells (nur Entwicklung) |
+| `tests/unit/` | Unit-Tests der Logik (`node:test`) |
 | `tests/e2e/` | Browser-Tests (Playwright) |
+
+**Aufbau ohne Build:** Alle Dateien sind klassische Skripte (keine ES-Module), damit die App weiterhin per Doppelklick über `file://` läuft. Die Logik-Dateien stellen je genau einen Namensraum bereit (`Util`, `Model`, `Evaluation`, `IO`, `Store`) und arbeiten auf einer übergebenen Matrix statt auf globalem Zustand. Die Dateien unter `js/ui/` teilen sich ihre Funktionen über den globalen Gültigkeitsbereich; Änderungen am Zustand laufen über `mutate()` (strukturell, mit Rückgängig), `bindField()` (Texteingaben) bzw. `setPref()` (Ansicht pro Tab) – siehe Kopfkommentar in `js/ui/core.js`.
 
 ## Entwicklung
 
@@ -56,10 +64,12 @@ npx playwright install chromium  # Browser für die Tests (einmalig)
 
 npm run lint        # ESLint
 npm run typecheck   # Typprüfung des JavaScript per JSDoc (tsc, ohne Build)
+npm run test:unit   # Unit-Tests der Logik (node:test, ohne Browser)
 npm run test:e2e    # Browser-Tests (Playwright) gegen index.html per file://
 npm test            # alles zusammen
 ```
 
-- **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). `app.js` nutzt diese Typen über JSDoc-Kommentare.
+- **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). Die Skripte nutzen diese Typen über JSDoc-Kommentare; `tsc` prüft auch die Bezüge zwischen den Dateien.
 - **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, mehrere Tabs, Bewertung, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
-- **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung und Browser-Tests bei jedem Pull Request aus.
+- **Unit-Tests:** `tests/unit/` lädt die DOM-freien Skripte in einen isolierten Node-Kontext (`tests/unit/load.js`) – so, wie der Browser sie ausführt. Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft.
+- **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung, Unit- und Browser-Tests bei jedem Pull Request aus.

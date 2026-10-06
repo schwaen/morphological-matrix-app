@@ -29,6 +29,9 @@ jobs:
       - name: Typprüfung (tsc, JSDoc)
         run: npm run typecheck
 
+      - name: Unit-Tests (node:test)
+        run: npm run test:unit
+
       - name: Browser installieren
         run: npx playwright install --with-deps chromium
 
