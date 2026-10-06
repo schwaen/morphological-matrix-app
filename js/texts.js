@@ -184,14 +184,29 @@ const Texts = (() => {
       },
     },
 
+    tabs: {
+      label: 'Geöffnete Matrizen',
+      titleLabel: 'Titel der Matrix',
+      renameHint: 'Doppelklick zum Umbenennen',
+      add: 'Matrix öffnen oder neu anlegen',
+      close: 'Tab schließen',
+      closeNamed: title => `${q(title)} schließen`,
+      external: 'In einem anderen Browser-Tab geändert',
+      newBlank: 'Neue leere Matrix',
+      example: 'Beispiel öffnen',
+      importJson: 'JSON öffnen …',
+      fromLibrary: 'Aus „Meine Matrizen“ öffnen …',
+      recentlyClosed: 'Zuletzt geschlossen',
+    },
+
     library: {
-      currentTab: 'dieser Tab',
+      currentTab: 'aktiv',
+      openTab: 'geöffnet',
       meta: (date, parameters, concepts) => `${date} · ${parameters} Parameter · ${plural(concepts, 'Konzept', 'Konzepte')}`,
       open: 'Öffnen',
-      newTab: 'Neuer Tab',
-      newTabTitle: 'In einem neuen Tab öffnen',
+      show: 'Anzeigen',
       delete: 'Matrix löschen',
-      deleteCurrent: 'Die Matrix dieses Tabs kann nicht gelöscht werden',
+      deleteOpen: 'Geöffnete Matrizen können nicht gelöscht werden – zuerst den Tab schließen',
     },
 
     // Spaltenköpfe des CSV-Exports

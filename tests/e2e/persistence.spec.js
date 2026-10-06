@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { test, expect, menu, downloadText } from './fixtures.js';
+import { test, expect, menu, downloadText, setTitle } from './fixtures.js';
 
 test('JSON-Export und -Import ergeben dieselbe Matrix', async ({ page }) => {
   const exported = await downloadText(page, 'export-json');
@@ -36,7 +36,7 @@ test('CSV-Export enthält Matrix und Konzepte (Excel-kompatibel)', async ({ page
 });
 
 test('Teilen-Link öffnet die Matrix als neue Matrix', async ({ page, context }) => {
-  await page.locator('#title').fill('Geteilte Matrix');
+  await setTitle(page, 'Geteilte Matrix');
   await page.evaluate(() => {
     window.__copied = null;
     navigator.clipboard.writeText = async t => { window.__copied = t; };
@@ -64,28 +64,47 @@ test('Daten der alten Version werden übernommen', async ({ page }) => {
 });
 
 test('Startmatrix wird sofort gespeichert (stabil nach Neuladen)', async ({ page }) => {
-  const before = await page.evaluate(() => sessionStorage.getItem('morphologische-matrix:tab-doc'));
+  const activeId = () => page.evaluate(() => JSON.parse(sessionStorage.getItem('morphologische-matrix:workspace')).active);
+  const before = await activeId();
   expect(before).toBeTruthy();
+  expect(await page.evaluate(id => localStorage.getItem('morphologische-matrix:doc:' + id), before)).toBeTruthy();
   await page.reload();
-  expect(await page.evaluate(() => sessionStorage.getItem('morphologische-matrix:tab-doc'))).toBe(before);
+  expect(await activeId()).toBe(before);
 });
 
-test('Bibliothek: Matrizen öffnen, in neuem Tab öffnen, löschen', async ({ page, context }) => {
-  await page.locator('#title').fill('Matrix A');
+test('Bibliothek: geöffnete Matrizen markiert, Öffnen als App-Tab, Löschen nur geschlossener', async ({ page }) => {
+  await setTitle(page, 'Matrix A');
   await menu(page, 'new');
-  await page.locator('#title').fill('Matrix B');
+  await setTitle(page, 'Matrix B');
+  await expect(page.locator('.app-tab')).toHaveCount(2);
+
+  // Tab „Matrix A“ schließen – die Matrix bleibt in der Bibliothek
+  await page.locator('.app-tab', { hasText: 'Matrix A' }).getByRole('button', { name: /schließen/ }).click();
+  await expect(page.locator('.app-tab')).toHaveCount(1);
+
   await menu(page, 'open');
   const docs = page.locator('#docList .doc');
   await expect(docs).toHaveCount(2);
-  await expect(docs.first()).toContainText('dieser Tab');
+  const current = docs.filter({ hasText: 'Matrix B' });
+  await expect(current).toContainText('aktiv');
+  await expect(current.getByRole('button', { name: 'Matrix löschen' })).toHaveCount(0);
+  await expect(current.locator('.icon-btn.danger')).toBeDisabled();
 
-  const other = docs.filter({ hasText: 'Matrix A' });
-  const [tab] = await Promise.all([context.waitForEvent('page'), other.locator('a.btn').click()]);
-  await expect(tab.locator('#title')).toHaveValue('Matrix A');
-  expect(tab.url()).not.toContain('doc=');
-  await tab.close();
+  const closed = docs.filter({ hasText: 'Matrix A' });
+  await closed.getByRole('button', { name: 'Öffnen' }).click();
+  await expect(page.locator('.app-tab')).toHaveCount(2);
+  await expect(page.locator('#title')).toHaveValue('Matrix A');
 
+  // Bereits geöffnete Matrix: „Anzeigen“ wechselt nur den Tab
+  await menu(page, 'open');
+  await docs.filter({ hasText: 'Matrix B' }).getByRole('button', { name: 'Anzeigen' }).click();
+  await expect(page.locator('.app-tab')).toHaveCount(2);
+  await expect(page.locator('#title')).toHaveValue('Matrix B');
+
+  // Löschen erst nach dem Schließen möglich
+  await page.locator('.app-tab', { hasText: 'Matrix A' }).getByRole('button', { name: /schließen/ }).click();
+  await menu(page, 'open');
   page.once('dialog', d => d.accept());
-  await other.locator('.icon-btn.danger').click();
+  await docs.filter({ hasText: 'Matrix A' }).locator('.icon-btn.danger').click();
   await expect(docs).toHaveCount(1);
 });

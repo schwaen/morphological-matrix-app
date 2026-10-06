@@ -5,10 +5,6 @@
 'use strict';
 
 function bindEvents() {
-  bindField($('#title'), v => { state.title = v; }, () => {
-    document.title = Texts.app.documentTitle(state.title);
-    refreshLight();
-  });
   const desc = $('#description');
   bindField(desc, v => { state.description = v; }, () => autosize(desc));
 
@@ -49,7 +45,15 @@ function bindEvents() {
     if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
   });
   document.addEventListener('click', e => {
-    if (!/** @type {HTMLElement} */ (e.target).closest('.menu')) toggleMenu(false);
+    const target = /** @type {HTMLElement} */ (e.target);
+    if (!target.closest('.menu')) toggleMenu(false);
+    if (!target.closest('#tabMenu')) toggleTabMenu(false);
+  });
+  $('#tabMenu').addEventListener('keydown', e => {
+    const items = $$('button', $('#tabMenu'));
+    const i = items.indexOf(/** @type {HTMLElement} */ (document.activeElement));
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
   });
 
   // Dialoge (Klick auf den Hintergrund schließt)
@@ -75,6 +79,11 @@ function bindEvents() {
     if (e.key === 'Escape' && !$('#menuList').hidden) {
       toggleMenu(false);
       $('#menuBtn').focus();
+      return;
+    }
+    if (e.key === 'Escape' && !$('#tabMenu').hidden) {
+      toggleTabMenu(false);
+      $('#tabAddBtn').focus();
       return;
     }
     if (!(e.ctrlKey || e.metaKey)) return;
@@ -111,21 +120,23 @@ function bindEvents() {
     scheduleLines();
   });
 
-  // Nur wenn ein anderer Tab dieselbe Matrix bearbeitet, dessen Änderungen übernehmen.
+  // Änderungen anderer Browser-Tabs an hier geöffneten Matrizen übernehmen.
   window.addEventListener('storage', e => {
-    if (Store.isDocKey(e.key, docId) && e.newValue) adoptExternalChange();
+    const id = Store.docIdFromKey(e.key);
+    if (id && e.newValue && tabById(id)) onExternalDocChange(id);
     if ($('#libraryDialog').open) renderLibrary();
   });
 }
 
 function init() {
   bindEvents();
-  loadFromHash();
   save(); // auch eine neu erzeugte Startmatrix sofort sichern (stabile IDs nach Neuladen)
-  // Einstellungen sofort an diesen Tab binden – sonst übernimmt er beim Neuladen die
-  // zuletzt in einem anderen Tab verwendeten (Vorgabe aus dem localStorage).
+  // Einstellungen und geöffnete Tabs sofort an diesen Browser-Tab binden – sonst übernähme er
+  // beim Neuladen die zuletzt in einem anderen Browser-Tab verwendeten (Vorgabe im localStorage).
   Store.savePrefs(prefs, { tabOnly: true });
+  saveWorkspace({ tabOnly: true });
   render();
+  loadFromHash();
 }
 
 init();

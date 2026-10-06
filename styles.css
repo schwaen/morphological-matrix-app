@@ -194,21 +194,73 @@
     background: linear-gradient(90deg, var(--accent), #06b6d4 55%, #22c55e);
   }
 
-  .brand { display: flex; align-items: center; gap: 12px; flex: 1 1 280px; min-width: 0; }
+  .brand { display: flex; align-items: center; gap: 12px; flex: 1 1 320px; min-width: 0; }
   .logo {
     width: 28px; height: 28px; color: var(--accent); stroke: none;
     filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--accent) 35%, transparent));
   }
 
-  .title-input {
+  /* App-Tabs: geöffnete Matrizen; der aktive Tab trägt den bearbeitbaren Titel */
+  .app-tabs {
     flex: 1; min-width: 0;
-    font-size: 1.05rem; font-weight: 650; letter-spacing: -.01em;
-    padding: 5px 10px; border: 1px solid transparent; border-radius: var(--radius-sm);
-    background: transparent;
-    text-overflow: ellipsis;
+    display: flex; align-items: center; gap: 4px;
+    overflow-x: auto; scrollbar-width: none;
+    padding: 2px;
+    /* weich ausblenden, wenn Tabs seitlich überstehen */
+    mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
   }
-  .title-input:hover { border-color: var(--border); background: var(--surface-2); }
-  .title-input:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .app-tabs::-webkit-scrollbar { display: none; }
+  .app-tab {
+    position: relative;
+    flex: 0 1 auto; min-width: 88px; max-width: 240px;
+    display: flex; align-items: center; gap: 4px;
+    height: 36px; padding: 0 4px 0 12px;
+    border: 1px solid transparent; border-radius: 9px;
+    color: var(--muted); font-size: .9rem; font-weight: 550; white-space: nowrap;
+    cursor: pointer; user-select: none;
+  }
+  .app-tab:hover { background: var(--surface-2); color: var(--text); }
+  .app-tab.is-active {
+    flex-shrink: 0; max-width: none;
+    background: var(--surface); border-color: var(--border); box-shadow: var(--shadow-xs);
+    color: var(--text); font-weight: 650;
+  }
+  .app-tab.is-active::after {
+    content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px;
+    border-radius: 2px; background: var(--accent);
+  }
+  .tab-title { overflow: hidden; text-overflow: ellipsis; }
+  .tab-title-input {
+    min-width: 0; max-width: 340px; padding: 3px 4px; margin-left: -4px;
+    border: 1px solid transparent; border-radius: 6px; background: transparent;
+    font-size: 1rem; font-weight: 650; letter-spacing: -.01em; color: var(--text);
+    text-overflow: ellipsis; cursor: pointer;
+  }
+  .tab-title-input[readonly]:focus { outline: none; }
+  .tab-title-input:not([readonly]) {
+    cursor: text; border-color: var(--accent); background: var(--surface);
+    box-shadow: 0 0 0 3px var(--accent-soft); outline: none;
+  }
+  .tab-close {
+    display: grid; place-items: center; flex: none;
+    width: 22px; height: 22px; padding: 0; border: 0; border-radius: 6px;
+    background: transparent; color: var(--muted); cursor: pointer; opacity: 0;
+  }
+  .tab-close svg { width: 13px; height: 13px; }
+  .app-tab:hover .tab-close, .app-tab.is-active .tab-close, .tab-close:focus-visible { opacity: 1; }
+  .tab-close:hover { background: var(--surface-3); color: var(--text); }
+  .tab-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+  .tab-add {
+    display: grid; place-items: center; flex: none;
+    width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px;
+    background: transparent; color: var(--muted); cursor: pointer;
+  }
+  .tab-add:hover, .tab-add[aria-expanded="true"] { background: var(--surface-2); color: var(--text); }
+  .tab-menu { position: fixed; right: auto; top: 0; left: 0; z-index: 40; }
+  .menu-label { padding: 4px 10px 2px; font-size: .72rem; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  @media (hover: none) {
+    .tab-close { opacity: 1; }
+  }
 
   .toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
   .btn-group { display: flex; gap: 2px; }
@@ -633,6 +685,8 @@
     :root { --param-col: 112px; --opt-min: 120px; --gutter: 12px; }
     .app-header { position: relative; }
     .brand { flex-basis: 100%; }
+    .app-tab.is-active { max-width: 75%; }
+    .tab-title-input { max-width: 100%; }
     .toolbar { width: 100%; justify-content: space-between; }
     .layout { padding-top: 12px; }
     .matrix-wrap { padding: 6px; }
@@ -656,6 +710,12 @@
     :root { --bg: #fff; --surface: #fff; --surface-2: #f2f4f7; --text: #000; --text-2: #222; --muted: #555; --border: #bbb; }
     body { background: #fff; font-size: 10pt; }
     .app-header { position: static; border: 0; padding: 0 0 8px; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+    /* Im Ausdruck nur den Titel der aktiven Matrix zeigen */
+    .app-tab:not(.is-active), .tab-close, .tab-add, .tab-dot { display: none !important; }
+    .app-tabs { mask-image: none; overflow: visible; }
+    .app-tab.is-active { border: 0; box-shadow: none; padding: 0; }
+    .app-tab.is-active::after { display: none; }
+    .tab-title-input { font-size: 1.3rem; max-width: none; }
     .app-header::before { display: none; }
     .toolbar, .below-matrix, .cat-nav, .cat-toggle, .cat-end, .concept-actions, .auto-concepts, .check, .icon-btn, .add-opt, .panel-head .btn, .swatch { display: none !important; }
     .layout { display: block; padding: 0; }

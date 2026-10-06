@@ -30,7 +30,8 @@ python3 -m http.server 8000
 - Konzeptvergleich als Tabelle, ein- und ausklappbar (Zustand wird gemerkt; beim Drucken immer sichtbar).
 - Rückgängig / Wiederholen (`Strg+Z`, `Strg+Umschalt+Z`).
 - Automatisches Speichern im Browser (localStorage), beliebig viele Matrizen unter **Datei → Meine Matrizen**.
-- **Mehrere Tabs parallel:** Jeder Tab bearbeitet seine eigene Matrix und hat eigene Ansichtseinstellungen (Modus, Linien, Konzeptvergleich). „Neue Matrix“, „Beispiel laden“, Import und geteilte Links legen jeweils eine neue Matrix an, ohne andere Tabs zu verändern. Über „Neuer Tab“ in „Meine Matrizen“ lässt sich eine Matrix gezielt in einem weiteren Tab öffnen. Ist dieselbe Matrix in zwei Tabs geöffnet, werden Änderungen zwischen ihnen abgeglichen.
+- **Tabs in der App:** Mehrere Matrizen sind gleichzeitig in Tabs in der Kopfzeile geöffnet. Jeder Tab behält Ansicht (Modus, Konzeptvergleich, eingeklappte Kategorien), Rückgängig-Verlauf und Scroll-Position. Über **+** lassen sich eine neue leere Matrix, das Beispiel, ein JSON-Import, eine Matrix aus „Meine Matrizen“ oder ein zuletzt geschlossener Tab öffnen. Doppelklick auf den aktiven Tab benennt die Matrix um; Tabs lassen sich per Ziehen umsortieren und mit × oder der mittleren Maustaste schließen (die Matrix bleibt gespeichert). Geöffnete Tabs werden nach dem Neuladen wiederhergestellt; eine bereits geöffnete Matrix wird nicht doppelt geöffnet.
+- **Mehrere Browser-Tabs:** Weiterhin möglich – jeder Browser-Tab hat seine eigenen App-Tabs. Ändert ein anderer Browser-Tab eine hier geöffnete Matrix, wird sie übernommen; inaktive Tabs werden dabei mit einem Punkt markiert.
 - Export als JSON (`Strg+S`) und CSV (Excel-kompatibel), Import von JSON.
 - Teilen per Link (die Matrix steckt komplett in der URL).
 - Druckansicht bzw. PDF-Export über den Browser.
@@ -47,8 +48,8 @@ python3 -m http.server 8000
 | `js/model.js` | `Model` – Datenmodell, Beispiel, Normalisierung, Abfragen (ohne DOM) |
 | `js/evaluation.js` | `Evaluation` – Kosten, Nutzwert, Preis-Leistung, automatische Konzepte (ohne DOM) |
 | `js/io.js` | `IO` – JSON, CSV, Teilen-Links (ohne DOM) |
-| `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, Einstellungen pro Tab) |
-| `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `actions`, `render-matrix`, `render-panels`, `lines`, `dialogs`, `main` (Start) |
+| `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, geöffnete Tabs, Einstellungen pro Browser-Tab) |
+| `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `tabs` (App-Tabs), `actions`, `render-matrix`, `render-panels`, `lines`, `dialogs`, `main` (Start) |
 | `types.d.ts` | Typen des Datenmodells (nur Entwicklung) |
 | `docs/DATENFORMAT.md` | Datenformat (JSON, Speicherung, Teilen-Links), Versionen und Migrationen |
 | `tests/unit/` | Unit-Tests der Logik (`node:test`) |
@@ -76,6 +77,6 @@ npm test            # alles zusammen
 ```
 
 - **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). Die Skripte nutzen diese Typen über JSDoc-Kommentare; `tsc` prüft auch die Bezüge zwischen den Dateien.
-- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, mehrere Tabs, Bewertung, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
+- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, App-Tabs, mehrere Browser-Tabs, Bewertung, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
 - **Unit-Tests:** `tests/unit/` lädt die DOM-freien Skripte in einen isolierten Node-Kontext (`tests/unit/load.js`) – so, wie der Browser sie ausführt. Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft.
 - **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung, Unit- und Browser-Tests bei jedem Pull Request aus.

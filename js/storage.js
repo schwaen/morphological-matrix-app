@@ -11,6 +11,7 @@ const Store = (() => {
   const LEGACY_KEY = 'morphologische-matrix:v1';
   const TAB_DOC_KEY = 'morphologische-matrix:tab-doc';
   const PREFS_KEY = 'morphologische-matrix:prefs';
+  const WORKSPACE_KEY = 'morphologische-matrix:workspace';
 
   /** @typedef {'localStorage' | 'sessionStorage'} Area */
 
@@ -50,8 +51,8 @@ const Store = (() => {
   /** @param {string} id */
   const removeDoc = id => remove('localStorage', DOC_PREFIX + id);
 
-  /** Gehört ein Speicherschlüssel (z. B. aus einem `storage`-Ereignis) zu dieser Matrix? */
-  const isDocKey = (key, id) => key === DOC_PREFIX + id;
+  /** Matrix-ID zu einem Speicherschlüssel (z. B. aus einem `storage`-Ereignis), sonst `null`. */
+  const docIdFromKey = key => (key && key.startsWith(DOC_PREFIX) ? key.slice(DOC_PREFIX.length) : null);
 
   /** Alle gespeicherten Matrizen, zuletzt bearbeitete zuerst. @returns {StoredDoc[]} */
   function listDocs() {
@@ -79,10 +80,29 @@ const Store = (() => {
     }
   }
 
-  /** ID der Matrix, die dieser Tab zuletzt bearbeitet hat. */
-  const tabDocId = () => get('sessionStorage', TAB_DOC_KEY) || '';
-  /** @param {string} id */
-  const setTabDocId = id => set('sessionStorage', TAB_DOC_KEY, id);
+  /** ID der Matrix, die dieser Browser-Tab vor Einführung der App-Tabs bearbeitet hat. */
+  const legacyTabDocId = () => get('sessionStorage', TAB_DOC_KEY) || '';
+
+  /**
+   * Geöffnete App-Tabs: die dieses Browser-Tabs, für neue Browser-Tabs die zuletzt verwendeten.
+   * @returns {Workspace | null}
+   */
+  function loadWorkspace() {
+    const raw = get('sessionStorage', WORKSPACE_KEY) || get('localStorage', WORKSPACE_KEY);
+    try {
+      const ws = JSON.parse(raw || 'null');
+      return ws && Array.isArray(ws.tabs) ? ws : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** @param {Workspace} ws @param {{ tabOnly?: boolean }} [opts] */
+  function saveWorkspace(ws, { tabOnly = false } = {}) {
+    const json = JSON.stringify(ws);
+    set('sessionStorage', WORKSPACE_KEY, json);
+    if (!tabOnly) set('localStorage', WORKSPACE_KEY, json);
+  }
 
   /**
    * Eigene Einstellungen des Tabs, für neue Tabs die zuletzt verwendeten.
@@ -109,7 +129,7 @@ const Store = (() => {
   }
 
   return {
-    readDoc, writeDoc, removeDoc, isDocKey, listDocs, migrateLegacy,
-    tabDocId, setTabDocId, loadPrefs, savePrefs,
+    readDoc, writeDoc, removeDoc, docIdFromKey, listDocs, migrateLegacy,
+    legacyTabDocId, loadWorkspace, saveWorkspace, loadPrefs, savePrefs,
   };
 })();

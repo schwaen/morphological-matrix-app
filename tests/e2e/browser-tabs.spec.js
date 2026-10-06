@@ -1,4 +1,4 @@
-import { test, expect, menu, APP_URL } from './fixtures.js';
+import { test, expect, menu, setTitle, APP_URL } from './fixtures.js';
 
 test('Zwei Tabs bearbeiten unabhängig verschiedene Matrizen', async ({ page, context }) => {
   const b = await context.newPage();
@@ -7,8 +7,8 @@ test('Zwei Tabs bearbeiten unabhängig verschiedene Matrizen', async ({ page, co
   await expect(b.locator('#title')).toHaveValue('Beispiel: Kaffeemaschine');
 
   await menu(b, 'new');
-  await b.locator('#title').fill('Matrix B');
-  await page.locator('#title').fill('Matrix A');
+  await setTitle(b, 'Matrix B');
+  await setTitle(page, 'Matrix A');
 
   await expect(page.locator('#title')).toHaveValue('Matrix A');
   await expect(b.locator('#title')).toHaveValue('Matrix B');
@@ -21,7 +21,7 @@ test('Zwei Tabs bearbeiten unabhängig verschiedene Matrizen', async ({ page, co
 test('Dieselbe Matrix in zwei Tabs wird abgeglichen', async ({ page, context }) => {
   const b = await context.newPage();
   await b.goto(APP_URL);
-  await page.locator('#title').fill('Synchron');
+  await setTitle(page, 'Synchron');
   await expect(b.locator('#title')).toHaveValue('Synchron');
 });
 

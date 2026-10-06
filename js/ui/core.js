@@ -1,44 +1,87 @@
 /*
- * Zustand der Oberfläche: aktuelle Matrix dieses Tabs, Ansichtseinstellungen,
+ * Zustand der Oberfläche: geöffnete App-Tabs, die Matrix des aktiven Tabs, Ansicht,
  * Speichern sowie Rückgängig/Wiederholen.
+ *
+ * Die Variablen `docId`, `state`, `prefs`, `undoStack` und `redoStack` beschreiben immer den
+ * AKTIVEN App-Tab. Beim Wechsel (js/ui/tabs.js) wird dieser Stand im Tab-Eintrag abgelegt und
+ * der des Ziel-Tabs geladen – der übrige Code muss von Tabs nichts wissen.
  *
  * Regeln für Änderungen:
  *  - Strukturelle Änderungen laufen über `mutate()` (Verlaufseintrag, Speichern, komplettes Neuzeichnen).
  *  - Texteingaben laufen über `bindField()` (kein Neuzeichnen beim Tippen, Verlaufseintrag beim Verlassen).
- *  - Ansichtseinstellungen (pro Tab) über `setPref()`; sie sind nicht Teil des Verlaufs.
+ *  - Ansichtseinstellungen über `setPref()`; sie sind nicht Teil des Verlaufs.
  */
 'use strict';
 
 const HISTORY_LIMIT = 200;
 /** @type {TabPrefs} */
 const DEFAULT_PREFS = { mode: 'select', showLines: true, compareOpen: true };
+/** Ansichtseinstellungen, die jeder App-Tab für sich behält (`showLines` gilt für alle). */
+const VIEW_KEYS = /** @type {const} */ (['mode', 'compareOpen', 'collapsed']);
+const CLOSED_LIMIT = 8;
 
-/** Matrix für diesen Tab: per `?doc=`, sonst die zuletzt hier geöffnete, sonst die zuletzt bearbeitete. */
-function loadInitialDoc() {
+/**
+ * Ein geöffneter App-Tab. Für inaktive Tabs liegen Matrix, Verlauf und Scroll-Position hier;
+ * für den aktiven Tab gelten die globalen Variablen.
+ * @typedef {{ docId: string, view: Partial<TabView>, state?: Matrix, undo?: string[], redo?: string[],
+ *             lastSaved?: string | null, scrollY?: number, external?: boolean }} AppTab
+ */
+
+/** @param {TabPrefs | Partial<TabView>} source @returns {Partial<TabView>} */
+const pickView = source => Object.fromEntries(VIEW_KEYS.filter(k => k in source).map(k => [k, source[k]]));
+
+/**
+ * Geöffnete App-Tabs beim Start: gespeicherter Arbeitsbereich (nur noch vorhandene Matrizen),
+ * sonst wie früher die zuletzt bearbeitete Matrix bzw. das Beispiel. `?doc=` öffnet zusätzlich
+ * eine bestimmte Matrix (Link aus älteren Versionen bzw. Lesezeichen).
+ */
+function loadInitialTabs() {
   Store.migrateLegacy();
+  const ws = Store.loadWorkspace();
+  /** @type {AppTab[]} */
+  const list = [];
+  for (const t of (ws && ws.tabs) || []) {
+    const doc = t && Store.readDoc(t.docId);
+    if (doc && !list.some(x => x.docId === doc.id)) list.push({ docId: doc.id, view: t.view || {}, state: doc.data });
+  }
+  let active = ws && list.some(t => t.docId === ws.active) ? ws.active : null;
+
   const params = new URLSearchParams(location.search);
   const requested = params.get('doc');
   if (requested != null) {
-    // Parameter entfernen, damit ein späteres Neuladen die aktuelle Tab-Matrix zeigt.
+    // Parameter entfernen, damit ein späteres Neuladen den gespeicherten Arbeitsbereich zeigt.
     params.delete('doc');
     const query = params.toString();
     history.replaceState(null, '', location.pathname + (query ? `?${query}` : '') + location.hash);
     const doc = Store.readDoc(requested);
-    if (doc) return doc;
+    if (doc) {
+      if (!list.some(t => t.docId === doc.id)) list.push({ docId: doc.id, view: {}, state: doc.data });
+      active = doc.id;
+    }
   }
-  const tabDoc = Store.readDoc(Store.tabDocId());
-  if (tabDoc) return tabDoc;
-  const [latest] = Store.listDocs();
-  if (latest) return latest;
-  return { id: Util.uid(), data: Model.exampleState() };
+
+  if (!list.length) {
+    const doc = Store.readDoc(Store.legacyTabDocId()) || Store.listDocs()[0]
+      || { id: Util.uid(), data: Model.exampleState() };
+    list.push({ docId: doc.id, view: {}, state: doc.data });
+  }
+  return { list, active: active || list[0].docId, closed: (ws && Array.isArray(ws.closed)) ? ws.closed : [] };
 }
 
-const initialDoc = loadInitialDoc();
-let docId = initialDoc.id;
+const initial = loadInitialTabs();
+/** @type {AppTab[]} */
+const tabs = initial.list;
+/** Zuletzt geschlossene Matrizen (IDs, neueste zuerst). @type {string[]} */
+// eslint-disable-next-line prefer-const -- wird in tabs.js und dialogs.js neu gesetzt
+let closedTabs = initial.closed;
+
+const initialTab = tabs.find(t => t.docId === initial.active);
+// eslint-disable-next-line prefer-const -- wird beim Tab-Wechsel (tabs.js) neu gesetzt
+let docId = initialTab.docId;
 /** @type {Matrix} */
-let state = initialDoc.data;
+let state = initialTab.state;
 /** @type {TabPrefs} */
-const prefs = Store.loadPrefs(DEFAULT_PREFS);
+const prefs = { ...Store.loadPrefs(DEFAULT_PREFS), ...initialTab.view };
 /** `data-fid` des Felds, das nach dem nächsten Neuzeichnen den Fokus bekommt. */
 // eslint-disable-next-line prefer-const -- wird in Aktionen und beim Rendern neu gesetzt
 let pendingFocus = null;
@@ -57,24 +100,35 @@ function save() {
   const json = JSON.stringify(state);
   if (json === lastSaved) return;
   lastSaved = json;
-  Store.setTabDocId(docId);
   if (!Store.writeDoc(docId, state)) toast(Texts.errors.storageFull);
 }
 
+/** Geöffnete Tabs, aktiven Tab und deren Ansichten merken. @param {{ tabOnly?: boolean }} [opts] */
+function saveWorkspace(opts) {
+  Store.saveWorkspace({
+    tabs: tabs.map(t => ({ docId: t.docId, view: t.docId === docId ? pickView(prefs) : t.view })),
+    active: docId,
+    closed: closedTabs.slice(0, CLOSED_LIMIT),
+  }, opts);
+}
+
 /**
- * Ansichtseinstellung dieses Tabs ändern und merken (auch als Vorgabe für neue Tabs).
+ * Ansichtseinstellung des aktiven Tabs ändern und merken (auch als Vorgabe für neue Tabs).
  * @template {keyof TabPrefs} K
  * @param {K} key @param {TabPrefs[K]} value
  */
 function setPref(key, value) {
   prefs[key] = value;
   Store.savePrefs(prefs);
+  saveWorkspace();
 }
 
-// ---------- Verlauf (Rückgängig / Wiederholen) ----------
+// ---------- Verlauf (Rückgängig / Wiederholen) – je App-Tab ----------
 
-const undoStack = [];
-const redoStack = [];
+/** @type {string[]} */
+let undoStack = [];
+/** @type {string[]} */
+let redoStack = [];
 const snapshot = () => JSON.stringify(state);
 
 function pushHistory(snap) {
@@ -85,8 +139,8 @@ function pushHistory(snap) {
 }
 
 function clearHistory() {
-  undoStack.length = 0;
-  redoStack.length = 0;
+  undoStack = [];
+  redoStack = [];
 }
 
 /** Strukturelle Änderung: Verlauf sichern, ändern, speichern, neu zeichnen. @param {(m: Matrix) => void} fn */
@@ -134,25 +188,7 @@ function bindField(el, apply, after = refreshLight) {
   });
 }
 
-// ---------- Matrix wechseln ----------
-
-/** Öffnet in diesem Tab eine andere Matrix; andere Tabs bleiben unberührt. */
-function openDoc(id, data, message) {
-  docId = id;
-  state = data;
-  lastSaved = null;
-  clearHistory();
-  save();
-  render();
-  if (message) toast(message);
-}
-
-/** Legt eine neue Matrix an und öffnet sie in diesem Tab. */
-function openNewDoc(data, message) {
-  openDoc(Util.uid(), data, message);
-}
-
-/** Übernimmt den Stand, den ein anderer Tab für dieselbe Matrix gespeichert hat. */
+/** Übernimmt den Stand, den ein anderer Browser-Tab für die aktive Matrix gespeichert hat. */
 function adoptExternalChange() {
   const doc = Store.readDoc(docId);
   if (!doc) return;
