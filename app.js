@@ -32,7 +32,16 @@
     copy: 'M9 9h10v10H9zM5 15V5h10',
   };
 
+  /**
+   * Erstes passendes Element (bewusst lose typisiert: Formularfelder, Dialoge, …).
+   * @type {(sel: string, root?: ParentNode) => any}
+   */
   const $ = (sel, root = document) => root.querySelector(sel);
+  /**
+   * Alle passenden Elemente als Array.
+   * @type {(sel: string, root?: ParentNode) => HTMLElement[]}
+   */
+  const $$ = (sel, root = document) => [.../** @type {NodeListOf<HTMLElement>} */ (root.querySelectorAll(sel))];
 
   // ---------- Hilfsfunktionen ----------
 
@@ -89,6 +98,7 @@
   const SCALES = [5, 10, 100];
   const numberFormat = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 });
 
+  /** @returns {MatrixSettings} */
   function defaultSettings() {
     return { costs: false, utility: false, currency: 'EUR', utilityMax: 10 };
   }
@@ -141,6 +151,7 @@
     return { id: uid(), text: '', cost: null, score: null };
   }
 
+  /** @returns {Matrix} */
   function blankState() {
     const parameters = [1, 2, 3].map(i => ({
       id: uid(),
@@ -162,8 +173,10 @@
     };
   }
 
+  /** @returns {Matrix} */
   function exampleState() {
     // [Parameter, Gewicht, [[Ausprägung, Kosten, Nutzwert 0–10], …]]
+    /** @type {Array<[string, number, Array<[string, number, number]>]>} */
     const rows = [
       ['Wassererwärmung', 3, [['Durchlauferhitzer', 18, 6], ['Boiler', 25, 5], ['Thermoblock', 22, 8], ['Induktion', 40, 9]]],
       ['Druckerzeugung', 3, [['Schwerkraft', 2, 3], ['Vibrationspumpe', 12, 7], ['Rotationspumpe', 45, 9], ['Handhebel', 8, 6]]],
@@ -202,7 +215,11 @@
     };
   }
 
-  /** Prüft und bereinigt beliebige (z. B. importierte) Daten. Wirft bei unbrauchbarem Format. */
+  /**
+   * Prüft und bereinigt beliebige (z. B. importierte) Daten. Wirft bei unbrauchbarem Format.
+   * @param {any} data
+   * @returns {Matrix}
+   */
   function normalize(data) {
     if (!data || typeof data !== 'object' || !Array.isArray(data.parameters)) {
       throw new Error('Ungültiges Dateiformat: „parameters“ fehlt.');
@@ -275,6 +292,9 @@
    * Parameter nach Kategorien gruppiert sortieren (Reihenfolge der Kategorien, ohne
    * Kategorie zuletzt; innerhalb einer Gruppe stabil). So entspricht die Reihenfolge
    * im Array immer der Anzeige – Linien, Vergleich und Export brauchen keine Sonderfälle.
+   * @param {MatrixCategory[]} categories
+   * @param {MatrixParameter[]} parameters
+   * @returns {MatrixParameter[]}
    */
   function sortedByCategory(categories, parameters) {
     const rank = new Map(categories.map((k, i) => [k.id, i]));
@@ -290,6 +310,10 @@
 
   // ---------- Speicher ----------
 
+  /**
+   * Zugriff auf Web Storage; liefert bei gesperrtem Speicher (z. B. privates Fenster) leere Werte.
+   * @type {Record<'get'|'set'|'remove', (area: 'localStorage'|'sessionStorage', key: string, value?: string) => any>}
+   */
   const storage = {
     get(area, key) {
       try { return window[area].getItem(key); } catch (e) { return null; }
@@ -392,7 +416,9 @@
 
   const initialDoc = loadInitialDoc();
   let docId = initialDoc.id;
+  /** @type {Matrix} */
   let state = initialDoc.data;
+  /** @type {TabPrefs} */
   const prefs = loadPrefs();
   let pendingFocus = null;
 
@@ -482,6 +508,7 @@
   const categoryById = id => state.categories.find(k => k.id === id) || null;
 
   /** Parametergruppen in Anzeigereihenfolge; ohne Kategorien genau eine Gruppe ohne Kopfzeile. */
+  /** @returns {Array<{ cat: MatrixCategory | null, items: Array<{ p: MatrixParameter, pi: number }> }>} */
   function categoryGroups() {
     const groups = state.categories.map(cat => ({ cat, items: [] }));
     const none = { cat: null, items: [] };
@@ -608,7 +635,8 @@
     const p = state.parameters.find(x => x.id === pid);
     const target = index + delta;
     if (!p || target < 0 || target >= p.options.length) return;
-    pendingFocus = document.activeElement && document.activeElement.dataset.fid === `opt:${p.options[index].id}`
+    const focused = /** @type {HTMLElement | null} */ (document.activeElement);
+    pendingFocus = focused && focused.dataset.fid === `opt:${p.options[index].id}`
       ? `opt:${p.options[index].id}` : null;
     mutate(s => {
       const opts = s.parameters.find(x => x.id === pid).options;
@@ -760,7 +788,7 @@
 
     // Start: höchster Nutzwert
     let x = solve((p, o) => -util(p, o));
-    let { C, U } = totals(x);
+    const { C, U } = totals(x);
     if (U <= 0) return { error: 'Alle gepflegten Nutzwerte sind 0.' };
     let lambda = C / U;
     for (let iter = 0; iter < 100; iter++) {
@@ -848,7 +876,7 @@
 
   function renderGenerators() {
     let any = false;
-    document.querySelectorAll('[data-generate]').forEach(btn => {
+    $$('[data-generate]').forEach(btn => {
       const gen = GENERATORS[btn.dataset.generate];
       const on = !!gen && gen.available();
       btn.hidden = !on;
@@ -895,7 +923,7 @@
     const desc = $('#description');
     if (document.activeElement !== desc) desc.value = state.description;
 
-    document.querySelectorAll('.segmented button').forEach(b => {
+    $$('.segmented button').forEach(b => {
       b.setAttribute('aria-pressed', String(b.dataset.mode === prefs.mode));
     });
     $('#showLines').checked = prefs.showLines;
@@ -1286,7 +1314,7 @@
     if (state.activeConceptId === cid) return;
     state.activeConceptId = cid;
     save();
-    document.querySelectorAll('.concept').forEach(li => li.classList.toggle('is-active', li.dataset.cid === cid));
+    $$('.concept').forEach(li => li.classList.toggle('is-active', li.dataset.cid === cid));
     renderMatrix();
     refreshLight();
   }
@@ -1294,7 +1322,7 @@
   function updateProgress() {
     const total = state.parameters.length;
     for (const c of state.concepts) {
-      const el = document.querySelector(`[data-progress="${c.id}"]`);
+      const el = $(`[data-progress="${c.id}"]`);
       if (!el) continue;
       const filled = state.parameters.filter(p => c.selections[p.id]).length;
       el.textContent = `${filled}/${total}`;
@@ -1315,12 +1343,18 @@
   const totalWeight = () => state.parameters.reduce((s, p) => s + weightOf(p), 0);
   const clampScore = s => Math.min(state.settings.utilityMax, Math.max(0, s));
 
+  /**
+   * @param {MatrixParameter} p
+   * @param {MatrixConcept} c
+   * @returns {MatrixOption | null}
+   */
   function selectedOption(p, c) {
     const oid = c.selections[p.id];
     return oid ? p.options.find(o => o.id === oid) || null : null;
   }
 
   /** Summe der Kosten aller gewählten Ausprägungen; `missing` zählt fehlende Angaben. */
+  /** @param {MatrixConcept} c @returns {{ total: number, missing: number }} */
   function conceptCost(c) {
     let total = 0;
     let missing = 0;
@@ -1336,6 +1370,7 @@
    * Gesamtnutzwert wie in der Nutzwertanalyse: Σ (Gewicht × Erfüllungsgrad) / Σ Gewichte.
    * Nicht gewählte oder unbewertete Parameter gehen mit 0 ein.
    */
+  /** @param {MatrixConcept} c @returns {{ value: number | null, missing: number }} */
   function conceptUtility(c) {
     const sumW = totalWeight();
     let sum = 0;
@@ -1355,6 +1390,7 @@
    * Preis-Leistungs-Verhältnis als Kosten je Nutzwertpunkt (niedriger ist besser).
    * Nur sinnvoll, wenn Kosten und Nutzwerte des Konzepts vollständig gepflegt sind.
    */
+  /** @param {MatrixConcept} c @returns {{ value: number | null, reason: string | null }} */
   function priceValue(c) {
     const cost = conceptCost(c);
     const util = conceptUtility(c);
@@ -1382,6 +1418,10 @@
   }
 
   /** Eingabefeld für Zahlen; speichert beim Tippen, formatiert beim Verlassen. */
+  /**
+   * @param {{ value: number | null, label: string, placeholder?: string, fid?: string,
+   *           apply: (n: number | null) => void, validate?: (n: number) => boolean }} opts
+   */
   function numberField({ value, label, placeholder, fid, apply, validate }) {
     const input = h('input', {
       type: 'text', inputmode: 'decimal', class: 'num-input', value: numberToInput(value),
@@ -1540,7 +1580,7 @@
     // Aktives Konzept zuletzt zeichnen, damit es oben liegt.
     const order = state.concepts
       .map((c, ci) => ({ c, ci }))
-      .sort((a, b) => (a.c.id === state.activeConceptId) - (b.c.id === state.activeConceptId));
+      .sort((a, b) => Number(a.c.id === state.activeConceptId) - Number(b.c.id === state.activeConceptId));
 
     for (const { c, ci } of order) {
       const pts = [];
@@ -1582,7 +1622,7 @@
   // ---------- Fokus & Größen ----------
 
   function focusField(fid) {
-    const el = document.querySelector(`[data-fid="${CSS.escape(fid)}"]`);
+    const el = /** @type {HTMLInputElement | HTMLTextAreaElement | null} */ (document.querySelector(`[data-fid="${CSS.escape(fid)}"]`));
     if (!el) return;
     el.focus();
     const len = el.value.length;
@@ -1873,7 +1913,7 @@
     const desc = $('#description');
     bindField(desc, v => { state.description = v; }, () => autosize(desc));
 
-    document.querySelectorAll('.segmented button').forEach(b => {
+    $$('.segmented button').forEach(b => {
       b.addEventListener('click', () => setMode(b.dataset.mode));
     });
     $('#undoBtn').addEventListener('click', undo);
@@ -1882,7 +1922,7 @@
     $('#addCategoryBtn').addEventListener('click', addCategory);
     $('#addConceptBtn').addEventListener('click', addConcept);
     $('#randomBtn').addEventListener('click', randomizeActive);
-    document.querySelectorAll('[data-generate]').forEach(btn => {
+    $$('[data-generate]').forEach(btn => {
       btn.addEventListener('click', () => generateConcept(btn.dataset.generate));
     });
     $('#clearSelBtn').addEventListener('click', clearActive);
@@ -1912,7 +1952,7 @@
       if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
     });
     document.addEventListener('click', e => {
-      if (!e.target.closest('.menu')) toggleMenu(false);
+      if (!/** @type {HTMLElement} */ (e.target).closest('.menu')) toggleMenu(false);
     });
 
     $('#libraryClose').addEventListener('click', closeLibrary);
@@ -1944,7 +1984,7 @@
       }
       const mod = e.ctrlKey || e.metaKey;
       if (!mod) return;
-      const inField = e.target.closest('input, textarea');
+      const inField = /** @type {HTMLElement} */ (e.target).closest('input, textarea');
       const key = e.key.toLowerCase();
       if (key === 's') {
         e.preventDefault();
@@ -1993,6 +2033,9 @@
 
     loadFromHash();
     save(); // auch eine neu erzeugte Startmatrix sofort sichern (stabile IDs nach Neuladen)
+    // Einstellungen sofort an diesen Tab binden – sonst übernimmt er beim Neuladen die
+    // zuletzt in einem anderen Tab verwendeten (Fallback aus dem localStorage).
+    storage.set('sessionStorage', PREFS_KEY, JSON.stringify(prefs));
     render();
   }
 
