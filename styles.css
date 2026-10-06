@@ -248,6 +248,7 @@ svg .fill { fill: currentColor; stroke: none; }
   gap: 6px;
 }
 .matrix.is-selecting { row-gap: 14px; }
+.matrix.is-editing { margin-top: 6px; } /* Platz für die Werkzeugleiste der ersten Zeile */
 
 .lines { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; overflow: visible; }
 .lines path { fill: none; stroke-linecap: round; }
@@ -285,11 +286,21 @@ svg .fill { fill: currentColor; stroke: none; }
     opacity: 0; pointer-events: none; transition: opacity .12s;
   }
   .param-cell:hover .row-tools, .param-cell:focus-within .row-tools { opacity: 1; pointer-events: auto; }
+  /* Auf der oberen Zellkante, damit das Textfeld frei bleibt */
+  .opt-cell.edit .opt-tools {
+    position: absolute; top: -14px; right: 6px; z-index: 3; padding: 1px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow);
+    opacity: 0; pointer-events: none; transition: opacity .12s;
+  }
+  .opt-cell.edit:hover .opt-tools, .opt-cell.edit:focus-within .opt-tools { opacity: 1; pointer-events: auto; }
+  .opt-cell.edit .opt-tools .icon-btn { width: 22px; height: 22px; }
+  .opt-cell.edit .opt-tools .icon-btn svg { width: 14px; height: 14px; }
 }
 
 .opt-cell { border-radius: var(--radius-sm); min-width: 0; }
 
 .opt-cell.edit {
+  position: relative;
   display: flex; flex-direction: column;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -304,8 +315,7 @@ svg .fill { fill: currentColor; stroke: none; }
   field-sizing: content;
 }
 .opt-cell.edit textarea:focus { outline: none; }
-.opt-cell.edit .icon-btn { margin: 3px 3px 0 0; opacity: .55; }
-.opt-cell.edit:hover .icon-btn, .opt-cell.edit:focus-within .icon-btn { opacity: 1; }
+.opt-tools { display: flex; gap: 0; }
 
 .opt-cell.pick {
   position: relative;
@@ -616,7 +626,8 @@ svg .fill { fill: currentColor; stroke: none; }
 }
 
 @media (hover: none) {
-  .opt-cell.edit .icon-btn { opacity: 1; }
+  /* Touch: Werkzeuge als eigene Zeile unten rechts in der Zelle */
+  .opt-tools { order: 2; justify-content: flex-end; padding: 0 3px 3px; margin-top: auto; }
   .opt-cell.pick:hover { transform: none; }
 }
 

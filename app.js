@@ -23,6 +23,8 @@
 
   const ICONS = {
     up: 'M6 15l6-6 6 6',
+    left: 'M15 6l-6 6 6 6',
+    right: 'M9 6l6 6-6 6',
     down: 'M6 9l6 6 6-6',
     trash: 'M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3',
     x: 'M6 6l12 12M18 6L6 18',
@@ -601,6 +603,20 @@
     });
   }
 
+  /** Ausprägung innerhalb ihres Parameters nach links (−1) oder rechts (+1) verschieben. */
+  function moveOption(pid, index, delta) {
+    const p = state.parameters.find(x => x.id === pid);
+    const target = index + delta;
+    if (!p || target < 0 || target >= p.options.length) return;
+    pendingFocus = document.activeElement && document.activeElement.dataset.fid === `opt:${p.options[index].id}`
+      ? `opt:${p.options[index].id}` : null;
+    mutate(s => {
+      const opts = s.parameters.find(x => x.id === pid).options;
+      const [o] = opts.splice(index, 1);
+      opts.splice(target, 0, o);
+    });
+  }
+
   function deleteOption(pid, oid) {
     mutate(s => {
       const p = s.parameters.find(x => x.id === pid);
@@ -1013,6 +1029,10 @@
                   const nextParam = state.parameters[pi + 1];
                   if (nextParam) focusField(`param:${nextParam.id}`);
                 }
+              } else if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                // Alt+←/→ verschiebt die Ausprägung (Fokus bleibt im Feld)
+                e.preventDefault();
+                moveOption(p.id, oi, e.key === 'ArrowLeft' ? -1 : 1);
               } else if (e.key === 'Backspace' && !ta.value && p.options.length > 1) {
                 e.preventDefault();
                 const prev = p.options[oi - 1] || p.options[oi + 1];
@@ -1024,8 +1044,10 @@
           bindField(ta, v => { o.text = v; });
           const optLabel = o.text.trim() || `Ausprägung ${oi + 1}`;
           cells.push(h('div', { class: 'opt-cell edit' },
-            h('div', { class: 'opt-main' },
-              ta,
+            h('div', { class: 'opt-main' }, ta),
+            h('div', { class: 'opt-tools' },
+              iconBtn('left', 'Nach links verschieben (Alt+←)', () => moveOption(p.id, oi, -1), { disabled: oi === 0 }),
+              iconBtn('right', 'Nach rechts verschieben (Alt+→)', () => moveOption(p.id, oi, 1), { disabled: oi === p.options.length - 1 }),
               iconBtn('x', 'Ausprägung löschen', () => deleteOption(p.id, o.id), { danger: true })),
             evaluationOn()
               ? h('div', { class: 'opt-metrics' },
