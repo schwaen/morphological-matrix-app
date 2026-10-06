@@ -148,6 +148,7 @@ function syncSettingsForm() {
   $('#setCurrency').value = s.currency;
   $('#setCurrency').disabled = !s.costs;
   $('#setUtility').checked = s.utility;
+  $('#setMoscow').checked = s.moscow;
   $('#setScale').value = String(s.utilityMax);
   $('#setScale').disabled = !s.utility;
 }

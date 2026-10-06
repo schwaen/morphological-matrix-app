@@ -29,7 +29,8 @@ test('normalize: altes Format, Standardwerte und Bereinigung', () => {
   assert.deepEqual(plain(m.concepts[0].selections), {}); // ungültige Auswahl verworfen
   assert.equal(m.concepts[0].name, 'Konzept 1');
   assert.match(m.concepts[0].color, /^#[0-9a-f]{6}$/i);
-  assert.deepEqual(plain(m.settings), { costs: false, utility: false, currency: 'EUR', utilityMax: 10 });
+  assert.deepEqual(plain(m.settings), { costs: false, utility: false, currency: 'EUR', utilityMax: 10, moscow: false });
+  assert.ok(p.options.every(o => o.priority === null));
   assert.equal(m.activeConceptId, 'c1');
   assert.deepEqual(plain(m.categories), []);
 });
@@ -113,4 +114,27 @@ test('Datenformat: jede Version hat eine Migration bis zur aktuellen', () => {
   for (let v = 1; v < Model.SCHEMA_VERSION; v++) {
     assert.doesNotThrow(() => Model.migrate({ version: v, parameters: [] }), `Migration ${v} → ${v + 1}`);
   }
+});
+
+test('Priorität (MoSCoW): gültige Werte bleiben, ungültige werden verworfen', () => {
+  const m = Model.normalize({
+    version: 3,
+    settings: { moscow: true },
+    parameters: [{ id: 'p', options: [
+      { id: 'a', text: 'a', priority: 'must' }, { id: 'b', text: 'b', priority: 'wont' },
+      { id: 'c', text: 'c', priority: 'MUST' }, { id: 'd', text: 'd' },
+    ] }],
+  });
+  assert.equal(m.settings.moscow, true);
+  assert.deepEqual(plain(m.parameters[0].options.map(o => o.priority)), ['must', 'wont', null, null]);
+});
+
+test('Datenformat: Version 2 wird ohne Verlust auf Version 3 gebracht', () => {
+  const v2 = { version: 2, settings: { costs: true }, parameters: [{ id: 'p', options: [{ id: 'o', text: 'x', cost: 5 }] }] };
+  const m = Model.normalize(v2);
+  assert.equal(m.version, 3);
+  assert.equal(m.settings.costs, true);
+  assert.equal(m.settings.moscow, false);
+  assert.equal(m.parameters[0].options[0].cost, 5);
+  assert.equal(m.parameters[0].options[0].priority, null);
 });

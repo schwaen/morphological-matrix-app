@@ -38,20 +38,23 @@ const IO = (() => {
       [...catHead, cell(L.parameter), ...Array.from({ length: maxOptions }, (_, i) => cell(L.option(i + 1)))],
       ...m.parameters.map(p => [...catCell(p), cell(p.name), ...p.options.map(o => cell(o.text))]),
     ];
-    const { costs, utility, currency, utilityMax } = m.settings;
-    if (costs || utility) {
+    const { costs, utility, currency, utilityMax, moscow } = m.settings;
+    const prio = o => (o.priority ? Texts.moscow.levels[o.priority].label : '');
+    if (costs || utility || moscow) {
       lines.push([], [...catHead, cell(L.parameter),
         ...(utility ? [cell(L.weight)] : []),
         cell(L.optionSingle),
         ...(costs ? [cell(L.cost(currency))] : []),
-        ...(utility ? [cell(L.utility(utilityMax))] : [])]);
+        ...(utility ? [cell(L.utility(utilityMax))] : []),
+        ...(moscow ? [cell(L.priority)] : [])]);
       for (const p of m.parameters) {
         for (const o of p.options) {
           lines.push([...catCell(p), cell(p.name),
             ...(utility ? [csvNum(weightOf(p))] : []),
             cell(o.text),
             ...(costs ? [csvNum(o.cost)] : []),
-            ...(utility ? [csvNum(o.score)] : [])]);
+            ...(utility ? [csvNum(o.score)] : []),
+            ...(moscow ? [cell(prio(o))] : [])]);
         }
       }
     }

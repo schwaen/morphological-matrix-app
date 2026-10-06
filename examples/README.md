@@ -9,7 +9,7 @@ Examples.register({
   "id": "kaffeemaschine",                  // eindeutig, gleich dem Dateinamen ohne .js
   "name": "Kaffeemaschine",                // Name in der Auswahl
   "description": "Kurze Beschreibung …",   // optional, erscheint in der Auswahl
-  "data": { "version": 2, "title": "…", … } // Matrix im Format des JSON-Exports
+  "data": { "version": 3, "title": "…", … } // Matrix im Format des JSON-Exports
 });
 ```
 

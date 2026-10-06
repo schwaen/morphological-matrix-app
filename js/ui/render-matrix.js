@@ -128,7 +128,7 @@ function renderOptionEdit(p, pi, o, oi) {
   });
   bindField(ta, v => { o.text = v; });
   const optLabel = o.text.trim() || Texts.fallback.option(oi + 1);
-  const { costs, utility, currency, utilityMax } = state.settings;
+  const { costs, utility, currency, utilityMax, moscow } = state.settings;
   return h('div', { class: 'opt-cell edit' },
     h('div', { class: 'opt-main' }, ta),
     h('div', { class: 'opt-tools' },
@@ -152,16 +152,40 @@ function renderOptionEdit(p, pi, o, oi) {
               validate: n => n >= 0 && n <= utilityMax,
             }))
           : null)
-      : null);
+      : null,
+    moscow ? priorityPicker(p, o, optLabel) : null);
+}
+
+/** Auswahl M/S/C/W; erneuter Klick auf die gewählte Priorität entfernt sie. */
+function priorityPicker(p, o, optLabel) {
+  return h('div', { class: 'opt-prio', role: 'group', 'aria-label': Texts.moscow.groupLabel },
+    h('span', { class: 'metric-unit', 'aria-hidden': 'true' }, Texts.moscow.short),
+    Model.PRIORITIES.map(level => {
+      const { short, label } = Texts.moscow.levels[level];
+      return h('button', {
+        type: 'button', class: `prio-btn prio-${level}`, 'aria-pressed': String(o.priority === level),
+        title: level === 'wont' ? Texts.moscow.wontHint : label,
+        'aria-label': Texts.moscow.setLabel(label, optLabel),
+        onclick: () => setPriority(p.id, o.id, level),
+      }, short);
+    }));
+}
+
+/** Kürzel der Priorität (M/S/C/W) oder `null`. @param {MatrixOption} o */
+function priorityBadge(o) {
+  if (!state.settings.moscow || !o.priority) return null;
+  const { short, label } = Texts.moscow.levels[o.priority];
+  return h('span', { class: `prio prio-${o.priority}`, title: o.priority === 'wont' ? Texts.moscow.wontHint : label }, short);
 }
 
 function renderOptionPick(p, o, oi, active) {
   const selectedBy = state.concepts.filter(c => c.selections[p.id] === o.id);
   const isActive = !!active && active.selections[p.id] === o.id;
   const metrics = optionMetricsText(o);
+  const badge = priorityBadge(o);
   return h('button', {
     type: 'button',
-    class: `opt-cell pick${isActive ? ' is-active' : ''}${o.text.trim() ? '' : ' is-empty'}`,
+    class: `opt-cell pick${isActive ? ' is-active' : ''}${o.text.trim() ? '' : ' is-empty'}${state.settings.moscow && o.priority === 'wont' ? ' is-wont' : ''}`,
     'aria-pressed': String(isActive),
     title: selectedBy.length ? Texts.matrix.selectedIn(selectedBy.map(Model.nameOrUnnamed).join(', ')) : null,
     style: isActive ? { '--c': active.color } : null,
@@ -170,7 +194,7 @@ function renderOptionPick(p, o, oi, active) {
   },
   h('span', { class: 'opt-label' },
     h('span', null, o.text.trim() || Texts.fallback.emptyOption(oi + 1)),
-    metrics ? h('span', { class: 'opt-metrics-view' }, metrics) : null),
+    metrics || badge ? h('span', { class: 'opt-metrics-view' }, badge, metrics) : null),
   selectedBy.length
     ? h('span', { class: 'markers', 'aria-hidden': 'true' },
       selectedBy.map(c => h('span', { class: 'marker', style: { '--c': c.color } })))

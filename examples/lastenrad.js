@@ -8,10 +8,10 @@ Examples.register({
   "name": "Elektro-Lastenrad (umfangreich)",
   "description": "Große Matrix zum Erkunden: 30 Parameter in 6 Kategorien mit bis zu 8 Ausprägungen, 7 Konzepte, Kosten und Nutzwerte aktiv – inklusive offener Werte und eines unvollständigen Entwurfs.",
   "data": {
-    "version": 2,
+    "version": 3,
     "title": "Beispiel: Elektro-Lastenrad",
     "description": "Baukasten für eine Lastenrad-Produktfamilie: Welche Teillösungen ergeben welche Fahrzeugvariante? Kosten = Mehrkosten je Rad in Euro gegenüber der einfachsten Lösung, Nutzwert 0–10, Gewichtung nach Bedeutung für die Kundschaft.",
-    "settings": { "costs": true, "utility": true, "currency": "EUR", "utilityMax": 10 },
+    "settings": { "costs": true, "utility": true, "currency": "EUR", "utilityMax": 10, "moscow": false },
     "categories": [
       { "id": "k1", "name": "Antrieb", "color": "#4f46e5" },
       { "id": "k2", "name": "Energie", "color": "#0891b2" },
@@ -27,10 +27,10 @@ Examples.register({
         "weight": 3,
         "categoryId": "k1",
         "options": [
-          { "id": "p1o1", "text": "Vorderradnabe", "cost": 180, "score": 4 },
-          { "id": "p1o2", "text": "Hinterradnabe", "cost": 220, "score": 6 },
-          { "id": "p1o3", "text": "Mittelmotor", "cost": 450, "score": 9 },
-          { "id": "p1o4", "text": "Ohne Motor (Bio-Bike)", "cost": 0, "score": 2 }
+          { "id": "p1o1", "text": "Vorderradnabe", "cost": 180, "score": 4, "priority": null },
+          { "id": "p1o2", "text": "Hinterradnabe", "cost": 220, "score": 6, "priority": null },
+          { "id": "p1o3", "text": "Mittelmotor", "cost": 450, "score": 9, "priority": null },
+          { "id": "p1o4", "text": "Ohne Motor (Bio-Bike)", "cost": 0, "score": 2, "priority": null }
         ]
       },
       {
@@ -39,10 +39,10 @@ Examples.register({
         "weight": 2,
         "categoryId": "k1",
         "options": [
-          { "id": "p2o1", "text": "40 Nm", "cost": 0, "score": 4 },
-          { "id": "p2o2", "text": "65 Nm", "cost": 80, "score": 7 },
-          { "id": "p2o3", "text": "85 Nm", "cost": 160, "score": 9 },
-          { "id": "p2o4", "text": "120 Nm (Gewerbe)", "cost": 260, "score": 8 }
+          { "id": "p2o1", "text": "40 Nm", "cost": 0, "score": 4, "priority": null },
+          { "id": "p2o2", "text": "65 Nm", "cost": 80, "score": 7, "priority": null },
+          { "id": "p2o3", "text": "85 Nm", "cost": 160, "score": 9, "priority": null },
+          { "id": "p2o4", "text": "120 Nm (Gewerbe)", "cost": 260, "score": 8, "priority": null }
         ]
       },
       {
@@ -51,11 +51,11 @@ Examples.register({
         "weight": 2,
         "categoryId": "k1",
         "options": [
-          { "id": "p3o1", "text": "Kettenschaltung 9-fach", "cost": 60, "score": 5 },
-          { "id": "p3o2", "text": "Nabenschaltung 5-Gang", "cost": 140, "score": 7 },
-          { "id": "p3o3", "text": "Stufenlose Nabe", "cost": 290, "score": 9 },
-          { "id": "p3o4", "text": "Elektronische Automatikschaltung", "cost": 480, "score": 8 },
-          { "id": "p3o5", "text": "Singlespeed", "cost": 0, "score": 3 }
+          { "id": "p3o1", "text": "Kettenschaltung 9-fach", "cost": 60, "score": 5, "priority": null },
+          { "id": "p3o2", "text": "Nabenschaltung 5-Gang", "cost": 140, "score": 7, "priority": null },
+          { "id": "p3o3", "text": "Stufenlose Nabe", "cost": 290, "score": 9, "priority": null },
+          { "id": "p3o4", "text": "Elektronische Automatikschaltung", "cost": 480, "score": 8, "priority": null },
+          { "id": "p3o5", "text": "Singlespeed", "cost": 0, "score": 3, "priority": null }
         ]
       },
       {
@@ -64,9 +64,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k1",
         "options": [
-          { "id": "p4o1", "text": "Kette", "cost": 15, "score": 5 },
-          { "id": "p4o2", "text": "Kette mit Vollkettenschutz", "cost": 45, "score": 7 },
-          { "id": "p4o3", "text": "Riemen", "cost": 160, "score": 9 }
+          { "id": "p4o1", "text": "Kette", "cost": 15, "score": 5, "priority": null },
+          { "id": "p4o2", "text": "Kette mit Vollkettenschutz", "cost": 45, "score": 7, "priority": null },
+          { "id": "p4o3", "text": "Riemen", "cost": 160, "score": 9, "priority": null }
         ]
       },
       {
@@ -75,9 +75,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k1",
         "options": [
-          { "id": "p5o1", "text": "3 feste Stufen", "cost": 0, "score": 5 },
-          { "id": "p5o2", "text": "5 Stufen und Schiebehilfe", "cost": 20, "score": 7 },
-          { "id": "p5o3", "text": "Automatisch nach Last", "cost": 70, "score": 9 }
+          { "id": "p5o1", "text": "3 feste Stufen", "cost": 0, "score": 5, "priority": null },
+          { "id": "p5o2", "text": "5 Stufen und Schiebehilfe", "cost": 20, "score": 7, "priority": null },
+          { "id": "p5o3", "text": "Automatisch nach Last", "cost": 70, "score": 9, "priority": null }
         ]
       },
       {
@@ -86,11 +86,11 @@ Examples.register({
         "weight": 3,
         "categoryId": "k2",
         "options": [
-          { "id": "p6o1", "text": "400 Wh", "cost": 280, "score": 4 },
-          { "id": "p6o2", "text": "500 Wh", "cost": 340, "score": 6 },
-          { "id": "p6o3", "text": "625 Wh", "cost": 420, "score": 8 },
-          { "id": "p6o4", "text": "750 Wh", "cost": 520, "score": 9 },
-          { "id": "p6o5", "text": "2 × 500 Wh (Dual)", "cost": 690, "score": 10 }
+          { "id": "p6o1", "text": "400 Wh", "cost": 280, "score": 4, "priority": null },
+          { "id": "p6o2", "text": "500 Wh", "cost": 340, "score": 6, "priority": null },
+          { "id": "p6o3", "text": "625 Wh", "cost": 420, "score": 8, "priority": null },
+          { "id": "p6o4", "text": "750 Wh", "cost": 520, "score": 9, "priority": null },
+          { "id": "p6o5", "text": "2 × 500 Wh (Dual)", "cost": 690, "score": 10, "priority": null }
         ]
       },
       {
@@ -99,10 +99,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p7o1", "text": "Im Rahmen integriert", "cost": 90, "score": 9 },
-          { "id": "p7o2", "text": "Auf dem Unterrohr", "cost": 20, "score": 6 },
-          { "id": "p7o3", "text": "Unter der Transportbox", "cost": 40, "score": 7 },
-          { "id": "p7o4", "text": "Am Gepäckträger", "cost": 10, "score": 4 }
+          { "id": "p7o1", "text": "Im Rahmen integriert", "cost": 90, "score": 9, "priority": null },
+          { "id": "p7o2", "text": "Auf dem Unterrohr", "cost": 20, "score": 6, "priority": null },
+          { "id": "p7o3", "text": "Unter der Transportbox", "cost": 40, "score": 7, "priority": null },
+          { "id": "p7o4", "text": "Am Gepäckträger", "cost": 10, "score": 4, "priority": null }
         ]
       },
       {
@@ -111,9 +111,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p8o1", "text": "Externes Ladegerät 2 A", "cost": 0, "score": 5 },
-          { "id": "p8o2", "text": "Schnellladegerät 4 A", "cost": 60, "score": 8 },
-          { "id": "p8o3", "text": "Ladebuchse am Rahmen", "cost": 30, "score": 7 }
+          { "id": "p8o1", "text": "Externes Ladegerät 2 A", "cost": 0, "score": 5, "priority": null },
+          { "id": "p8o2", "text": "Schnellladegerät 4 A", "cost": 60, "score": 8, "priority": null },
+          { "id": "p8o3", "text": "Ladebuchse am Rahmen", "cost": 30, "score": 7, "priority": null }
         ]
       },
       {
@@ -122,9 +122,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p9o1", "text": "Nicht vorgesehen", "cost": 0, "score": 3 },
-          { "id": "p9o2", "text": "Nachrüstbar", "cost": 30, "score": 7 },
-          { "id": "p9o3", "text": "Serienmäßig", "cost": 450, "score": 9 }
+          { "id": "p9o1", "text": "Nicht vorgesehen", "cost": 0, "score": 3, "priority": null },
+          { "id": "p9o2", "text": "Nachrüstbar", "cost": 30, "score": 7, "priority": null },
+          { "id": "p9o3", "text": "Serienmäßig", "cost": 450, "score": 9, "priority": null }
         ]
       },
       {
@@ -133,9 +133,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p10o1", "text": "Keine", "cost": 0, "score": 5 },
-          { "id": "p10o2", "text": "Beim Bremsen (nur Nabenmotor)", "cost": 120, "score": 6 },
-          { "id": "p10o3", "text": "Bergab einstellbar (in Erprobung)", "cost": null, "score": null }
+          { "id": "p10o1", "text": "Keine", "cost": 0, "score": 5, "priority": null },
+          { "id": "p10o2", "text": "Beim Bremsen (nur Nabenmotor)", "cost": 120, "score": 6, "priority": null },
+          { "id": "p10o3", "text": "Bergab einstellbar (in Erprobung)", "cost": null, "score": null, "priority": null }
         ]
       },
       {
@@ -144,11 +144,11 @@ Examples.register({
         "weight": 3,
         "categoryId": "k3",
         "options": [
-          { "id": "p11o1", "text": "Long John (Box vorne)", "cost": 600, "score": 8 },
-          { "id": "p11o2", "text": "Longtail", "cost": 450, "score": 7 },
-          { "id": "p11o3", "text": "Trike (zwei Räder vorne)", "cost": 750, "score": 6 },
-          { "id": "p11o4", "text": "Midtail", "cost": 380, "score": 6 },
-          { "id": "p11o5", "text": "Anhänger-Lösung", "cost": 250, "score": 4 }
+          { "id": "p11o1", "text": "Long John (Box vorne)", "cost": 600, "score": 8, "priority": null },
+          { "id": "p11o2", "text": "Longtail", "cost": 450, "score": 7, "priority": null },
+          { "id": "p11o3", "text": "Trike (zwei Räder vorne)", "cost": 750, "score": 6, "priority": null },
+          { "id": "p11o4", "text": "Midtail", "cost": 380, "score": 6, "priority": null },
+          { "id": "p11o5", "text": "Anhänger-Lösung", "cost": 250, "score": 4, "priority": null }
         ]
       },
       {
@@ -157,14 +157,14 @@ Examples.register({
         "weight": 2,
         "categoryId": "k3",
         "options": [
-          { "id": "p12o1", "text": "Stahl", "cost": 80, "score": 5 },
-          { "id": "p12o2", "text": "Aluminium", "cost": 160, "score": 7 },
-          { "id": "p12o3", "text": "Aluminium hydrogeformt", "cost": 230, "score": 8 },
-          { "id": "p12o4", "text": "Chrom-Molybdän-Stahl", "cost": 140, "score": 7 },
-          { "id": "p12o5", "text": "Carbon", "cost": 900, "score": 9 },
-          { "id": "p12o6", "text": "Titan", "cost": 1400, "score": 9 },
-          { "id": "p12o7", "text": "Bambus-Verbund", "cost": 380, "score": 6 },
-          { "id": "p12o8", "text": "Recycling-Aluminium", "cost": 200, "score": 8 }
+          { "id": "p12o1", "text": "Stahl", "cost": 80, "score": 5, "priority": null },
+          { "id": "p12o2", "text": "Aluminium", "cost": 160, "score": 7, "priority": null },
+          { "id": "p12o3", "text": "Aluminium hydrogeformt", "cost": 230, "score": 8, "priority": null },
+          { "id": "p12o4", "text": "Chrom-Molybdän-Stahl", "cost": 140, "score": 7, "priority": null },
+          { "id": "p12o5", "text": "Carbon", "cost": 900, "score": 9, "priority": null },
+          { "id": "p12o6", "text": "Titan", "cost": 1400, "score": 9, "priority": null },
+          { "id": "p12o7", "text": "Bambus-Verbund", "cost": 380, "score": 6, "priority": null },
+          { "id": "p12o8", "text": "Recycling-Aluminium", "cost": 200, "score": 8, "priority": null }
         ]
       },
       {
@@ -173,10 +173,10 @@ Examples.register({
         "weight": 2,
         "categoryId": "k3",
         "options": [
-          { "id": "p13o1", "text": "Starr", "cost": 0, "score": 3 },
-          { "id": "p13o2", "text": "Federgabel", "cost": 120, "score": 6 },
-          { "id": "p13o3", "text": "Federgabel und gefederte Sattelstütze", "cost": 170, "score": 7 },
-          { "id": "p13o4", "text": "Vollfederung", "cost": 420, "score": 9 }
+          { "id": "p13o1", "text": "Starr", "cost": 0, "score": 3, "priority": null },
+          { "id": "p13o2", "text": "Federgabel", "cost": 120, "score": 6, "priority": null },
+          { "id": "p13o3", "text": "Federgabel und gefederte Sattelstütze", "cost": 170, "score": 7, "priority": null },
+          { "id": "p13o4", "text": "Vollfederung", "cost": 420, "score": 9, "priority": null }
         ]
       },
       {
@@ -185,10 +185,10 @@ Examples.register({
         "weight": 3,
         "categoryId": "k3",
         "options": [
-          { "id": "p14o1", "text": "Felgenbremse", "cost": 25, "score": 3 },
-          { "id": "p14o2", "text": "Rollenbremse", "cost": 50, "score": 5 },
-          { "id": "p14o3", "text": "Hydraulische Scheibenbremse, 2 Kolben", "cost": 110, "score": 8 },
-          { "id": "p14o4", "text": "Hydraulische Scheibenbremse, 4 Kolben", "cost": 180, "score": 10 }
+          { "id": "p14o1", "text": "Felgenbremse", "cost": 25, "score": 3, "priority": null },
+          { "id": "p14o2", "text": "Rollenbremse", "cost": 50, "score": 5, "priority": null },
+          { "id": "p14o3", "text": "Hydraulische Scheibenbremse, 2 Kolben", "cost": 110, "score": 8, "priority": null },
+          { "id": "p14o4", "text": "Hydraulische Scheibenbremse, 4 Kolben", "cost": 180, "score": 10, "priority": null }
         ]
       },
       {
@@ -197,10 +197,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k3",
         "options": [
-          { "id": "p15o1", "text": "Standard 20 Zoll", "cost": 40, "score": 5 },
-          { "id": "p15o2", "text": "Pannenschutz 20 Zoll", "cost": 70, "score": 8 },
-          { "id": "p15o3", "text": "Ballonreifen 24 Zoll", "cost": 90, "score": 7 },
-          { "id": "p15o4", "text": "Spikereifen (Winter)", "cost": 120, "score": 6 }
+          { "id": "p15o1", "text": "Standard 20 Zoll", "cost": 40, "score": 5, "priority": null },
+          { "id": "p15o2", "text": "Pannenschutz 20 Zoll", "cost": 70, "score": 8, "priority": null },
+          { "id": "p15o3", "text": "Ballonreifen 24 Zoll", "cost": 90, "score": 7, "priority": null },
+          { "id": "p15o4", "text": "Spikereifen (Winter)", "cost": 120, "score": 6, "priority": null }
         ]
       },
       {
@@ -209,11 +209,11 @@ Examples.register({
         "weight": 2,
         "categoryId": "k4",
         "options": [
-          { "id": "p16o1", "text": "Offene Ladefläche", "cost": 60, "score": 5 },
-          { "id": "p16o2", "text": "Holzbox", "cost": 180, "score": 6 },
-          { "id": "p16o3", "text": "Kunststoffbox (EPP)", "cost": 220, "score": 8 },
-          { "id": "p16o4", "text": "Abschließbare Alu-Box", "cost": 390, "score": 9 },
-          { "id": "p16o5", "text": "Modulare Wechselaufbauten", "cost": 520, "score": 9 }
+          { "id": "p16o1", "text": "Offene Ladefläche", "cost": 60, "score": 5, "priority": null },
+          { "id": "p16o2", "text": "Holzbox", "cost": 180, "score": 6, "priority": null },
+          { "id": "p16o3", "text": "Kunststoffbox (EPP)", "cost": 220, "score": 8, "priority": null },
+          { "id": "p16o4", "text": "Abschließbare Alu-Box", "cost": 390, "score": 9, "priority": null },
+          { "id": "p16o5", "text": "Modulare Wechselaufbauten", "cost": 520, "score": 9, "priority": null }
         ]
       },
       {
@@ -222,10 +222,10 @@ Examples.register({
         "weight": 2,
         "categoryId": "k4",
         "options": [
-          { "id": "p17o1", "text": "Keine", "cost": 0, "score": 3 },
-          { "id": "p17o2", "text": "Sitzbank für 2 Kinder", "cost": 90, "score": 6 },
-          { "id": "p17o3", "text": "2 Sitze mit 5-Punkt-Gurt", "cost": 160, "score": 8 },
-          { "id": "p17o4", "text": "Adapter für Babyschale", "cost": 120, "score": 7 }
+          { "id": "p17o1", "text": "Keine", "cost": 0, "score": 3, "priority": null },
+          { "id": "p17o2", "text": "Sitzbank für 2 Kinder", "cost": 90, "score": 6, "priority": null },
+          { "id": "p17o3", "text": "2 Sitze mit 5-Punkt-Gurt", "cost": 160, "score": 8, "priority": null },
+          { "id": "p17o4", "text": "Adapter für Babyschale", "cost": 120, "score": 7, "priority": null }
         ]
       },
       {
@@ -234,9 +234,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k4",
         "options": [
-          { "id": "p18o1", "text": "Keiner", "cost": 0, "score": 3 },
-          { "id": "p18o2", "text": "Regenverdeck", "cost": 140, "score": 7 },
-          { "id": "p18o3", "text": "Komplettverdeck mit Fenster", "cost": 260, "score": 9 }
+          { "id": "p18o1", "text": "Keiner", "cost": 0, "score": 3, "priority": null },
+          { "id": "p18o2", "text": "Regenverdeck", "cost": 140, "score": 7, "priority": null },
+          { "id": "p18o3", "text": "Komplettverdeck mit Fenster", "cost": 260, "score": 9, "priority": null }
         ]
       },
       {
@@ -245,8 +245,8 @@ Examples.register({
         "weight": 1,
         "categoryId": "k4",
         "options": [
-          { "id": "p19o1", "text": "Feste Einstellung", "cost": 0, "score": 3 },
-          { "id": "p19o2", "text": "Sattel und Lenker werkzeuglos verstellbar", "cost": 70, "score": 9 }
+          { "id": "p19o1", "text": "Feste Einstellung", "cost": 0, "score": 3, "priority": null },
+          { "id": "p19o2", "text": "Sattel und Lenker werkzeuglos verstellbar", "cost": 70, "score": 9, "priority": null }
         ]
       },
       {
@@ -255,10 +255,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k4",
         "options": [
-          { "id": "p20o1", "text": "Einbeinständer", "cost": 15, "score": 3 },
-          { "id": "p20o2", "text": "Zweibeinständer", "cost": 45, "score": 7 },
-          { "id": "p20o3", "text": "Zweibeinständer mit Parkbremse", "cost": 90, "score": 9 },
-          { "id": "p20o4", "text": "Hydraulischer Hubständer", "cost": null, "score": 9 }
+          { "id": "p20o1", "text": "Einbeinständer", "cost": 15, "score": 3, "priority": null },
+          { "id": "p20o2", "text": "Zweibeinständer", "cost": 45, "score": 7, "priority": null },
+          { "id": "p20o3", "text": "Zweibeinständer mit Parkbremse", "cost": 90, "score": 9, "priority": null },
+          { "id": "p20o4", "text": "Hydraulischer Hubständer", "cost": null, "score": 9, "priority": null }
         ]
       },
       {
@@ -267,10 +267,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k5",
         "options": [
-          { "id": "p21o1", "text": "LED-Bedieneinheit", "cost": 0, "score": 4 },
-          { "id": "p21o2", "text": "Farbdisplay", "cost": 60, "score": 7 },
-          { "id": "p21o3", "text": "Smartphone als Display", "cost": 25, "score": 6 },
-          { "id": "p21o4", "text": "Großes Farbdisplay mit Navigation", "cost": 180, "score": 9 }
+          { "id": "p21o1", "text": "LED-Bedieneinheit", "cost": 0, "score": 4, "priority": null },
+          { "id": "p21o2", "text": "Farbdisplay", "cost": 60, "score": 7, "priority": null },
+          { "id": "p21o3", "text": "Smartphone als Display", "cost": 25, "score": 6, "priority": null },
+          { "id": "p21o4", "text": "Großes Farbdisplay mit Navigation", "cost": 180, "score": 9, "priority": null }
         ]
       },
       {
@@ -279,9 +279,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k5",
         "options": [
-          { "id": "p22o1", "text": "Keine", "cost": 0, "score": 3 },
-          { "id": "p22o2", "text": "Bluetooth-App", "cost": 15, "score": 6 },
-          { "id": "p22o3", "text": "App mit Cloud und Fahrtenbuch", "cost": 45, "score": 8 }
+          { "id": "p22o1", "text": "Keine", "cost": 0, "score": 3, "priority": null },
+          { "id": "p22o2", "text": "Bluetooth-App", "cost": 15, "score": 6, "priority": null },
+          { "id": "p22o3", "text": "App mit Cloud und Fahrtenbuch", "cost": 45, "score": 8, "priority": null }
         ]
       },
       {
@@ -290,10 +290,10 @@ Examples.register({
         "weight": 2,
         "categoryId": "k5",
         "options": [
-          { "id": "p23o1", "text": "Rahmenschloss", "cost": 25, "score": 4 },
-          { "id": "p23o2", "text": "Rahmen- und Kettenschloss", "cost": 70, "score": 6 },
-          { "id": "p23o3", "text": "Elektronische Motorsperre", "cost": 40, "score": 7 },
-          { "id": "p23o4", "text": "GPS-Ortung mit Alarm", "cost": 110, "score": 9 }
+          { "id": "p23o1", "text": "Rahmenschloss", "cost": 25, "score": 4, "priority": null },
+          { "id": "p23o2", "text": "Rahmen- und Kettenschloss", "cost": 70, "score": 6, "priority": null },
+          { "id": "p23o3", "text": "Elektronische Motorsperre", "cost": 40, "score": 7, "priority": null },
+          { "id": "p23o4", "text": "GPS-Ortung mit Alarm", "cost": 110, "score": 9, "priority": null }
         ]
       },
       {
@@ -302,9 +302,9 @@ Examples.register({
         "weight": 2,
         "categoryId": "k5",
         "options": [
-          { "id": "p24o1", "text": "Standard nach StVZO", "cost": 30, "score": 5 },
-          { "id": "p24o2", "text": "Hell mit Fernlicht", "cost": 80, "score": 8 },
-          { "id": "p24o3", "text": "Licht, Blinker und Bremslicht", "cost": 150, "score": 9 }
+          { "id": "p24o1", "text": "Standard nach StVZO", "cost": 30, "score": 5, "priority": null },
+          { "id": "p24o2", "text": "Hell mit Fernlicht", "cost": 80, "score": 8, "priority": null },
+          { "id": "p24o3", "text": "Licht, Blinker und Bremslicht", "cost": 150, "score": 9, "priority": null }
         ]
       },
       {
@@ -313,10 +313,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k5",
         "options": [
-          { "id": "p25o1", "text": "Keine", "cost": 0, "score": 4 },
-          { "id": "p25o2", "text": "Abstandswarner hinten (Radar)", "cost": 140, "score": 7 },
-          { "id": "p25o3", "text": "ABS für das Vorderrad", "cost": 300, "score": 9 },
-          { "id": "p25o4", "text": "Kombination aus Radar-Abstandswarner, ABS und automatischer Lichtsteuerung über Umgebungssensor", "cost": 520, "score": 10 }
+          { "id": "p25o1", "text": "Keine", "cost": 0, "score": 4, "priority": null },
+          { "id": "p25o2", "text": "Abstandswarner hinten (Radar)", "cost": 140, "score": 7, "priority": null },
+          { "id": "p25o3", "text": "ABS für das Vorderrad", "cost": 300, "score": 9, "priority": null },
+          { "id": "p25o4", "text": "Kombination aus Radar-Abstandswarner, ABS und automatischer Lichtsteuerung über Umgebungssensor", "cost": 520, "score": 10, "priority": null }
         ]
       },
       {
@@ -325,10 +325,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k6",
         "options": [
-          { "id": "p26o1", "text": "Fachhandel", "cost": 120, "score": 8 },
-          { "id": "p26o2", "text": "Direktvertrieb online", "cost": 40, "score": 5 },
-          { "id": "p26o3", "text": "Eigene Showrooms", "cost": 200, "score": 7 },
-          { "id": "p26o4", "text": "Abo-Modell", "cost": 60, "score": 6 }
+          { "id": "p26o1", "text": "Fachhandel", "cost": 120, "score": 8, "priority": null },
+          { "id": "p26o2", "text": "Direktvertrieb online", "cost": 40, "score": 5, "priority": null },
+          { "id": "p26o3", "text": "Eigene Showrooms", "cost": 200, "score": 7, "priority": null },
+          { "id": "p26o4", "text": "Abo-Modell", "cost": 60, "score": 6, "priority": null }
         ]
       },
       {
@@ -337,9 +337,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k6",
         "options": [
-          { "id": "p27o1", "text": "2 Jahre gesetzlich", "cost": 0, "score": 4 },
-          { "id": "p27o2", "text": "5 Jahre auf den Rahmen", "cost": 30, "score": 7 },
-          { "id": "p27o3", "text": "5 Jahre komplett inkl. Akku", "cost": 120, "score": 9 }
+          { "id": "p27o1", "text": "2 Jahre gesetzlich", "cost": 0, "score": 4, "priority": null },
+          { "id": "p27o2", "text": "5 Jahre auf den Rahmen", "cost": 30, "score": 7, "priority": null },
+          { "id": "p27o3", "text": "5 Jahre komplett inkl. Akku", "cost": 120, "score": 9, "priority": null }
         ]
       },
       {
@@ -348,9 +348,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k6",
         "options": [
-          { "id": "p28o1", "text": "Keine", "cost": 0, "score": 3 },
-          { "id": "p28o2", "text": "Inspektion beim Händler", "cost": 60, "score": 6 },
-          { "id": "p28o3", "text": "Mobiler Werkstattservice", "cost": 150, "score": 9 }
+          { "id": "p28o1", "text": "Keine", "cost": 0, "score": 3, "priority": null },
+          { "id": "p28o2", "text": "Inspektion beim Händler", "cost": 60, "score": 6, "priority": null },
+          { "id": "p28o3", "text": "Mobiler Werkstattservice", "cost": 150, "score": 9, "priority": null }
         ]
       },
       {
@@ -359,10 +359,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k6",
         "options": [
-          { "id": "p29o1", "text": "Kauf", "cost": 0, "score": 6 },
-          { "id": "p29o2", "text": "Dienstrad-Leasing", "cost": 30, "score": 8 },
-          { "id": "p29o3", "text": "Sharing-Flotte", "cost": 90, "score": 7 },
-          { "id": "p29o4", "text": "Miet-Abo", "cost": 50, "score": 7 }
+          { "id": "p29o1", "text": "Kauf", "cost": 0, "score": 6, "priority": null },
+          { "id": "p29o2", "text": "Dienstrad-Leasing", "cost": 30, "score": 8, "priority": null },
+          { "id": "p29o3", "text": "Sharing-Flotte", "cost": 90, "score": 7, "priority": null },
+          { "id": "p29o4", "text": "Miet-Abo", "cost": 50, "score": 7, "priority": null }
         ]
       },
       {
@@ -371,9 +371,9 @@ Examples.register({
         "weight": null,
         "categoryId": null,
         "options": [
-          { "id": "p30o1", "text": "Schwarz matt", "cost": 0, "score": 6 },
-          { "id": "p30o2", "text": "Signalfarbe", "cost": 20, "score": 7 },
-          { "id": "p30o3", "text": "Individuelle Pulverbeschichtung", "cost": 90, "score": 8 }
+          { "id": "p30o1", "text": "Schwarz matt", "cost": 0, "score": 6, "priority": null },
+          { "id": "p30o2", "text": "Signalfarbe", "cost": 20, "score": 7, "priority": null },
+          { "id": "p30o3", "text": "Individuelle Pulverbeschichtung", "cost": 90, "score": 8, "priority": null }
         ]
       }
     ],

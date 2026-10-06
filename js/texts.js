@@ -157,6 +157,23 @@ const Texts = (() => {
       none: 'Noch keine Konzepte.',
     },
 
+    // Priorität nach MoSCoW
+    moscow: {
+      levels: {
+        must: { short: 'M', label: 'Must have' },
+        should: { short: 'S', label: 'Should have' },
+        could: { short: 'C', label: 'Could have' },
+        wont: { short: 'W', label: "Won't have" },
+      },
+      groupLabel: 'Priorität',
+      short: 'Prio',
+      setLabel: (level, option) => `Priorität von ${option}: ${level}`,
+      wontHint: "Won't have – bewusst ausgeschlossen; wird von automatischen Konzepten nie gewählt",
+      profileTitle: 'Gewählte Ausprägungen je Priorität',
+      none: 'ohne',
+      wontNote: n => `enthält ${n} × Won't`,
+    },
+
     summary: {
       noConcept: 'Kein Konzept ausgewählt.',
       noParameters: 'Die Matrix enthält noch keine Parameter.',
@@ -175,6 +192,7 @@ const Texts = (() => {
       priceValue: 'Preis-Leistung',
       priceValueNote: 'Kosten je Nutzwertpunkt',
       priceValueTitle: 'Gesamtkosten geteilt durch Nutzwert – je niedriger, desto besser',
+      priority: 'Priorität (MoSCoW)',
     },
 
     evaluation: {
@@ -189,6 +207,9 @@ const Texts = (() => {
         'min-cost': { label: 'Geringste Kosten', missing: 'Kosten' },
         'max-cost': { label: 'Höchste Kosten', missing: 'Kosten' },
         'best-value': { label: 'Beste Preis-Leistung', missing: 'Kosten und Nutzwert' },
+        'moscow-must': { label: 'MVP (Must-haves)', missing: 'die Priorität „Must“' },
+        'moscow-should': { label: 'Standard (Should-haves)', missing: 'die Priorität „Should“' },
+        'moscow-could': { label: 'Premium (Could-haves)', missing: 'die Priorität „Could“' },
       },
     },
 
@@ -238,6 +259,7 @@ const Texts = (() => {
       weight: 'Gewicht',
       cost: currency => `Kosten (${currency})`,
       utility: max => `Nutzwert (0–${max})`,
+      priority: 'Priorität (MoSCoW)',
       concept: 'Konzept',
       totalCost: currency => `Gesamtkosten (${currency})`,
       utilityTotal: 'Nutzwert',

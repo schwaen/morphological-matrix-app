@@ -66,6 +66,7 @@ function bindEvents() {
   $('#settingsDone').addEventListener('click', () => closeDialog($('#settingsDialog')));
   $('#setCosts').addEventListener('change', e => changeSetting('costs', e.target.checked));
   $('#setUtility').addEventListener('change', e => changeSetting('utility', e.target.checked));
+  $('#setMoscow').addEventListener('change', e => changeSetting('moscow', e.target.checked));
   $('#setCurrency').addEventListener('change', e => changeSetting('currency', e.target.value));
   $('#setScale').addEventListener('change', e => changeScale(Number(e.target.value)));
 

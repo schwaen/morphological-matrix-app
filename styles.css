@@ -28,6 +28,11 @@
     --accent-soft: #eef2ff;
     --accent-contrast: #ffffff;
     --danger: #d92d20;
+    /* Prioritäten (MoSCoW): Text / Hintergrund */
+    --prio-must: #c92a2a; --prio-must-bg: #ffe3e3;
+    --prio-should: #a35200; --prio-should-bg: #fff0d6;
+    --prio-could: #1864ab; --prio-could-bg: #dbeafe;
+    --prio-wont: #495057; --prio-wont-bg: #e9ecef;
     --radius: 12px;
     --radius-sm: 7px;
     --shadow-xs: 0 1px 2px rgba(16, 24, 40, .05);
@@ -55,6 +60,10 @@
       --accent-soft: #1f2140;
       --accent-contrast: #0c0e13;
       --danger: #f97066;
+      --prio-must: #ffa8a8; --prio-must-bg: #4a1d1f;
+      --prio-should: #ffc078; --prio-should-bg: #45300f;
+      --prio-could: #a5d8ff; --prio-could-bg: #16304d;
+      --prio-wont: #ced4da; --prio-wont-bg: #2f343a;
       --shadow-xs: 0 1px 2px rgba(0, 0, 0, .4);
       --shadow: 0 1px 3px rgba(0, 0, 0, .45);
       --shadow-lg: 0 16px 40px -8px rgba(0, 0, 0, .6);
@@ -164,14 +173,15 @@
     position: fixed; left: 50%; bottom: 20px; z-index: 50;
     transform: translateX(-50%);
     display: flex; align-items: center; gap: 12px;
-    max-width: calc(100vw - 32px);
+    /* max-content: Mit left: 50% stünde sonst nur die halbe Breite für den Umbruch zur Verfügung */
+    width: max-content; max-width: calc(100vw - 32px);
     padding: 10px 12px 10px 16px;
     background: var(--text); color: var(--bg);
     border-radius: 12px; box-shadow: var(--shadow-lg);
     font-size: .9rem;
   }
   .toast button {
-    border: 0; background: transparent; color: inherit; font-weight: 700;
+    flex: none; border: 0; background: transparent; color: inherit; font-weight: 700;
     text-decoration: underline; cursor: pointer; padding: 4px 6px;
   }
 }
@@ -576,6 +586,9 @@
   .auto-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
   .auto-buttons .btn { white-space: normal; text-align: center; line-height: 1.2; background: var(--surface); }
   .auto-buttons .btn:not([hidden]):last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .auto-buttons-list { grid-template-columns: minmax(0, 1fr); }
+  .auto-group { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); }
+  .auto-buttons[hidden] + .auto-group { margin-top: 0; padding-top: 0; border-top: 0; }
   .check { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); cursor: pointer; }
   .check input { width: 16px; height: 16px; accent-color: var(--accent); }
 
@@ -635,6 +648,38 @@
   /* Obergrenze: Ein langer Text bricht um, statt alle Spalten auf seine Einzeilenbreite aufzuziehen */
   .opt-label { display: flex; flex-direction: column; gap: 1px; max-inline-size: 15rem; }
   .opt-metrics-view { font-size: .72rem; font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* Priorität (MoSCoW) */
+  .prio {
+    display: inline-grid; place-items: center; min-width: 18px; height: 17px; padding: 0 4px; margin-right: 5px;
+    border-radius: 5px; font-size: .68rem; font-weight: 700; letter-spacing: .02em; line-height: 1;
+    vertical-align: 1px; white-space: nowrap;
+  }
+  .prio-must { color: var(--prio-must); background: var(--prio-must-bg); }
+  .prio-should { color: var(--prio-should); background: var(--prio-should-bg); }
+  .prio-could { color: var(--prio-could); background: var(--prio-could-bg); }
+  .prio-wont { color: var(--prio-wont); background: var(--prio-wont-bg); }
+  .prio-none { color: var(--muted); background: var(--surface-2); font-weight: 600; }
+  .opt-label > .opt-metrics-view .prio-wont { text-decoration: line-through; }
+  .opt-cell.pick.is-wont:not(.is-active) { opacity: .6; }
+  .opt-prio { display: flex; align-items: center; gap: 3px; padding: 0 6px 6px 9px; contain: inline-size; }
+  .opt-prio .metric-unit { margin-right: 2px; }
+  .prio-btn {
+    flex: 1 1 0; min-width: 0; height: 22px; padding: 0;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--surface);
+    font-size: .7rem; font-weight: 700; color: var(--muted); cursor: pointer;
+  }
+  .prio-btn:hover { border-color: var(--border-strong); color: var(--text); }
+  .prio-btn[aria-pressed="true"] { border-color: currentColor; }
+  .prio-btn.prio-must[aria-pressed="true"] { color: var(--prio-must); background: var(--prio-must-bg); }
+  .prio-btn.prio-should[aria-pressed="true"] { color: var(--prio-should); background: var(--prio-should-bg); }
+  .prio-btn.prio-could[aria-pressed="true"] { color: var(--prio-could); background: var(--prio-could-bg); }
+  .prio-btn.prio-wont[aria-pressed="true"] { color: var(--prio-wont); background: var(--prio-wont-bg); }
+  .prio-profile { display: flex; flex-wrap: wrap; gap: 4px; }
+  .prio-profile .prio { margin: 0; }
+  .summary .prio-profile { margin: -4px 0 12px; }
+  .prio-note { display: block; margin-top: 2px; color: var(--muted); }
+  .setting-desc .prio { margin: 0 2px 0 0; }
   .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .metric { display: flex; flex-direction: column; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
   .metric span { font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
@@ -752,6 +797,6 @@
     .collapse-toggle { padding: 0 0 8px; }
     .collapse-toggle .chevron, .collapse-meta { display: none; }
     .compare td.best::after { display: none; }
-    .opt-cell.pick, .concept, .compare tr, .param-cell, .cat-band { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .opt-cell.pick, .concept, .compare tr, .param-cell, .cat-band, .prio { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 }

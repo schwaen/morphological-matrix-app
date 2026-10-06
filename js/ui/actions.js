@@ -259,6 +259,17 @@ function generateConcept(key) {
 
 // ---------- Bewertungseinstellungen ----------
 
+/**
+ * Priorität (MoSCoW) einer Ausprägung setzen; dieselbe Priorität erneut gewählt entfernt sie.
+ * @param {string} pid @param {string} oid @param {MatrixPriority} priority
+ */
+function setPriority(pid, oid, priority) {
+  mutate(m => {
+    const o = m.parameters.find(p => p.id === pid).options.find(x => x.id === oid);
+    o.priority = o.priority === priority ? null : priority;
+  });
+}
+
 /** @template {keyof MatrixSettings} K @param {K} key @param {MatrixSettings[K]} value */
 function changeSetting(key, value) {
   if (state.settings[key] === value) return;

@@ -79,6 +79,21 @@ const Evaluation = (() => {
     return sumW > 0 ? weightOf(p) / sumW : null;
   }
 
+  /**
+   * Anzahl der gewählten Ausprägungen eines Konzepts je Priorität (MoSCoW).
+   * `none`: gewählt, aber ohne Priorität. Nicht gewählte Parameter zählen nicht.
+   * @param {Matrix} m @param {MatrixConcept} c
+   * @returns {Record<MatrixPriority | 'none', number>}
+   */
+  function priorityProfile(m, c) {
+    const counts = { must: 0, should: 0, could: 0, wont: 0, none: 0 };
+    for (const p of m.parameters) {
+      const o = p.options.find(x => x.id === c.selections[p.id]);
+      if (o) counts[o.priority || 'none']++;
+    }
+    return counts;
+  }
+
   // ---------- Automatische Konzepte ----------
 
   /** Wählt die Ausprägung mit dem lexikografisch kleinsten Schlüssel; Kandidaten per Filter. */
@@ -191,11 +206,29 @@ const Evaluation = (() => {
       available: m => m.settings.costs && m.settings.utility,
       build: buildBestValue,
     },
+    // MoSCoW-Pfade: je Parameter nur Ausprägungen genau dieser Priorität (ohne Rückfall auf
+    // eine andere Stufe; Parameter ohne passende Priorität bleiben leer).
+    // MVP: bei mehreren die günstigste; Standard/Premium: die mit dem höchsten Nutzwert.
+    'moscow-must': {
+      ...Texts.evaluation.generators['moscow-must'],
+      available: m => m.settings.moscow,
+      build: separable(o => o.priority === 'must', (m, o) => [tieCost(m, o), tieScore(m, o)]),
+    },
+    'moscow-should': {
+      ...Texts.evaluation.generators['moscow-should'],
+      available: m => m.settings.moscow,
+      build: separable(o => o.priority === 'should', (m, o) => [tieScore(m, o), tieCost(m, o)]),
+    },
+    'moscow-could': {
+      ...Texts.evaluation.generators['moscow-could'],
+      available: m => m.settings.moscow,
+      build: separable(o => o.priority === 'could', (m, o) => [tieScore(m, o), tieCost(m, o)]),
+    },
   };
 
   return {
     weightOf, totalWeight, clampScore, isEnabled, weightShare,
-    conceptCost, conceptUtility, priceValue,
+    conceptCost, conceptUtility, priceValue, priorityProfile,
     GENERATORS,
   };
 })();
