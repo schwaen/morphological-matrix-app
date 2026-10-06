@@ -165,6 +165,11 @@ function renderGenerators() {
     btn.hidden = !on;
     any = any || on;
   });
+  // Gruppen ohne verfügbare Knöpfe ausblenden (z. B. nur MoSCoW aktiv)
+  $$('#autoConcepts .auto-buttons').forEach(group => {
+    group.hidden = ![...group.querySelectorAll('button')].some(b => !b.hidden);
+  });
+  $('#autoMoscow').hidden = $('#autoMoscow .auto-buttons').hidden;
   $('#autoConcepts').hidden = !any;
 }
 
@@ -211,8 +216,22 @@ function renderSummary() {
   replaceWith(box,
     h('h3', { style: { '--c': c.color } }, c.name || Texts.fallback.unnamedConcept),
     metrics.length ? h('div', { class: 'metrics' }, metrics) : null,
+    state.parameters.length && state.settings.moscow ? priorityProfileView(Evaluation.priorityProfile(state, c), true) : null,
     rows.some(Boolean) ? h('dl', null, rows) : h('p', { class: 'summary-empty' }, Texts.summary.noParameters),
   );
+}
+
+/**
+ * Prioritäten der gewählten Ausprägungen als Kürzel („2 × M“ …).
+ * @param {Record<MatrixPriority | 'none', number>} counts @param {boolean} all auch Nullwerte zeigen
+ */
+function priorityProfileView(counts, all) {
+  const pills = Model.PRIORITIES
+    .filter(level => all || counts[level])
+    .map(level => h('span', { class: `prio prio-${level}`, title: Texts.moscow.levels[level].label },
+      `${counts[level]} × ${Texts.moscow.levels[level].short}`));
+  if (counts.none) pills.push(h('span', { class: 'prio prio-none' }, `${counts.none} × ${Texts.moscow.none}`));
+  return h('div', { class: 'prio-profile', title: Texts.moscow.profileTitle }, pills);
 }
 
 // ---------- Konzeptvergleich ----------
@@ -286,6 +305,14 @@ function buildCompareTable() {
         class: x.value == null ? 'incomplete' : (x.value === best ? 'best' : null),
         title: x.reason,
       }, x.value == null ? '–' : money(x.value)))));
+  }
+  if (m.settings.moscow) {
+    footRows.unshift(h('tr', null, h('th', { scope: 'row', title: Texts.moscow.profileTitle }, Texts.compare.priority),
+      m.concepts.map(c => {
+        const counts = Evaluation.priorityProfile(m, c);
+        return h('td', null, priorityProfileView(counts, false),
+          counts.wont ? h('small', { class: 'prio-note' }, Texts.moscow.wontNote(counts.wont)) : null);
+      })));
   }
   replaceWith($('#compareTable'), head, body, footRows.length ? h('tfoot', null, footRows) : null);
 }

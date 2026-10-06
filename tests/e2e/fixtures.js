@@ -48,11 +48,12 @@ export async function tabMenu(page, label) {
   await page.locator('#tabMenu button', { hasText: label }).first().click();
 }
 
-/** Schaltet Kosten und/oder Nutzwert im Bewertungsdialog. */
-export async function setEvaluation(page, { costs, utility, scale } = {}) {
+/** Schaltet Kosten, Nutzwert und/oder Priorität (MoSCoW) im Bewertungsdialog. */
+export async function setEvaluation(page, { costs, utility, scale, moscow } = {}) {
   await menu(page, 'settings');
   if (costs != null) await page.setChecked('#setCosts', costs);
   if (utility != null) await page.setChecked('#setUtility', utility);
+  if (moscow != null) await page.setChecked('#setMoscow', moscow);
   if (scale != null) await page.selectOption('#setScale', String(scale));
   await page.click('#settingsDone');
 }

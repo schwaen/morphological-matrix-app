@@ -20,12 +20,14 @@ python3 -m http.server 8000
 - **Kombinieren-Modus:** Lösungskonzepte bilden, indem je Parameter eine Ausprägung angeklickt wird. Jedes Konzept hat eine eigene Farbe; die Auswahl wird durch Verbindungslinien dargestellt.
 - Konzepte anlegen, duplizieren, umbenennen, umfärben, zufällig befüllen.
 - Kennzahlen: Anzahl Parameter, Ausprägungen und mögliche Kombinationen.
-- **Optionale Bewertung** (pro Matrix über **Datei → Bewertung: Kosten & Nutzwert** zuschaltbar, standardmäßig aus):
+- **Optionale Bewertung** (pro Matrix über **Datei → Bewertung: Kosten, Nutzwert & Priorität** zuschaltbar, standardmäßig aus):
   - **Kosten** je Ausprägung in wählbarer Währung (EUR, USD, CHF, GBP); je Konzept werden die Gesamtkosten summiert.
   - **Nutzwert** je Ausprägung als Erfüllungsgrad (Skala 0–5, 0–10 oder 0–100) und optionale **Gewichtung** je Parameter (Standard 1). Der Nutzwert eines Konzepts ist wie in der Nutzwertanalyse Σ(Gewicht × Erfüllungsgrad) / Σ Gewichte; nicht gewählte oder unbewertete Parameter zählen mit 0.
   - Sind beide aktiv, zeigt der Konzeptvergleich zusätzlich das **Preis-Leistungs-Verhältnis** als Kosten je Nutzwertpunkt (Gesamtkosten ÷ Nutzwert, niedriger ist besser). Es wird nur berechnet, wenn Kosten und Nutzwerte des Konzepts vollständig gepflegt sind.
   - Ergebnisse in der Konzeptzusammenfassung und im Konzeptvergleich (bester Wert hervorgehoben, unvollständige Werte mit * markiert) sowie im CSV-Export.
   - **Konzepte automatisch erstellen** (Seitenleiste, nur bei aktivierter Bewertung): *Höchster Nutzwert*, *Geringster Nutzwert*, *Geringste Kosten*, *Höchste Kosten* und *Beste Preis-Leistung*. Die ersten vier wählen je Parameter die passende Ausprägung (bei Gleichstand entscheidet Kosten bzw. Nutzwert); *Beste Preis-Leistung* findet exakt die Kombination mit den geringsten Kosten je Nutzwertpunkt (Dinkelbach-Verfahren) und setzt voraus, dass jeder Parameter Ausprägungen mit Kosten und Nutzwert hat. Existiert die Kombination schon, wird das vorhandene Konzept ausgewählt.
+  - **Priorität nach MoSCoW** je Ausprägung: *Must have*, *Should have*, *Could have*, *Won't have*. Die Kürzel M/S/C/W stehen in den Zellen; Won't-Ausprägungen sind abgeschwächt, bleiben aber wählbar (z. B. für Negativ-Konzepte). Zusammenfassung und Konzeptvergleich zeigen je Konzept, wie viele Ausprägungen welcher Priorität gewählt sind.
+  - **Konzepte nach Priorität** (bei aktivierter Priorität): *MVP* wählt je Parameter die Must-Ausprägung (bei mehreren die günstigste), *Standard* die Should-, *Premium* die Could-Ausprägung (bei mehreren jeweils die mit dem höchsten Nutzwert). Es gibt keinen Rückfall auf eine andere Stufe: Parameter ohne passende Priorität bleiben leer, ein Hinweis nennt ihre Anzahl. Won't wird nie gewählt.
   - Ausgeblendete Werte bleiben erhalten.
 - Konzeptvergleich als Tabelle, ein- und ausklappbar (Zustand wird gemerkt; beim Drucken immer sichtbar).
 - Rückgängig / Wiederholen (`Strg+Z`, `Strg+Umschalt+Z`).
@@ -80,6 +82,6 @@ npm test            # alles zusammen
 ```
 
 - **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). Die Skripte nutzen diese Typen über JSDoc-Kommentare; `tsc` prüft auch die Bezüge zwischen den Dateien.
-- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
+- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, MoSCoW, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
 - **Unit-Tests:** `tests/unit/` lädt die DOM-freien Skripte in einen isolierten Node-Kontext (`tests/unit/load.js`) – so, wie der Browser sie ausführt. Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft.
 - **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung, Unit- und Browser-Tests bei jedem Pull Request aus.

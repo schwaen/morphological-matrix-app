@@ -10,7 +10,12 @@ interface MatrixOption {
   cost: number | null;
   /** Nutzwert (Erfüllungsgrad) auf der Skala `settings.utilityMax`, `null` = nicht erfasst */
   score: number | null;
+  /** Priorität nach MoSCoW, `null` = nicht festgelegt */
+  priority: MatrixPriority | null;
 }
+
+/** MoSCoW: Must have, Should have, Could have, Won't have */
+type MatrixPriority = 'must' | 'should' | 'could' | 'wont';
 
 interface MatrixParameter {
   id: string;
@@ -41,6 +46,8 @@ interface MatrixSettings {
   utility: boolean;
   currency: 'EUR' | 'USD' | 'CHF' | 'GBP';
   utilityMax: 5 | 10 | 100;
+  /** Priorität (MoSCoW) je Ausprägung erfassen */
+  moscow: boolean;
 }
 
 interface Matrix {

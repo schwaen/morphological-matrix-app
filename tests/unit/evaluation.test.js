@@ -169,4 +169,48 @@ test('Verfügbarkeit hängt von den Einstellungen ab', () => {
   assert.deepEqual(plain(avail()), ['max-utility', 'min-utility']);
   m.settings.costs = true;
   assert.deepEqual(plain(avail()), ['max-utility', 'min-utility', 'min-cost', 'max-cost', 'best-value']);
+  m.settings.moscow = true;
+  assert.deepEqual(plain(avail()).slice(-3), ['moscow-must', 'moscow-should', 'moscow-could']);
+});
+
+/** Ausprägungstexte eines erzeugten Konzepts (leer = nicht gewählt). */
+const texts = (m, selections) => m.parameters.map(p => (p.options.find(o => o.id === selections[p.id]) || { text: '' }).text);
+
+test('MoSCoW-Pfade: nur genau die Priorität, Parameter ohne Treffer bleiben leer', () => {
+  const m = kaffeemaschine();
+  m.settings.moscow = true;
+  const must = Evaluation.GENERATORS['moscow-must'].build(m);
+  assert.deepEqual(plain(texts(m, must.selections)),
+    ['Durchlauferhitzer', 'Vibrationspumpe', 'Pulver (lose)', 'Drehknopf', 'Netzstrom', 'Manuell']);
+  assert.equal(must.skipped, 0);
+  // Druckerzeugung und Energieversorgung haben kein Should → leer, kein Rückfall auf Must
+  const should = Evaluation.GENERATORS['moscow-should'].build(m);
+  assert.deepEqual(plain(texts(m, should.selections)),
+    ['Thermoblock', '', 'Pad', 'Tasten', '', 'Automatische Spülung']);
+  assert.equal(should.skipped, 2);
+  const could = Evaluation.GENERATORS['moscow-could'].build(m);
+  assert.deepEqual(plain(texts(m, could.selections)),
+    ['Induktion', 'Rotationspumpe', 'Bohnen mit Mahlwerk', 'Touch-Display', 'Akku', '']);
+  assert.equal(could.skipped, 1);
+});
+
+test('MoSCoW-Pfade: Gleichstand – MVP günstigste, Standard/Premium höchster Nutzwert', () => {
+  const m = kaffeemaschine();
+  Object.assign(m.settings, { moscow: true, costs: true, utility: true });
+  const p = m.parameters[0];
+  p.options.forEach(o => { o.priority = null; });
+  p.options[0].priority = 'must'; p.options[0].cost = 30; p.options[0].score = 9;
+  p.options[1].priority = 'must'; p.options[1].cost = 10; p.options[1].score = 2;
+  assert.equal(Evaluation.GENERATORS['moscow-must'].build(m).selections[p.id], p.options[1].id);
+  p.options[0].priority = 'should'; p.options[1].priority = 'should';
+  assert.equal(Evaluation.GENERATORS['moscow-should'].build(m).selections[p.id], p.options[0].id);
+});
+
+test('Prioritätsprofil zählt die gewählten Ausprägungen je Priorität', () => {
+  const m = kaffeemaschine();
+  const outdoor = m.concepts.find(c => c.name === 'Outdoor');
+  assert.deepEqual(plain(Evaluation.priorityProfile(m, outdoor)), { must: 2, should: 1, could: 1, wont: 2, none: 0 });
+  delete outdoor.selections[m.parameters[0].id];
+  m.parameters[1].options.forEach(o => { o.priority = null; });
+  assert.deepEqual(plain(Evaluation.priorityProfile(m, outdoor)), { must: 2, should: 1, could: 0, wont: 1, none: 1 });
 });

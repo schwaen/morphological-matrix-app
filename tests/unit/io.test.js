@@ -35,6 +35,14 @@ test('CSV mit Bewertung: Kennzahlen mit Dezimalkomma', () => {
   assert.match(csv, /"Kompakt-Espresso";.*;54;7,25;7,45/);
 });
 
+test('CSV mit Priorität (MoSCoW)', () => {
+  const m = kaffeemaschine();
+  m.settings.moscow = true;
+  const csv = IO.toCsv(m);
+  assert.match(csv, /"Kategorie";"Parameter";"Ausprägung";"Priorität \(MoSCoW\)"/);
+  assert.match(csv, /"Wassererwärmung";"Boiler";"Won't have"/);
+});
+
 test('CSV maskiert Anführungszeichen', () => {
   const m = Model.blankState();
   m.title = 'Er sagte "Hallo"';

@@ -8,10 +8,10 @@ Examples.register({
   "name": "Firmen-Event planen",
   "description": "Event für rund 80 Mitarbeitende: Ort, Programm, Verpflegung und Kommunikation zu Varianten wie Sommerfest oder Strategie-Offsite kombinieren und nach Gesamtkosten und Zufriedenheit (0–5) vergleichen.",
   "data": {
-    "version": 2,
+    "version": 3,
     "title": "Beispiel: Firmen-Event planen",
     "description": "Firmen-Event für rund 80 Mitarbeitende: Bausteine von Ort über Programm bis Verpflegung zu Event-Varianten kombinieren. Kosten = Gesamtkosten in Euro, Nutzwert = erwartete Zufriedenheit von 0 bis 5.",
-    "settings": { "costs": true, "utility": true, "currency": "EUR", "utilityMax": 5 },
+    "settings": { "costs": true, "utility": true, "currency": "EUR", "utilityMax": 5, "moscow": false },
     "categories": [
       { "id": "k1", "name": "Rahmen", "color": "#4f46e5" },
       { "id": "k2", "name": "Ort & Anreise", "color": "#0891b2" },
@@ -26,9 +26,9 @@ Examples.register({
         "weight": 2,
         "categoryId": "k1",
         "options": [
-          { "id": "p1o1", "text": "Nachmittag und Abend", "cost": 0, "score": 3 },
-          { "id": "p1o2", "text": "Ganzer Tag", "cost": 1200, "score": 4 },
-          { "id": "p1o3", "text": "Zwei Tage", "cost": 2500, "score": 5 }
+          { "id": "p1o1", "text": "Nachmittag und Abend", "cost": 0, "score": 3, "priority": null },
+          { "id": "p1o2", "text": "Ganzer Tag", "cost": 1200, "score": 4, "priority": null },
+          { "id": "p1o3", "text": "Zwei Tage", "cost": 2500, "score": 5, "priority": null }
         ]
       },
       {
@@ -37,9 +37,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k1",
         "options": [
-          { "id": "p2o1", "text": "Werktag", "cost": 0, "score": 3 },
-          { "id": "p2o2", "text": "Freitag", "cost": 0, "score": 4 },
-          { "id": "p2o3", "text": "Wochenende", "cost": 600, "score": 2 }
+          { "id": "p2o1", "text": "Werktag", "cost": 0, "score": 3, "priority": null },
+          { "id": "p2o2", "text": "Freitag", "cost": 0, "score": 4, "priority": null },
+          { "id": "p2o3", "text": "Wochenende", "cost": 600, "score": 2, "priority": null }
         ]
       },
       {
@@ -48,10 +48,10 @@ Examples.register({
         "weight": 2,
         "categoryId": "k1",
         "options": [
-          { "id": "p3o1", "text": "Nur Belegschaft", "cost": 0, "score": 3 },
-          { "id": "p3o2", "text": "Mit Partnerinnen und Partnern", "cost": 3800, "score": 4 },
-          { "id": "p3o3", "text": "Mit Familien", "cost": 5200, "score": 5 },
-          { "id": "p3o4", "text": "Mit Kundinnen und Kunden", "cost": 2500, "score": 4 }
+          { "id": "p3o1", "text": "Nur Belegschaft", "cost": 0, "score": 3, "priority": null },
+          { "id": "p3o2", "text": "Mit Partnerinnen und Partnern", "cost": 3800, "score": 4, "priority": null },
+          { "id": "p3o3", "text": "Mit Familien", "cost": 5200, "score": 5, "priority": null },
+          { "id": "p3o4", "text": "Mit Kundinnen und Kunden", "cost": 2500, "score": 4, "priority": null }
         ]
       },
       {
@@ -60,11 +60,11 @@ Examples.register({
         "weight": 3,
         "categoryId": "k2",
         "options": [
-          { "id": "p4o1", "text": "Eigene Büroräume", "cost": 0, "score": 2 },
-          { "id": "p4o2", "text": "Eventlocation in der Stadt", "cost": 3500, "score": 4 },
-          { "id": "p4o3", "text": "Landgasthof", "cost": 2400, "score": 4 },
-          { "id": "p4o4", "text": "Hotel mit Tagungsbereich", "cost": 4800, "score": 4 },
-          { "id": "p4o5", "text": "Outdoor-Gelände mit Zelt", "cost": 2900, "score": 5 }
+          { "id": "p4o1", "text": "Eigene Büroräume", "cost": 0, "score": 2, "priority": null },
+          { "id": "p4o2", "text": "Eventlocation in der Stadt", "cost": 3500, "score": 4, "priority": null },
+          { "id": "p4o3", "text": "Landgasthof", "cost": 2400, "score": 4, "priority": null },
+          { "id": "p4o4", "text": "Hotel mit Tagungsbereich", "cost": 4800, "score": 4, "priority": null },
+          { "id": "p4o5", "text": "Outdoor-Gelände mit Zelt", "cost": 2900, "score": 5, "priority": null }
         ]
       },
       {
@@ -73,10 +73,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p5o1", "text": "Individuell", "cost": 0, "score": 2 },
-          { "id": "p5o2", "text": "ÖPNV-Tickets", "cost": 400, "score": 3 },
-          { "id": "p5o3", "text": "Reisebus", "cost": 1200, "score": 5 },
-          { "id": "p5o4", "text": "Bahn-Gruppenticket", "cost": 1600, "score": 4 }
+          { "id": "p5o1", "text": "Individuell", "cost": 0, "score": 2, "priority": null },
+          { "id": "p5o2", "text": "ÖPNV-Tickets", "cost": 400, "score": 3, "priority": null },
+          { "id": "p5o3", "text": "Reisebus", "cost": 1200, "score": 5, "priority": null },
+          { "id": "p5o4", "text": "Bahn-Gruppenticket", "cost": 1600, "score": 4, "priority": null }
         ]
       },
       {
@@ -85,10 +85,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p6o1", "text": "Keine", "cost": 0, "score": 3 },
-          { "id": "p6o2", "text": "Hotel, Doppelzimmer", "cost": 6400, "score": 4 },
-          { "id": "p6o3", "text": "Hotel, Einzelzimmer", "cost": 9600, "score": 5 },
-          { "id": "p6o4", "text": "Glamping", "cost": 7200, "score": 4 }
+          { "id": "p6o1", "text": "Keine", "cost": 0, "score": 3, "priority": null },
+          { "id": "p6o2", "text": "Hotel, Doppelzimmer", "cost": 6400, "score": 4, "priority": null },
+          { "id": "p6o3", "text": "Hotel, Einzelzimmer", "cost": 9600, "score": 5, "priority": null },
+          { "id": "p6o4", "text": "Glamping", "cost": 7200, "score": 4, "priority": null }
         ]
       },
       {
@@ -97,8 +97,8 @@ Examples.register({
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p7o1", "text": "Grundlegend", "cost": 0, "score": 2 },
-          { "id": "p7o2", "text": "Vollständig barrierefrei", "cost": 500, "score": 5 }
+          { "id": "p7o1", "text": "Grundlegend", "cost": 0, "score": 2, "priority": null },
+          { "id": "p7o2", "text": "Vollständig barrierefrei", "cost": 500, "score": 5, "priority": null }
         ]
       },
       {
@@ -107,10 +107,10 @@ Examples.register({
         "weight": 3,
         "categoryId": "k3",
         "options": [
-          { "id": "p8o1", "text": "Feiern und Netzwerken", "cost": 0, "score": 4 },
-          { "id": "p8o2", "text": "Strategie und Workshops", "cost": 1500, "score": 4 },
-          { "id": "p8o3", "text": "Teambuilding", "cost": 1800, "score": 5 },
-          { "id": "p8o4", "text": "Weiterbildung", "cost": 2200, "score": 3 }
+          { "id": "p8o1", "text": "Feiern und Netzwerken", "cost": 0, "score": 4, "priority": null },
+          { "id": "p8o2", "text": "Strategie und Workshops", "cost": 1500, "score": 4, "priority": null },
+          { "id": "p8o3", "text": "Teambuilding", "cost": 1800, "score": 5, "priority": null },
+          { "id": "p8o4", "text": "Weiterbildung", "cost": 2200, "score": 3, "priority": null }
         ]
       },
       {
@@ -119,12 +119,12 @@ Examples.register({
         "weight": 2,
         "categoryId": "k3",
         "options": [
-          { "id": "p9o1", "text": "Keine", "cost": 0, "score": 1 },
-          { "id": "p9o2", "text": "Kochkurs", "cost": 3200, "score": 5 },
-          { "id": "p9o3", "text": "Escape-Room", "cost": 2400, "score": 4 },
-          { "id": "p9o4", "text": "Stadtrallye", "cost": 1100, "score": 4 },
-          { "id": "p9o5", "text": "Kletterwald", "cost": 2700, "score": 4 },
-          { "id": "p9o6", "text": "Segeltörn", "cost": 4200, "score": 5 }
+          { "id": "p9o1", "text": "Keine", "cost": 0, "score": 1, "priority": null },
+          { "id": "p9o2", "text": "Kochkurs", "cost": 3200, "score": 5, "priority": null },
+          { "id": "p9o3", "text": "Escape-Room", "cost": 2400, "score": 4, "priority": null },
+          { "id": "p9o4", "text": "Stadtrallye", "cost": 1100, "score": 4, "priority": null },
+          { "id": "p9o5", "text": "Kletterwald", "cost": 2700, "score": 4, "priority": null },
+          { "id": "p9o6", "text": "Segeltörn", "cost": 4200, "score": 5, "priority": null }
         ]
       },
       {
@@ -133,10 +133,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k3",
         "options": [
-          { "id": "p10o1", "text": "Keiner", "cost": 0, "score": 2 },
-          { "id": "p10o2", "text": "Durch die Geschäftsführung", "cost": 0, "score": 3 },
-          { "id": "p10o3", "text": "Externe Keynote", "cost": 3000, "score": 4 },
-          { "id": "p10o4", "text": "Kabarett", "cost": 2500, "score": 5 }
+          { "id": "p10o1", "text": "Keiner", "cost": 0, "score": 2, "priority": null },
+          { "id": "p10o2", "text": "Durch die Geschäftsführung", "cost": 0, "score": 3, "priority": null },
+          { "id": "p10o3", "text": "Externe Keynote", "cost": 3000, "score": 4, "priority": null },
+          { "id": "p10o4", "text": "Kabarett", "cost": 2500, "score": 5, "priority": null }
         ]
       },
       {
@@ -145,11 +145,11 @@ Examples.register({
         "weight": 2,
         "categoryId": "k3",
         "options": [
-          { "id": "p11o1", "text": "Keines", "cost": 0, "score": 1 },
-          { "id": "p11o2", "text": "Live-Band", "cost": 3500, "score": 5 },
-          { "id": "p11o3", "text": "DJ", "cost": 1200, "score": 4 },
-          { "id": "p11o4", "text": "Quiz-Abend", "cost": 400, "score": 4 },
-          { "id": "p11o5", "text": "Lagerfeuer", "cost": 300, "score": 4 }
+          { "id": "p11o1", "text": "Keines", "cost": 0, "score": 1, "priority": null },
+          { "id": "p11o2", "text": "Live-Band", "cost": 3500, "score": 5, "priority": null },
+          { "id": "p11o3", "text": "DJ", "cost": 1200, "score": 4, "priority": null },
+          { "id": "p11o4", "text": "Quiz-Abend", "cost": 400, "score": 4, "priority": null },
+          { "id": "p11o5", "text": "Lagerfeuer", "cost": 300, "score": 4, "priority": null }
         ]
       },
       {
@@ -158,11 +158,11 @@ Examples.register({
         "weight": 3,
         "categoryId": "k4",
         "options": [
-          { "id": "p12o1", "text": "Fingerfood", "cost": 2400, "score": 3 },
-          { "id": "p12o2", "text": "Buffet", "cost": 3600, "score": 4 },
-          { "id": "p12o3", "text": "Grillen vor Ort", "cost": 2800, "score": 5 },
-          { "id": "p12o4", "text": "Menü am Tisch", "cost": 5200, "score": 4 },
-          { "id": "p12o5", "text": "Foodtrucks", "cost": 4000, "score": 5 }
+          { "id": "p12o1", "text": "Fingerfood", "cost": 2400, "score": 3, "priority": null },
+          { "id": "p12o2", "text": "Buffet", "cost": 3600, "score": 4, "priority": null },
+          { "id": "p12o3", "text": "Grillen vor Ort", "cost": 2800, "score": 5, "priority": null },
+          { "id": "p12o4", "text": "Menü am Tisch", "cost": 5200, "score": 4, "priority": null },
+          { "id": "p12o5", "text": "Foodtrucks", "cost": 4000, "score": 5, "priority": null }
         ]
       },
       {
@@ -171,10 +171,10 @@ Examples.register({
         "weight": 2,
         "categoryId": "k4",
         "options": [
-          { "id": "p13o1", "text": "Softdrinks und Kaffee", "cost": 600, "score": 2 },
-          { "id": "p13o2", "text": "Mit Bier und Wein", "cost": 1600, "score": 4 },
-          { "id": "p13o3", "text": "Offene Bar", "cost": 3800, "score": 5 },
-          { "id": "p13o4", "text": "Alkoholfrei mit Mocktails", "cost": 1100, "score": 4 }
+          { "id": "p13o1", "text": "Softdrinks und Kaffee", "cost": 600, "score": 2, "priority": null },
+          { "id": "p13o2", "text": "Mit Bier und Wein", "cost": 1600, "score": 4, "priority": null },
+          { "id": "p13o3", "text": "Offene Bar", "cost": 3800, "score": 5, "priority": null },
+          { "id": "p13o4", "text": "Alkoholfrei mit Mocktails", "cost": 1100, "score": 4, "priority": null }
         ]
       },
       {
@@ -183,9 +183,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k4",
         "options": [
-          { "id": "p14o1", "text": "Standardangebot", "cost": 0, "score": 1 },
-          { "id": "p14o2", "text": "Vegetarisch und vegan wählbar", "cost": 200, "score": 4 },
-          { "id": "p14o3", "text": "Allergene gekennzeichnet, individuelle Wünsche", "cost": 450, "score": 5 }
+          { "id": "p14o1", "text": "Standardangebot", "cost": 0, "score": 1, "priority": null },
+          { "id": "p14o2", "text": "Vegetarisch und vegan wählbar", "cost": 200, "score": 4, "priority": null },
+          { "id": "p14o3", "text": "Allergene gekennzeichnet, individuelle Wünsche", "cost": 450, "score": 5, "priority": null }
         ]
       },
       {
@@ -194,9 +194,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k5",
         "options": [
-          { "id": "p15o1", "text": "E-Mail", "cost": 0, "score": 2 },
-          { "id": "p15o2", "text": "Event-Webseite mit Anmeldung", "cost": 450, "score": 4 },
-          { "id": "p15o3", "text": "Gedruckte Einladung", "cost": 380, "score": 4 }
+          { "id": "p15o1", "text": "E-Mail", "cost": 0, "score": 2, "priority": null },
+          { "id": "p15o2", "text": "Event-Webseite mit Anmeldung", "cost": 450, "score": 4, "priority": null },
+          { "id": "p15o3", "text": "Gedruckte Einladung", "cost": 380, "score": 4, "priority": null }
         ]
       },
       {
@@ -205,9 +205,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k5",
         "options": [
-          { "id": "p16o1", "text": "Keine", "cost": 0, "score": 2 },
-          { "id": "p16o2", "text": "Livestream", "cost": 1500, "score": 4 },
-          { "id": "p16o3", "text": "Hybrid mit Interaktion", "cost": 3200, "score": 5 }
+          { "id": "p16o1", "text": "Keine", "cost": 0, "score": 2, "priority": null },
+          { "id": "p16o2", "text": "Livestream", "cost": 1500, "score": 4, "priority": null },
+          { "id": "p16o3", "text": "Hybrid mit Interaktion", "cost": 3200, "score": 5, "priority": null }
         ]
       },
       {
@@ -216,10 +216,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k5",
         "options": [
-          { "id": "p17o1", "text": "Keine", "cost": 0, "score": 1 },
-          { "id": "p17o2", "text": "Fotograf", "cost": 900, "score": 4 },
-          { "id": "p17o3", "text": "Fotobox", "cost": 450, "score": 4 },
-          { "id": "p17o4", "text": "Video-Zusammenschnitt", "cost": 2200, "score": 5 }
+          { "id": "p17o1", "text": "Keine", "cost": 0, "score": 1, "priority": null },
+          { "id": "p17o2", "text": "Fotograf", "cost": 900, "score": 4, "priority": null },
+          { "id": "p17o3", "text": "Fotobox", "cost": 450, "score": 4, "priority": null },
+          { "id": "p17o4", "text": "Video-Zusammenschnitt", "cost": 2200, "score": 5, "priority": null }
         ]
       },
       {
@@ -228,9 +228,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k5",
         "options": [
-          { "id": "p18o1", "text": "Keines", "cost": 0, "score": 2 },
-          { "id": "p18o2", "text": "Nachhaltiges Giveaway", "cost": 1300, "score": 4 },
-          { "id": "p18o3", "text": "Spende im Namen des Teams", "cost": 1000, "score": 5 }
+          { "id": "p18o1", "text": "Keines", "cost": 0, "score": 2, "priority": null },
+          { "id": "p18o2", "text": "Nachhaltiges Giveaway", "cost": 1300, "score": 4, "priority": null },
+          { "id": "p18o3", "text": "Spende im Namen des Teams", "cost": 1000, "score": 5, "priority": null }
         ]
       }
     ],

@@ -6,12 +6,12 @@
 Examples.register({
   "id": "kaffeemaschine",
   "name": "Kaffeemaschine",
-  "description": "Produktentwicklung eines Haushaltsgeräts mit Konzepten für Espresso, Outdoor und Smart Home. Kosten und Nutzwerte sind hinterlegt – zum Ausprobieren unter „Bewertung“ einschalten.",
+  "description": "Produktentwicklung eines Haushaltsgeräts mit Konzepten für Espresso, Outdoor und Smart Home. Kosten, Nutzwerte und Prioritäten (MoSCoW) sind hinterlegt – zum Ausprobieren unter „Bewertung“ einschalten.",
   "data": {
-    "version": 2,
+    "version": 3,
     "title": "Beispiel: Kaffeemaschine",
     "description": "Gesamtfunktion: Aus Wasser und Kaffee ein heißes Getränk zubereiten.",
-    "settings": { "costs": false, "utility": false, "currency": "EUR", "utilityMax": 10 },
+    "settings": { "costs": false, "utility": false, "currency": "EUR", "utilityMax": 10, "moscow": false },
     "categories": [
       { "id": "k1", "name": "Brühsystem", "color": "#4f46e5" },
       { "id": "k2", "name": "Nutzung & Betrieb", "color": "#0891b2" }
@@ -23,10 +23,10 @@ Examples.register({
         "weight": 3,
         "categoryId": "k1",
         "options": [
-          { "id": "p1o1", "text": "Durchlauferhitzer", "cost": 18, "score": 6 },
-          { "id": "p1o2", "text": "Boiler", "cost": 25, "score": 5 },
-          { "id": "p1o3", "text": "Thermoblock", "cost": 22, "score": 8 },
-          { "id": "p1o4", "text": "Induktion", "cost": 40, "score": 9 }
+          { "id": "p1o1", "text": "Durchlauferhitzer", "cost": 18, "score": 6, "priority": "must" },
+          { "id": "p1o2", "text": "Boiler", "cost": 25, "score": 5, "priority": "wont" },
+          { "id": "p1o3", "text": "Thermoblock", "cost": 22, "score": 8, "priority": "should" },
+          { "id": "p1o4", "text": "Induktion", "cost": 40, "score": 9, "priority": "could" }
         ]
       },
       {
@@ -35,10 +35,10 @@ Examples.register({
         "weight": 3,
         "categoryId": "k1",
         "options": [
-          { "id": "p2o1", "text": "Schwerkraft", "cost": 2, "score": 3 },
-          { "id": "p2o2", "text": "Vibrationspumpe", "cost": 12, "score": 7 },
-          { "id": "p2o3", "text": "Rotationspumpe", "cost": 45, "score": 9 },
-          { "id": "p2o4", "text": "Handhebel", "cost": 8, "score": 6 }
+          { "id": "p2o1", "text": "Schwerkraft", "cost": 2, "score": 3, "priority": "wont" },
+          { "id": "p2o2", "text": "Vibrationspumpe", "cost": 12, "score": 7, "priority": "must" },
+          { "id": "p2o3", "text": "Rotationspumpe", "cost": 45, "score": 9, "priority": "could" },
+          { "id": "p2o4", "text": "Handhebel", "cost": 8, "score": 6, "priority": "wont" }
         ]
       },
       {
@@ -47,10 +47,10 @@ Examples.register({
         "weight": 2,
         "categoryId": "k1",
         "options": [
-          { "id": "p3o1", "text": "Pulver (lose)", "cost": 3, "score": 6 },
-          { "id": "p3o2", "text": "Kapsel", "cost": 10, "score": 8 },
-          { "id": "p3o3", "text": "Pad", "cost": 6, "score": 5 },
-          { "id": "p3o4", "text": "Bohnen mit Mahlwerk", "cost": 35, "score": 9 }
+          { "id": "p3o1", "text": "Pulver (lose)", "cost": 3, "score": 6, "priority": "must" },
+          { "id": "p3o2", "text": "Kapsel", "cost": 10, "score": 8, "priority": "wont" },
+          { "id": "p3o3", "text": "Pad", "cost": 6, "score": 5, "priority": "should" },
+          { "id": "p3o4", "text": "Bohnen mit Mahlwerk", "cost": 35, "score": 9, "priority": "could" }
         ]
       },
       {
@@ -59,10 +59,10 @@ Examples.register({
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p4o1", "text": "Drehknopf", "cost": 2, "score": 5 },
-          { "id": "p4o2", "text": "Tasten", "cost": 4, "score": 6 },
-          { "id": "p4o3", "text": "Touch-Display", "cost": 20, "score": 8 },
-          { "id": "p4o4", "text": "Smartphone-App", "cost": 15, "score": 7 }
+          { "id": "p4o1", "text": "Drehknopf", "cost": 2, "score": 5, "priority": "must" },
+          { "id": "p4o2", "text": "Tasten", "cost": 4, "score": 6, "priority": "should" },
+          { "id": "p4o3", "text": "Touch-Display", "cost": 20, "score": 8, "priority": "could" },
+          { "id": "p4o4", "text": "Smartphone-App", "cost": 15, "score": 7, "priority": "could" }
         ]
       },
       {
@@ -71,10 +71,10 @@ Examples.register({
         "weight": 2,
         "categoryId": "k2",
         "options": [
-          { "id": "p5o1", "text": "Netzstrom", "cost": 3, "score": 8 },
-          { "id": "p5o2", "text": "Akku", "cost": 30, "score": 6 },
-          { "id": "p5o3", "text": "Gaskartusche", "cost": 15, "score": 5 },
-          { "id": "p5o4", "text": "Muskelkraft", "cost": 1, "score": 3 }
+          { "id": "p5o1", "text": "Netzstrom", "cost": 3, "score": 8, "priority": "must" },
+          { "id": "p5o2", "text": "Akku", "cost": 30, "score": 6, "priority": "could" },
+          { "id": "p5o3", "text": "Gaskartusche", "cost": 15, "score": 5, "priority": "wont" },
+          { "id": "p5o4", "text": "Muskelkraft", "cost": 1, "score": 3, "priority": "wont" }
         ]
       },
       {
@@ -83,9 +83,9 @@ Examples.register({
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p6o1", "text": "Manuell", "cost": 0, "score": 3 },
-          { "id": "p6o2", "text": "Automatische Spülung", "cost": 10, "score": 8 },
-          { "id": "p6o3", "text": "Spülmaschinenfest", "cost": 5, "score": 7 }
+          { "id": "p6o1", "text": "Manuell", "cost": 0, "score": 3, "priority": "must" },
+          { "id": "p6o2", "text": "Automatische Spülung", "cost": 10, "score": 8, "priority": "should" },
+          { "id": "p6o3", "text": "Spülmaschinenfest", "cost": 5, "score": 7, "priority": "should" }
         ]
       }
     ],

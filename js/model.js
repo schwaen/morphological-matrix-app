@@ -13,6 +13,8 @@ const Model = (() => {
   const CURRENCIES = ['EUR', 'USD', 'CHF', 'GBP'];
   /** @type {MatrixSettings['utilityMax'][]} */
   const SCALES = [5, 10, 100];
+  /** MoSCoW-Prioritäten in absteigender Wichtigkeit. @type {MatrixPriority[]} */
+  const PRIORITIES = ['must', 'should', 'could', 'wont'];
   /** Schlüssel der Gruppe „Ohne Kategorie“ (z. B. für den Einklappzustand). */
   const NO_CATEGORY = '__none';
 
@@ -21,7 +23,7 @@ const Model = (() => {
    * Beschreibung: docs/DATENFORMAT.md. Bei inkompatiblen Änderungen erhöhen und in
    * MIGRATIONS eine Umwandlung von der Vorgängerversion ergänzen.
    */
-  const SCHEMA_VERSION = 2;
+  const SCHEMA_VERSION = 3;
 
   /**
    * Umwandlungen von Version n auf n + 1. Sie erhalten die Rohdaten und liefern Rohdaten;
@@ -37,6 +39,10 @@ const Model = (() => {
         ? { ...p, options: p.options.map(o => (typeof o === 'string' ? { text: o } : o)) }
         : p)),
     }),
+    // 2 → 3: optionale Priorität (MoSCoW) je Ausprägung und Schalter `settings.moscow`.
+    // Keine Umwandlung nötig – die neue Version verhindert, dass ältere App-Versionen
+    // die Prioritäten beim Öffnen stillschweigend verwerfen.
+    2: data => data,
   };
 
   /**
@@ -59,12 +65,12 @@ const Model = (() => {
 
   /** @returns {MatrixSettings} */
   function defaultSettings() {
-    return { costs: false, utility: false, currency: 'EUR', utilityMax: 10 };
+    return { costs: false, utility: false, currency: 'EUR', utilityMax: 10, moscow: false };
   }
 
   /** @returns {MatrixOption} */
   function newOption() {
-    return { id: uid(), text: '', cost: null, score: null };
+    return { id: uid(), text: '', cost: null, score: null, priority: null };
   }
 
   /** @param {string | null} [categoryId] @returns {MatrixParameter} */
@@ -144,7 +150,10 @@ const Model = (() => {
         weight: weight != null && weight >= 0 ? weight : null,
         categoryId: str(p && p.categoryId) || null,
         options: (Array.isArray(p && p.options) ? p.options : []).map(o =>
-          ({ id: id(o && o.id), text: str(o && o.text), cost: num(o && o.cost), score: num(o && o.score) })),
+          ({
+            id: id(o && o.id), text: str(o && o.text), cost: num(o && o.cost), score: num(o && o.score),
+            priority: PRIORITIES.includes(o && o.priority) ? o.priority : null,
+          })),
       };
     });
     const categories = (Array.isArray(data.categories) ? data.categories : []).map((k, i) => ({
@@ -161,6 +170,7 @@ const Model = (() => {
       utility: src.utility === true,
       currency: CURRENCIES.includes(src.currency) ? src.currency : 'EUR',
       utilityMax: SCALES.includes(src.utilityMax) ? src.utilityMax : 10,
+      moscow: src.moscow === true,
     };
     const concepts = (Array.isArray(data.concepts) ? data.concepts : []).map((c, i) => {
       const selections = {};
@@ -268,7 +278,7 @@ const Model = (() => {
   const nameOrUnnamed = x => (x && x.name) || Texts.fallback.unnamed;
 
   return {
-    COLORS, CATEGORY_COLORS, CURRENCIES, SCALES, NO_CATEGORY, SCHEMA_VERSION, migrate,
+    COLORS, CATEGORY_COLORS, CURRENCIES, SCALES, PRIORITIES, NO_CATEGORY, SCHEMA_VERSION, migrate,
     defaultSettings, newOption, newParameter, newConcept, nextConceptColor, nextCategoryColor, uniqueName,
     blankState, normalize, sortedByCategory, resort,
     categoryById, categoryGroups, canMoveParameter, selectedOption, optionText, sameSelections,
