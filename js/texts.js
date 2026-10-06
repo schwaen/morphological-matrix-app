@@ -55,7 +55,7 @@ const Texts = (() => {
       conceptDeleted: name => `Konzept ${q(name)} gelöscht.`,
       noOptions: 'Es gibt noch keine Ausprägungen.',
       newMatrix: 'Neue Matrix angelegt.',
-      exampleOpened: 'Beispiel als neue Matrix geöffnet.',
+      exampleOpened: name => `Beispiel ${q(name)} als neue Matrix geöffnet.`,
       opened: title => `${q(title)} geöffnet.`,
       sharedOpened: title => `Geteilte Matrix ${q(title)} als neue Matrix geöffnet.`,
       linkCopied: 'Link in die Zwischenablage kopiert.',
@@ -193,10 +193,20 @@ const Texts = (() => {
       closeNamed: title => `${q(title)} schließen`,
       external: 'In einem anderen Browser-Tab geändert',
       newBlank: 'Neue leere Matrix',
-      example: 'Beispiel öffnen',
+      example: 'Beispiel öffnen …',
       importJson: 'JSON öffnen …',
       fromLibrary: 'Aus „Meine Matrizen“ öffnen …',
       recentlyClosed: 'Zuletzt geschlossen',
+    },
+
+    examples: {
+      meta: (parameters, categories, concepts) => [
+        `${parameters} Parameter`,
+        categories ? plural(categories, 'Kategorie', 'Kategorien') : null,
+        plural(concepts, 'Konzept', 'Konzepte'),
+      ].filter(Boolean).join(' · '),
+      open: 'Öffnen',
+      empty: 'Es sind keine Beispiele eingebunden.',
     },
 
     library: {

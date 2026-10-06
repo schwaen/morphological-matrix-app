@@ -30,7 +30,8 @@ python3 -m http.server 8000
 - Konzeptvergleich als Tabelle, ein- und ausklappbar (Zustand wird gemerkt; beim Drucken immer sichtbar).
 - Rückgängig / Wiederholen (`Strg+Z`, `Strg+Umschalt+Z`).
 - Automatisches Speichern im Browser (localStorage), beliebig viele Matrizen unter **Datei → Meine Matrizen**.
-- **Tabs in der App:** Mehrere Matrizen sind gleichzeitig in Tabs in der Kopfzeile geöffnet. Jeder Tab behält Ansicht (Modus, Konzeptvergleich, eingeklappte Kategorien), Rückgängig-Verlauf und Scroll-Position. Über **+** lassen sich eine neue leere Matrix, das Beispiel, ein JSON-Import, eine Matrix aus „Meine Matrizen“ oder ein zuletzt geschlossener Tab öffnen. Doppelklick auf den aktiven Tab benennt die Matrix um; Tabs lassen sich per Ziehen umsortieren und mit × oder der mittleren Maustaste schließen (die Matrix bleibt gespeichert). Geöffnete Tabs werden nach dem Neuladen wiederhergestellt; eine bereits geöffnete Matrix wird nicht doppelt geöffnet.
+- **Beispiele:** Mitgelieferte Beispiele lassen sich über **Datei → Beispiele …** oder **+ → Beispiel öffnen …** auswählen und öffnen sich als eigene Matrix in einem neuen Tab. Jedes Beispiel steht in einer eigenen Datei unter `examples/` – siehe [`examples/README.md`](examples/README.md).
+- **Tabs in der App:** Mehrere Matrizen sind gleichzeitig in Tabs in der Kopfzeile geöffnet. Jeder Tab behält Ansicht (Modus, Konzeptvergleich, eingeklappte Kategorien), Rückgängig-Verlauf und Scroll-Position. Über **+** lassen sich eine neue leere Matrix, ein Beispiel, ein JSON-Import, eine Matrix aus „Meine Matrizen“ oder ein zuletzt geschlossener Tab öffnen. Doppelklick auf den aktiven Tab benennt die Matrix um; Tabs lassen sich per Ziehen umsortieren und mit × oder der mittleren Maustaste schließen (die Matrix bleibt gespeichert). Geöffnete Tabs werden nach dem Neuladen wiederhergestellt; eine bereits geöffnete Matrix wird nicht doppelt geöffnet.
 - **Mehrere Browser-Tabs:** Weiterhin möglich – jeder Browser-Tab hat seine eigenen App-Tabs. Ändert ein anderer Browser-Tab eine hier geöffnete Matrix, wird sie übernommen; inaktive Tabs werden dabei mit einem Punkt markiert.
 - Export als JSON (`Strg+S`) und CSV (Excel-kompatibel), Import von JSON.
 - Teilen per Link (die Matrix steckt komplett in der URL).
@@ -45,17 +46,19 @@ python3 -m http.server 8000
 | `styles.css` | Design in Kaskaden-Ebenen (`@layer`): Tokens, Grundstile, Bausteine, Bereiche, Druck |
 | `js/texts.js` | `Texts` – alle Texte, die das JavaScript anzeigt (Hinweise, Beschriftungen, Fehlermeldungen, CSV-Spalten) |
 | `js/util.js` | `Util` – Zahlen, Texte, Kodierung (ohne DOM) |
-| `js/model.js` | `Model` – Datenmodell, Beispiel, Normalisierung, Abfragen (ohne DOM) |
+| `js/model.js` | `Model` – Datenmodell, Normalisierung, Abfragen (ohne DOM) |
 | `js/evaluation.js` | `Evaluation` – Kosten, Nutzwert, Preis-Leistung, automatische Konzepte (ohne DOM) |
 | `js/io.js` | `IO` – JSON, CSV, Teilen-Links (ohne DOM) |
 | `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, geöffnete Tabs, Einstellungen pro Browser-Tab) |
+| `js/examples.js` | `Examples` – Verzeichnis der mitgelieferten Beispiele |
+| `examples/` | Mitgelieferte Beispiele, je Beispiel eine Datei (Anleitung in `examples/README.md`) |
 | `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `tabs` (App-Tabs), `actions`, `render-matrix`, `render-panels`, `lines`, `dialogs`, `main` (Start) |
 | `types.d.ts` | Typen des Datenmodells (nur Entwicklung) |
 | `docs/DATENFORMAT.md` | Datenformat (JSON, Speicherung, Teilen-Links), Versionen und Migrationen |
 | `tests/unit/` | Unit-Tests der Logik (`node:test`) |
 | `tests/e2e/` | Browser-Tests (Playwright) |
 
-**Texte:** Statische Texte stehen in `index.html`, alle vom JavaScript erzeugten Texte in `js/texts.js` – Formulierungen ändern oder übersetzen betrifft nur diese beiden Dateien. Inhalte des Beispiels („Kaffeemaschine“) sind Daten und stehen in `js/model.js`.
+**Texte:** Statische Texte stehen in `index.html`, alle vom JavaScript erzeugten Texte in `js/texts.js` – Formulierungen ändern oder übersetzen betrifft nur diese beiden Dateien. Inhalte der Beispiele sind Daten und stehen je Beispiel in einer eigenen Datei unter `examples/`.
 
 **Datenformat:** Gespeicherte Matrizen, JSON-Export und Teilen-Links tragen eine Formatversion; ältere Daten werden beim Öffnen automatisch umgewandelt, Daten aus einer neueren App-Version werden abgelehnt. Details in [`docs/DATENFORMAT.md`](docs/DATENFORMAT.md).
 
@@ -77,6 +80,6 @@ npm test            # alles zusammen
 ```
 
 - **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). Die Skripte nutzen diese Typen über JSDoc-Kommentare; `tsc` prüft auch die Bezüge zwischen den Dateien.
-- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, App-Tabs, mehrere Browser-Tabs, Bewertung, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
+- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
 - **Unit-Tests:** `tests/unit/` lädt die DOM-freien Skripte in einen isolierten Node-Kontext (`tests/unit/load.js`) – so, wie der Browser sie ausführt. Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft.
 - **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung, Unit- und Browser-Tests bei jedem Pull Request aus.

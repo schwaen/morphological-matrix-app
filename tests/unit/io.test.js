@@ -2,21 +2,21 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadApp, plain } from './load.js';
 
-const { Model, IO } = loadApp();
+const { Model, IO, example: kaffeemaschine } = loadApp();
 
 test('Dateinamen aus dem Titel', () => {
-  const m = Model.exampleState();
+  const m = kaffeemaschine();
   assert.equal(IO.fileName(m, 'json'), 'beispiel-kaffeemaschine.json');
   assert.equal(IO.fileName(m, 'csv'), 'beispiel-kaffeemaschine.csv');
 });
 
 test('JSON-Export lässt sich unverändert wieder einlesen', () => {
-  const m = Model.exampleState();
+  const m = kaffeemaschine();
   assert.deepEqual(plain(Model.normalize(JSON.parse(IO.toJson(m)))), plain(m));
 });
 
 test('CSV: BOM, Semikolon, Kategorien, Konzepte', () => {
-  const csv = IO.toCsv(Model.exampleState());
+  const csv = IO.toCsv(kaffeemaschine());
   assert.equal(csv.charCodeAt(0), 0xfeff);
   const lines = csv.slice(1).split('\r\n');
   assert.equal(lines[0], '"Titel";"Beispiel: Kaffeemaschine"');
@@ -27,7 +27,7 @@ test('CSV: BOM, Semikolon, Kategorien, Konzepte', () => {
 });
 
 test('CSV mit Bewertung: Kennzahlen mit Dezimalkomma', () => {
-  const m = Model.exampleState();
+  const m = kaffeemaschine();
   m.settings.costs = true;
   m.settings.utility = true;
   const csv = IO.toCsv(m);
@@ -42,7 +42,7 @@ test('CSV maskiert Anführungszeichen', () => {
 });
 
 test('Teilen-Link: Rundreise und ungültige Daten', () => {
-  const m = Model.exampleState();
+  const m = kaffeemaschine();
   m.title = 'Geteilt – mit Ümlauten';
   const back = IO.decodeShareHash(`#m=${IO.encodeShare(m)}`);
   assert.deepEqual(plain(back), plain(m));

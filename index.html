@@ -15,6 +15,9 @@
   <script src="js/evaluation.js" defer></script>
   <script src="js/io.js" defer></script>
   <script src="js/storage.js" defer></script>
+  <script src="js/examples.js" defer></script>
+  <!-- Mitgelieferte Beispiele: je Beispiel eine Datei (Anleitung: examples/README.md) -->
+  <script src="examples/kaffeemaschine.js" defer></script>
   <script src="js/ui/dom.js" defer></script>
   <script src="js/ui/core.js" defer></script>
   <script src="js/ui/tabs.js" defer></script>
@@ -59,7 +62,7 @@
         <div class="menu-list" id="menuList" role="menu" hidden>
           <button type="button" role="menuitem" data-action="new">Neue leere Matrix</button>
           <button type="button" role="menuitem" data-action="open">Meine Matrizen …</button>
-          <button type="button" role="menuitem" data-action="example">Beispiel laden</button>
+          <button type="button" role="menuitem" data-action="example">Beispiele …</button>
           <hr>
           <button type="button" role="menuitem" data-action="settings">Bewertung: Kosten &amp; Nutzwert …</button>
           <hr>
@@ -159,6 +162,17 @@
     </div>
     <p class="dialog-hint">Alle Matrizen werden in diesem Browser gespeichert. Jeder Tab bearbeitet seine eigene Matrix – öffnen Sie eine Matrix in einem neuen Tab, um parallel zu arbeiten.</p>
     <ul class="doc-list" id="docList"></ul>
+  </dialog>
+
+  <dialog class="dialog" id="examplesDialog" aria-labelledby="examplesHeading">
+    <div class="dialog-head">
+      <h2 id="examplesHeading">Beispiele</h2>
+      <button type="button" class="icon-btn" id="examplesClose" aria-label="Schließen" title="Schließen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p class="dialog-hint">Ein Beispiel öffnet sich als neue Matrix in einem eigenen Tab. Änderungen daran wirken sich nicht auf das Beispiel aus.</p>
+    <ul class="doc-list" id="exampleList"></ul>
   </dialog>
 
   <dialog class="dialog" id="settingsDialog" aria-labelledby="settingsHeading">

@@ -2,11 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadApp, plain } from './load.js';
 
-const { Model, Evaluation } = loadApp();
+const { Model, Evaluation, example: kaffeemaschine } = loadApp();
 
 /** Beispielmatrix mit aktivierter Bewertung. */
 function example() {
-  const m = Model.exampleState();
+  const m = kaffeemaschine();
   m.settings.costs = true;
   m.settings.utility = true;
   return m;
@@ -162,7 +162,7 @@ test('Fehlende Werte: Parameter wird übersprungen bzw. Fehlermeldung', () => {
 });
 
 test('Verfügbarkeit hängt von den Einstellungen ab', () => {
-  const m = Model.exampleState();
+  const m = kaffeemaschine();
   const avail = () => Object.keys(Evaluation.GENERATORS).filter(k => Evaluation.GENERATORS[k].available(m));
   assert.deepEqual(plain(avail()), []);
   m.settings.utility = true;

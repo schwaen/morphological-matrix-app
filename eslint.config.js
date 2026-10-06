@@ -20,6 +20,11 @@ export default [
     },
   },
   {
+    // Beispiel-Dateien: nur Daten, angemeldet über den globalen Namensraum `Examples`
+    files: ['examples/**/*.js'],
+    languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: { Examples: 'readonly' } },
+  },
+  {
     // Werkzeuge und Tests laufen in Node
     files: ['*.config.js', 'tests/**/*.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: { ...globals.node, ...globals.browser } },

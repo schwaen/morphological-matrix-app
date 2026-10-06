@@ -1,6 +1,6 @@
 # Datenformat einer Matrix
 
-Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON-Export und Teilen-Links (`#m=…`, Base64url-kodiertes JSON). Typdefinitionen für die Entwicklung stehen in [`types.d.ts`](../types.d.ts).
+Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON-Export, Teilen-Links (`#m=…`, Base64url-kodiertes JSON) und die mitgelieferten Beispiele (`data` in `examples/*.js`, siehe [`examples/README.md`](../examples/README.md)). Typdefinitionen für die Entwicklung stehen in [`types.d.ts`](../types.d.ts).
 
 **Aktuelle Version: 2** (`Model.SCHEMA_VERSION` in `js/model.js`)
 
@@ -65,3 +65,4 @@ Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON
 2. In `MIGRATIONS` eine Funktion `alteVersion → neueVersion` ergänzen (Rohdaten rein, Rohdaten raus).
 3. `normalize()`, `types.d.ts` und dieses Dokument anpassen.
 4. Unit-Test in `tests/unit/model.test.js` für die Migration ergänzen.
+5. Die Beispiele unter `examples/` auf die neue Version bringen (der Unit-Test `tests/unit/examples.test.js` verlangt das aktuelle Format) – am einfachsten: Beispiel in der App öffnen, als JSON speichern und `data` ersetzen.

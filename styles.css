@@ -667,6 +667,8 @@
   .doc-info { flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .doc-title { font-weight: 650; overflow-wrap: anywhere; }
   .doc-meta { font-size: .8rem; color: var(--muted); }
+  .doc-desc { font-size: .86rem; color: var(--text-2); }
+  .doc-empty { padding: 12px 4px; color: var(--muted); }
   .doc-actions { display: flex; align-items: center; gap: 6px; }
   .doc-actions a.btn { text-decoration: none; }
   .badge {
