@@ -1,0 +1,271 @@
+/*
+ * Beispiel „Firmen-Event planen“.
+ * `data` hat dasselbe Format wie eine mit „Als JSON speichern“ exportierte Datei
+ * (siehe docs/DATENFORMAT.md). Anleitung für weitere Beispiele: examples/README.md
+ */
+Examples.register({
+  "id": "firmen-event",
+  "name": "Firmen-Event planen",
+  "description": "Event für rund 80 Mitarbeitende: Ort, Programm, Verpflegung und Kommunikation zu Varianten wie Sommerfest oder Strategie-Offsite kombinieren und nach Gesamtkosten und Zufriedenheit (0–5) vergleichen.",
+  "data": {
+    "version": 2,
+    "title": "Beispiel: Firmen-Event planen",
+    "description": "Firmen-Event für rund 80 Mitarbeitende: Bausteine von Ort über Programm bis Verpflegung zu Event-Varianten kombinieren. Kosten = Gesamtkosten in Euro, Nutzwert = erwartete Zufriedenheit von 0 bis 5.",
+    "settings": { "costs": true, "utility": true, "currency": "EUR", "utilityMax": 5 },
+    "categories": [
+      { "id": "k1", "name": "Rahmen", "color": "#4f46e5" },
+      { "id": "k2", "name": "Ort & Anreise", "color": "#0891b2" },
+      { "id": "k3", "name": "Programm", "color": "#d97706" },
+      { "id": "k4", "name": "Verpflegung", "color": "#059669" },
+      { "id": "k5", "name": "Kommunikation", "color": "#db2777" }
+    ],
+    "parameters": [
+      {
+        "id": "p1",
+        "name": "Dauer",
+        "weight": 2,
+        "categoryId": "k1",
+        "options": [
+          { "id": "p1o1", "text": "Nachmittag und Abend", "cost": 0, "score": 3 },
+          { "id": "p1o2", "text": "Ganzer Tag", "cost": 1200, "score": 4 },
+          { "id": "p1o3", "text": "Zwei Tage", "cost": 2500, "score": 5 }
+        ]
+      },
+      {
+        "id": "p2",
+        "name": "Termin",
+        "weight": 1,
+        "categoryId": "k1",
+        "options": [
+          { "id": "p2o1", "text": "Werktag", "cost": 0, "score": 3 },
+          { "id": "p2o2", "text": "Freitag", "cost": 0, "score": 4 },
+          { "id": "p2o3", "text": "Wochenende", "cost": 600, "score": 2 }
+        ]
+      },
+      {
+        "id": "p3",
+        "name": "Teilnehmende",
+        "weight": 2,
+        "categoryId": "k1",
+        "options": [
+          { "id": "p3o1", "text": "Nur Belegschaft", "cost": 0, "score": 3 },
+          { "id": "p3o2", "text": "Mit Partnerinnen und Partnern", "cost": 3800, "score": 4 },
+          { "id": "p3o3", "text": "Mit Familien", "cost": 5200, "score": 5 },
+          { "id": "p3o4", "text": "Mit Kundinnen und Kunden", "cost": 2500, "score": 4 }
+        ]
+      },
+      {
+        "id": "p4",
+        "name": "Location",
+        "weight": 3,
+        "categoryId": "k2",
+        "options": [
+          { "id": "p4o1", "text": "Eigene Büroräume", "cost": 0, "score": 2 },
+          { "id": "p4o2", "text": "Eventlocation in der Stadt", "cost": 3500, "score": 4 },
+          { "id": "p4o3", "text": "Landgasthof", "cost": 2400, "score": 4 },
+          { "id": "p4o4", "text": "Hotel mit Tagungsbereich", "cost": 4800, "score": 4 },
+          { "id": "p4o5", "text": "Outdoor-Gelände mit Zelt", "cost": 2900, "score": 5 }
+        ]
+      },
+      {
+        "id": "p5",
+        "name": "Anreise",
+        "weight": 1,
+        "categoryId": "k2",
+        "options": [
+          { "id": "p5o1", "text": "Individuell", "cost": 0, "score": 2 },
+          { "id": "p5o2", "text": "ÖPNV-Tickets", "cost": 400, "score": 3 },
+          { "id": "p5o3", "text": "Reisebus", "cost": 1200, "score": 5 },
+          { "id": "p5o4", "text": "Bahn-Gruppenticket", "cost": 1600, "score": 4 }
+        ]
+      },
+      {
+        "id": "p6",
+        "name": "Übernachtung",
+        "weight": 1,
+        "categoryId": "k2",
+        "options": [
+          { "id": "p6o1", "text": "Keine", "cost": 0, "score": 3 },
+          { "id": "p6o2", "text": "Hotel, Doppelzimmer", "cost": 6400, "score": 4 },
+          { "id": "p6o3", "text": "Hotel, Einzelzimmer", "cost": 9600, "score": 5 },
+          { "id": "p6o4", "text": "Glamping", "cost": 7200, "score": 4 }
+        ]
+      },
+      {
+        "id": "p7",
+        "name": "Barrierefreiheit",
+        "weight": 1,
+        "categoryId": "k2",
+        "options": [
+          { "id": "p7o1", "text": "Grundlegend", "cost": 0, "score": 2 },
+          { "id": "p7o2", "text": "Vollständig barrierefrei", "cost": 500, "score": 5 }
+        ]
+      },
+      {
+        "id": "p8",
+        "name": "Schwerpunkt",
+        "weight": 3,
+        "categoryId": "k3",
+        "options": [
+          { "id": "p8o1", "text": "Feiern und Netzwerken", "cost": 0, "score": 4 },
+          { "id": "p8o2", "text": "Strategie und Workshops", "cost": 1500, "score": 4 },
+          { "id": "p8o3", "text": "Teambuilding", "cost": 1800, "score": 5 },
+          { "id": "p8o4", "text": "Weiterbildung", "cost": 2200, "score": 3 }
+        ]
+      },
+      {
+        "id": "p9",
+        "name": "Aktivität",
+        "weight": 2,
+        "categoryId": "k3",
+        "options": [
+          { "id": "p9o1", "text": "Keine", "cost": 0, "score": 1 },
+          { "id": "p9o2", "text": "Kochkurs", "cost": 3200, "score": 5 },
+          { "id": "p9o3", "text": "Escape-Room", "cost": 2400, "score": 4 },
+          { "id": "p9o4", "text": "Stadtrallye", "cost": 1100, "score": 4 },
+          { "id": "p9o5", "text": "Kletterwald", "cost": 2700, "score": 4 },
+          { "id": "p9o6", "text": "Segeltörn", "cost": 4200, "score": 5 }
+        ]
+      },
+      {
+        "id": "p10",
+        "name": "Impulsvortrag",
+        "weight": 1,
+        "categoryId": "k3",
+        "options": [
+          { "id": "p10o1", "text": "Keiner", "cost": 0, "score": 2 },
+          { "id": "p10o2", "text": "Durch die Geschäftsführung", "cost": 0, "score": 3 },
+          { "id": "p10o3", "text": "Externe Keynote", "cost": 3000, "score": 4 },
+          { "id": "p10o4", "text": "Kabarett", "cost": 2500, "score": 5 }
+        ]
+      },
+      {
+        "id": "p11",
+        "name": "Abendprogramm",
+        "weight": 2,
+        "categoryId": "k3",
+        "options": [
+          { "id": "p11o1", "text": "Keines", "cost": 0, "score": 1 },
+          { "id": "p11o2", "text": "Live-Band", "cost": 3500, "score": 5 },
+          { "id": "p11o3", "text": "DJ", "cost": 1200, "score": 4 },
+          { "id": "p11o4", "text": "Quiz-Abend", "cost": 400, "score": 4 },
+          { "id": "p11o5", "text": "Lagerfeuer", "cost": 300, "score": 4 }
+        ]
+      },
+      {
+        "id": "p12",
+        "name": "Essen",
+        "weight": 3,
+        "categoryId": "k4",
+        "options": [
+          { "id": "p12o1", "text": "Fingerfood", "cost": 2400, "score": 3 },
+          { "id": "p12o2", "text": "Buffet", "cost": 3600, "score": 4 },
+          { "id": "p12o3", "text": "Grillen vor Ort", "cost": 2800, "score": 5 },
+          { "id": "p12o4", "text": "Menü am Tisch", "cost": 5200, "score": 4 },
+          { "id": "p12o5", "text": "Foodtrucks", "cost": 4000, "score": 5 }
+        ]
+      },
+      {
+        "id": "p13",
+        "name": "Getränke",
+        "weight": 2,
+        "categoryId": "k4",
+        "options": [
+          { "id": "p13o1", "text": "Softdrinks und Kaffee", "cost": 600, "score": 2 },
+          { "id": "p13o2", "text": "Mit Bier und Wein", "cost": 1600, "score": 4 },
+          { "id": "p13o3", "text": "Offene Bar", "cost": 3800, "score": 5 },
+          { "id": "p13o4", "text": "Alkoholfrei mit Mocktails", "cost": 1100, "score": 4 }
+        ]
+      },
+      {
+        "id": "p14",
+        "name": "Ernährungsformen",
+        "weight": 1,
+        "categoryId": "k4",
+        "options": [
+          { "id": "p14o1", "text": "Standardangebot", "cost": 0, "score": 1 },
+          { "id": "p14o2", "text": "Vegetarisch und vegan wählbar", "cost": 200, "score": 4 },
+          { "id": "p14o3", "text": "Allergene gekennzeichnet, individuelle Wünsche", "cost": 450, "score": 5 }
+        ]
+      },
+      {
+        "id": "p15",
+        "name": "Einladung",
+        "weight": 1,
+        "categoryId": "k5",
+        "options": [
+          { "id": "p15o1", "text": "E-Mail", "cost": 0, "score": 2 },
+          { "id": "p15o2", "text": "Event-Webseite mit Anmeldung", "cost": 450, "score": 4 },
+          { "id": "p15o3", "text": "Gedruckte Einladung", "cost": 380, "score": 4 }
+        ]
+      },
+      {
+        "id": "p16",
+        "name": "Remote-Teilnahme",
+        "weight": 1,
+        "categoryId": "k5",
+        "options": [
+          { "id": "p16o1", "text": "Keine", "cost": 0, "score": 2 },
+          { "id": "p16o2", "text": "Livestream", "cost": 1500, "score": 4 },
+          { "id": "p16o3", "text": "Hybrid mit Interaktion", "cost": 3200, "score": 5 }
+        ]
+      },
+      {
+        "id": "p17",
+        "name": "Erinnerung",
+        "weight": 1,
+        "categoryId": "k5",
+        "options": [
+          { "id": "p17o1", "text": "Keine", "cost": 0, "score": 1 },
+          { "id": "p17o2", "text": "Fotograf", "cost": 900, "score": 4 },
+          { "id": "p17o3", "text": "Fotobox", "cost": 450, "score": 4 },
+          { "id": "p17o4", "text": "Video-Zusammenschnitt", "cost": 2200, "score": 5 }
+        ]
+      },
+      {
+        "id": "p18",
+        "name": "Giveaway",
+        "weight": 1,
+        "categoryId": "k5",
+        "options": [
+          { "id": "p18o1", "text": "Keines", "cost": 0, "score": 2 },
+          { "id": "p18o2", "text": "Nachhaltiges Giveaway", "cost": 1300, "score": 4 },
+          { "id": "p18o3", "text": "Spende im Namen des Teams", "cost": 1000, "score": 5 }
+        ]
+      }
+    ],
+    "concepts": [
+      {
+        "id": "c1",
+        "name": "Sommerfest",
+        "color": "#e8590c",
+        "selections": { "p1": "p1o1", "p2": "p2o2", "p3": "p3o3", "p4": "p4o5", "p5": "p5o1", "p6": "p6o1", "p7": "p7o1", "p8": "p8o1", "p9": "p9o4", "p10": "p10o2", "p11": "p11o2", "p12": "p12o3", "p13": "p13o2", "p14": "p14o2", "p15": "p15o2", "p16": "p16o1", "p17": "p17o3", "p18": "p18o1" }
+      },
+      {
+        "id": "c2",
+        "name": "Teamtag Natur",
+        "color": "#1c7ed6",
+        "selections": { "p1": "p1o2", "p2": "p2o1", "p3": "p3o1", "p4": "p4o3", "p5": "p5o3", "p6": "p6o1", "p7": "p7o1", "p8": "p8o3", "p9": "p9o5", "p10": "p10o1", "p11": "p11o5", "p12": "p12o3", "p13": "p13o4", "p14": "p14o3", "p15": "p15o1", "p16": "p16o1", "p17": "p17o2", "p18": "p18o3" }
+      },
+      {
+        "id": "c3",
+        "name": "Offsite",
+        "color": "#2b8a3e",
+        "selections": { "p1": "p1o3", "p2": "p2o1", "p3": "p3o1", "p4": "p4o4", "p5": "p5o4", "p6": "p6o3", "p7": "p7o2", "p8": "p8o2", "p9": "p9o2", "p10": "p10o3", "p11": "p11o4", "p12": "p12o4", "p13": "p13o2", "p14": "p14o2", "p15": "p15o2", "p16": "p16o2", "p17": "p17o1", "p18": "p18o2" }
+      },
+      {
+        "id": "c4",
+        "name": "Jahresauftakt",
+        "color": "#ae3ec9",
+        "selections": { "p1": "p1o1", "p2": "p2o2", "p3": "p3o4", "p4": "p4o2", "p5": "p5o2", "p6": "p6o1", "p7": "p7o2", "p8": "p8o4", "p9": "p9o1", "p10": "p10o4", "p11": "p11o3", "p12": "p12o5", "p13": "p13o3", "p14": "p14o3", "p15": "p15o2", "p16": "p16o3", "p17": "p17o4", "p18": "p18o2" }
+      },
+      {
+        "id": "c5",
+        "name": "Büro-Budget",
+        "color": "#e03131",
+        "selections": { "p1": "p1o1", "p2": "p2o2", "p3": "p3o1", "p4": "p4o1", "p5": "p5o1", "p6": "p6o1", "p7": "p7o1", "p8": "p8o1", "p9": "p9o1", "p10": "p10o2", "p11": "p11o4", "p12": "p12o1", "p13": "p13o2", "p14": "p14o2", "p15": "p15o1", "p16": "p16o1", "p17": "p17o1", "p18": "p18o1" }
+      }
+    ],
+    "activeConceptId": "c1"
+  }
+});
