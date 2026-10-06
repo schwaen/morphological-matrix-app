@@ -1,0 +1,65 @@
+/**
+ * Typen des Datenmodells – nur für die Typprüfung (tsc/Editor), wird vom Browser nicht geladen.
+ * Die Struktur entspricht dem JSON-Export einer Matrix.
+ */
+
+interface MatrixOption {
+  id: string;
+  text: string;
+  /** Kosten in der Währung der Matrix, `null` = nicht erfasst */
+  cost: number | null;
+  /** Nutzwert (Erfüllungsgrad) auf der Skala `settings.utilityMax`, `null` = nicht erfasst */
+  score: number | null;
+}
+
+interface MatrixParameter {
+  id: string;
+  name: string;
+  /** Gewichtung für den Nutzwert, `null` = Standard 1 */
+  weight: number | null;
+  /** Zugeordnete Kategorie, `null` = ohne Kategorie */
+  categoryId: string | null;
+  options: MatrixOption[];
+}
+
+interface MatrixCategory {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface MatrixConcept {
+  id: string;
+  name: string;
+  color: string;
+  /** Parameter-ID → gewählte Ausprägungs-ID */
+  selections: Record<string, string>;
+}
+
+interface MatrixSettings {
+  costs: boolean;
+  utility: boolean;
+  currency: 'EUR' | 'USD' | 'CHF' | 'GBP';
+  utilityMax: 5 | 10 | 100;
+}
+
+interface Matrix {
+  version: number;
+  title: string;
+  description: string;
+  settings: MatrixSettings;
+  categories: MatrixCategory[];
+  /** Immer nach Kategorien gruppiert sortiert (siehe `sortedByCategory`) */
+  parameters: MatrixParameter[];
+  concepts: MatrixConcept[];
+  activeConceptId: string | null;
+}
+
+/** Ansichtseinstellungen pro Tab (sessionStorage) */
+interface TabPrefs {
+  mode: 'edit' | 'select';
+  showLines: boolean;
+  compareOpen: boolean;
+  /** Kategorie-ID (bzw. `__none`) → eingeklappt */
+  collapsed?: Record<string, boolean>;
+}

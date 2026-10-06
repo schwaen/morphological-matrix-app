@@ -43,3 +43,23 @@ python3 -m http.server 8000
 | `index.html` | Seitengerüst                   |
 | `styles.css` | Design, Layout, responsive Regeln, Druck |
 | `app.js`     | Datenmodell, Rendering, Logik  |
+| `types.d.ts` | Typen des Datenmodells (nur Entwicklung) |
+| `tests/e2e/` | Browser-Tests (Playwright) |
+
+## Entwicklung
+
+Die App selbst braucht weder Build noch Server. Für Qualitätssicherung gibt es Entwicklungswerkzeuge (Node.js ≥ 22):
+
+```sh
+npm install                      # Werkzeuge installieren (einmalig)
+npx playwright install chromium  # Browser für die Tests (einmalig)
+
+npm run lint        # ESLint
+npm run typecheck   # Typprüfung des JavaScript per JSDoc (tsc, ohne Build)
+npm run test:e2e    # Browser-Tests (Playwright) gegen index.html per file://
+npm test            # alles zusammen
+```
+
+- **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). `app.js` nutzt diese Typen über JSDoc-Kommentare.
+- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, mehrere Tabs, Bewertung, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
+- **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung und Browser-Tests bei jedem Pull Request aus.

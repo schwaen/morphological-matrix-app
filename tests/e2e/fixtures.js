@@ -1,0 +1,65 @@
+import { test as base, expect } from '@playwright/test';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+import fs from 'node:fs';
+
+/** Die App wird wie im Alltag direkt als Datei geöffnet (kein Server, kein Build). */
+export const APP_URL = pathToFileURL(path.resolve('index.html')).href;
+
+/**
+ * `page` öffnet die App mit leerem Speicher und lässt den Test bei jedem
+ * JavaScript-Fehler der Seite fehlschlagen.
+ */
+export const test = base.extend({
+  // Playwright verlangt hier ein Objektmuster als ersten Parameter
+  // eslint-disable-next-line no-empty-pattern
+  pageErrors: async ({}, use) => { await use([]); },
+  page: async ({ page, pageErrors }, use) => {
+    page.on('pageerror', e => pageErrors.push(e.message));
+    await openFresh(page);
+    await use(page);
+    expect(pageErrors, 'JavaScript-Fehler auf der Seite').toEqual([]);
+  },
+});
+export { expect };
+
+export async function openFresh(page, query = '') {
+  await page.goto(APP_URL + query);
+  await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
+  await page.reload();
+}
+
+/** Öffnet einen Eintrag im Menü „Datei“. */
+export async function menu(page, action) {
+  await page.click('#menuBtn');
+  await page.click(`[data-action="${action}"]`);
+}
+
+/** Schaltet Kosten und/oder Nutzwert im Bewertungsdialog. */
+export async function setEvaluation(page, { costs, utility, scale } = {}) {
+  await menu(page, 'settings');
+  if (costs != null) await page.setChecked('#setCosts', costs);
+  if (utility != null) await page.setChecked('#setUtility', utility);
+  if (scale != null) await page.selectOption('#setScale', String(scale));
+  await page.click('#settingsDone');
+}
+
+export async function downloadText(page, action) {
+  await page.click('#menuBtn');
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click(`[data-action="${action}"]`)]);
+  return { name: dl.suggestedFilename(), text: fs.readFileSync(await dl.path(), 'utf8'), path: await dl.path() };
+}
+
+/** Inhalt des Fußbereichs im Konzeptvergleich, je Zeile normalisiert. */
+export function compareFooter(page) {
+  return page.evaluate(() => [...document.querySelectorAll('#compareTable tfoot tr')]
+    .map(r => r.innerText.replace(/\s+/g, ' ').trim()));
+}
+
+/** Gespeicherte Daten der Matrix dieses Tabs. */
+export function storedMatrix(page) {
+  return page.evaluate(() => {
+    const id = sessionStorage.getItem('morphologische-matrix:tab-doc');
+    return JSON.parse(localStorage.getItem('morphologische-matrix:doc:' + id)).data;
+  });
+}
