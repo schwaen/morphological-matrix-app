@@ -7,7 +7,15 @@
 const Model = (() => {
   const { uid, str, num, isColor } = Util;
 
-  const COLORS = ['#e8590c', '#1c7ed6', '#2b8a3e', '#ae3ec9', '#e03131', '#0c8599', '#f08c00', '#5f3dc4'];
+  /**
+   * Konzeptfarben in fester Reihenfolge (auf Unterscheidbarkeit geprüft, auch bei Farbfehlsichtigkeit:
+   * benachbarte Farben ΔE ≥ 8, normales Sehen ΔE ≥ 15). Gespeichert wird die helle Stufe;
+   * im Dunkelmodus zeigt die Oberfläche die zugehörige Stufe aus COLORS_DARK.
+   */
+  const COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'];
+  /** Dieselben Farbtöne für den dunklen Hintergrund (Helligkeit und Kontrast ≥ 3:1 geprüft). */
+  const COLORS_DARK = /** @type {Record<string, string>} */ (Object.fromEntries(COLORS.map((c, i) =>
+    [c, ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'][i]])));
   const CATEGORY_COLORS = ['#4f46e5', '#0891b2', '#d97706', '#059669', '#db2777', '#7c3aed', '#475569', '#65a30d'];
   /** @type {MatrixSettings['currency'][]} */
   const CURRENCIES = ['EUR', 'USD', 'CHF', 'GBP'];
@@ -288,7 +296,7 @@ const Model = (() => {
   const nameOrUnnamed = x => (x && x.name) || Texts.fallback.unnamed;
 
   return {
-    COLORS, CATEGORY_COLORS, CURRENCIES, SCALES, PRIORITIES, NO_CATEGORY, SCHEMA_VERSION, migrate,
+    COLORS, COLORS_DARK, CATEGORY_COLORS, CURRENCIES, SCALES, PRIORITIES, NO_CATEGORY, SCHEMA_VERSION, migrate,
     defaultSettings, newOption, newParameter, newConcept, nextConceptColor, nextCategoryColor, uniqueName,
     blankState, normalize, sortedByCategory, resort,
     categoryById, categoryGroups, canMoveParameter, selectedOption, optionText, sameSelections,

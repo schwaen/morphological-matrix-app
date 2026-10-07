@@ -30,6 +30,7 @@ function loadTab(t) {
   // Ansicht des Tabs übernehmen; fehlende Werte (z. B. neuer Tab) mit Standardwerten
   prefs.mode = t.view.mode || DEFAULT_PREFS.mode;
   prefs.compareOpen = t.view.compareOpen ?? DEFAULT_PREFS.compareOpen;
+  prefs.compareView = t.view.compareView || DEFAULT_PREFS.compareView;
   prefs.collapsed = t.view.collapsed || {};
   t.external = false;
 }
@@ -58,7 +59,7 @@ function openInTab(id, data, message) {
     const current = activeTab();
     const at = current ? tabs.indexOf(current) + 1 : tabs.length;
     /** @type {AppTab} */
-    const t = { docId: id, view: { mode: prefs.mode, compareOpen: prefs.compareOpen }, state: data, lastSaved: null };
+    const t = { docId: id, view: { mode: prefs.mode, compareOpen: prefs.compareOpen, compareView: prefs.compareView }, state: data, lastSaved: null };
     tabs.splice(at, 0, t);
     closedTabs = closedTabs.filter(x => x !== id);
     loadTab(t);

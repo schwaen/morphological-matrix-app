@@ -93,19 +93,19 @@ Examples.register({
       {
         "id": "c1",
         "name": "Kompakt-Espresso",
-        "color": "#e8590c",
+        "color": "#2a78d6",
         "selections": { "p1": "p1o3", "p2": "p2o2", "p3": "p3o1", "p4": "p4o2", "p5": "p5o1", "p6": "p6o2" }
       },
       {
         "id": "c2",
         "name": "Outdoor",
-        "color": "#1c7ed6",
+        "color": "#eb6834",
         "selections": { "p1": "p1o4", "p2": "p2o4", "p3": "p3o3", "p4": "p4o1", "p5": "p5o4", "p6": "p6o1" }
       },
       {
         "id": "c3",
         "name": "Smart Home",
-        "color": "#2b8a3e",
+        "color": "#1baf7a",
         "selections": { "p1": "p1o2", "p2": "p2o3", "p3": "p3o4", "p4": "p4o4", "p5": "p5o1", "p6": "p6o2" }
       }
     ],

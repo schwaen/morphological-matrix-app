@@ -182,3 +182,16 @@ function applyStaticTexts() {
   });
   $$('[data-lang]').forEach(el => el.setAttribute('aria-checked', String(el.dataset.lang === Texts.meta.lang)));
 }
+
+// ---------- Konzeptfarben im hellen/dunklen Farbschema ----------
+
+const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+/**
+ * Anzeigefarbe eines Konzepts: Im Dunkelmodus erscheinen die Farben der Standardreihe in ihrer
+ * Dunkelstufe (Model.COLORS_DARK); selbst gewählte Farben bleiben unverändert.
+ * @param {string} color gespeicherte Farbe
+ */
+function shownColor(color) {
+  return darkScheme.matches ? (Model.COLORS_DARK[color.toLowerCase()] || color) : color;
+}

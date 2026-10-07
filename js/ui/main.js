@@ -8,7 +8,7 @@ function bindEvents() {
   const desc = $('#description');
   bindField(desc, v => { state.description = v; }, () => autosize(desc));
 
-  $$('.segmented button').forEach(b => {
+  $$('[data-mode]').forEach(b => {
     b.addEventListener('click', () => setMode(/** @type {TabPrefs['mode']} */ (b.dataset.mode)));
   });
   $('#undoBtn').addEventListener('click', undo);
@@ -21,14 +21,20 @@ function bindEvents() {
   $$('[data-generate]').forEach(btn => {
     btn.addEventListener('click', () => generateConcept(btn.dataset.generate || ''));
   });
+  $$('[data-compare-view]').forEach(b => b.addEventListener('click', () => {
+    setPref('compareView', /** @type {'table' | 'chart'} */ (b.dataset.compareView));
+    setPref('compareOpen', true);
+    renderCompare();
+  }));
   $('#compareToggle').addEventListener('click', () => {
     setPref('compareOpen', prefs.compareOpen === false);
     renderCompare();
   });
-  $('#showLines').addEventListener('change', e => {
-    setPref('showLines', e.target.checked);
+  $$('[data-lines]').forEach(btn => btn.addEventListener('click', () => {
+    setPref('lines', /** @type {TabPrefs['lines']} */ (btn.dataset.lines));
+    $$('[data-lines]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
     scheduleLines();
-  });
+  }));
 
   // Menü
   $('#menuBtn').addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
@@ -121,6 +127,8 @@ function bindEvents() {
     printing = true;
     renderMatrix();
     buildCompareTable();
+    $('#compareTable').hidden = false;
+    $('#compareChart').hidden = true;
     $('#compareBody').hidden = false;
     drawLines();
   });
@@ -130,6 +138,9 @@ function bindEvents() {
     renderCompare();
     scheduleLines();
   });
+
+  // Farbschema des Systems gewechselt: Konzeptfarben in der passenden Stufe neu zeichnen
+  darkScheme.addEventListener('change', render);
 
   // Beim Verlassen der Seite bzw. Wechsel in den Hintergrund ausstehende Eingaben sofort speichern
   window.addEventListener('pagehide', flushSave);
