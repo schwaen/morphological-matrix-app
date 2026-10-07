@@ -66,7 +66,7 @@ function updateWeightPercents() {
  * @param {bigint} n @returns {{ text: string, title: string | null }}
  */
 function formatCount(n) {
-  const exact = n.toLocaleString('de-DE');
+  const exact = Util.formatInteger(n);
   if (n < 10n ** 12n) return { text: exact, title: null };
   const { value, power } = Util.scaleBigInt(n);
   const unit = Texts.stats.bigUnits[power];
@@ -87,10 +87,10 @@ function renderStats() {
   const stat = (value, label, title = null) => h('span', { class: 'stat', title }, h('strong', null, value), ` ${label}`);
   const count = formatCount(combos);
   $('#stats').replaceChildren(
-    stat(P.toLocaleString('de-DE'), Texts.stats.parameters),
-    stat(O.toLocaleString('de-DE'), Texts.stats.options(O)),
+    stat(Util.formatInteger(P), Texts.stats.parameters),
+    stat(Util.formatInteger(O), Texts.stats.options(O)),
     stat(count.text, Texts.stats.combinations(combos === 1n), count.title),
-    stat(C.toLocaleString('de-DE'), Texts.stats.concepts(C)),
+    stat(Util.formatInteger(C), Texts.stats.concepts(C)),
   );
 }
 

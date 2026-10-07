@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 
-const FILES = ['js/texts.js', 'js/util.js', 'js/model.js', 'js/evaluation.js', 'js/ops.js', 'js/io.js', 'js/zip.js', 'js/examples.js'];
+const FILES = ['js/i18n/de.js', 'js/i18n/en.js', 'js/texts.js', 'js/util.js', 'js/model.js', 'js/evaluation.js', 'js/ops.js', 'js/io.js', 'js/zip.js', 'js/examples.js'];
 /** Mitgelieferte Beispiele: alle in index.html eingebundenen Dateien unter examples/. */
 export const EXAMPLE_FILES = [...fs.readFileSync(path.resolve('index.html'), 'utf8')
   .matchAll(/<script src="(examples\/[^"]+\.js)"/g)].map(m => m[1]);
@@ -20,7 +20,7 @@ export function loadApp() {
   for (const file of [...FILES, ...EXAMPLE_FILES]) {
     vm.runInContext(fs.readFileSync(path.resolve(file), 'utf8'), context, { filename: file });
   }
-  const app = vm.runInContext('({ Texts, Util, Model, Evaluation, Ops, IO, Zip, Examples })', context);
+  const app = vm.runInContext('({ Texts, Languages, Util, Model, Evaluation, Ops, IO, Zip, Examples })', context);
   /** Beispiel „Kaffeemaschine“ als frische Matrix (Grundlage vieler Tests). */
   app.example = () => app.Examples.load('kaffeemaschine');
   return app;

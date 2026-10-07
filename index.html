@@ -3,12 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Morphologische Matrix (Zwicky-Box) im Browser erstellen, Lösungskonzepte kombinieren und exportieren.">
+  <meta name="description" content="" data-i18n-attr="content:ui.metaDescription">
   <meta name="theme-color" content="#4f46e5">
-  <title>Morphologische Matrix</title>
+  <title></title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234f46e5'/%3E%3Cg fill='%23fff'%3E%3Crect x='6' y='6' width='6' height='6' rx='1.5'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5'/%3E%3Crect x='20' y='20' width='6' height='6' rx='1.5'/%3E%3C/g%3E%3Cg fill='%23fff' opacity='.45'%3E%3Crect x='13' y='6' width='6' height='6' rx='1.5'/%3E%3Crect x='20' y='6' width='6' height='6' rx='1.5'/%3E%3Crect x='6' y='13' width='6' height='6' rx='1.5'/%3E%3Crect x='20' y='13' width='6' height='6' rx='1.5'/%3E%3Crect x='6' y='20' width='6' height='6' rx='1.5'/%3E%3Crect x='13' y='20' width='6' height='6' rx='1.5'/%3E%3C/g%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
   <!-- Klassische Skripte ohne Build; Reihenfolge ist wichtig: erst reine Logik, dann Oberfläche -->
+  <script src="js/i18n/de.js" defer></script>
+  <script src="js/i18n/en.js" defer></script>
   <script src="js/texts.js" defer></script>
   <script src="js/util.js" defer></script>
   <script src="js/model.js" defer></script>
@@ -41,42 +43,47 @@
         <g fill="#fff"><rect x="6" y="6" width="6" height="6" rx="1.5"/><rect x="13" y="13" width="6" height="6" rx="1.5"/><rect x="20" y="20" width="6" height="6" rx="1.5"/></g>
         <g fill="#fff" opacity=".45"><rect x="13" y="6" width="6" height="6" rx="1.5"/><rect x="20" y="6" width="6" height="6" rx="1.5"/><rect x="6" y="13" width="6" height="6" rx="1.5"/><rect x="20" y="13" width="6" height="6" rx="1.5"/><rect x="6" y="20" width="6" height="6" rx="1.5"/><rect x="13" y="20" width="6" height="6" rx="1.5"/></g>
       </svg>
-      <nav class="app-tabs" id="appTabs" role="tablist" aria-label="Geöffnete Matrizen"></nav>
+      <nav class="app-tabs" id="appTabs" role="tablist" data-i18n-attr="aria-label:tabs.label"></nav>
     </div>
 
     <div class="toolbar">
-      <div class="segmented" role="group" aria-label="Modus">
-        <button type="button" data-mode="edit">Bearbeiten</button>
-        <button type="button" data-mode="select">Kombinieren</button>
+      <div class="segmented" role="group" data-i18n-attr="aria-label:ui.mode">
+        <button type="button" data-mode="edit" data-i18n="ui.modeEdit"></button>
+        <button type="button" data-mode="select" data-i18n="ui.modeSelect"></button>
       </div>
 
       <div class="btn-group">
-        <button type="button" class="icon-btn" id="undoBtn" title="Rückgängig (Strg+Z)" aria-label="Rückgängig">
+        <button type="button" class="icon-btn" id="undoBtn" data-i18n-attr="title:ui.undoTitle;aria-label:ui.undo">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></svg>
         </button>
-        <button type="button" class="icon-btn" id="redoBtn" title="Wiederholen (Strg+Umschalt+Z)" aria-label="Wiederholen">
+        <button type="button" class="icon-btn" id="redoBtn" data-i18n-attr="title:ui.redoTitle;aria-label:ui.redo">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3"/></svg>
         </button>
       </div>
 
       <div class="menu">
         <button type="button" class="btn" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="menuList">
-          Datei
+          <span data-i18n="ui.menu.file"></span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <div class="menu-list" id="menuList" role="menu" hidden>
-          <button type="button" role="menuitem" data-action="new">Neue leere Matrix</button>
-          <button type="button" role="menuitem" data-action="open">Meine Matrizen …</button>
-          <button type="button" role="menuitem" data-action="example">Beispiele …</button>
+          <button type="button" role="menuitem" data-action="new" data-i18n="ui.menu.new"></button>
+          <button type="button" role="menuitem" data-action="open" data-i18n="ui.menu.open"></button>
+          <button type="button" role="menuitem" data-action="example" data-i18n="ui.menu.examples"></button>
           <hr>
-          <button type="button" role="menuitem" data-action="settings">Bewertung: Kosten, Nutzwert &amp; Priorität …</button>
+          <button type="button" role="menuitem" data-action="settings" data-i18n="ui.menu.settings"></button>
           <hr>
-          <button type="button" role="menuitem" data-action="export-json">Als JSON speichern</button>
-          <button type="button" role="menuitem" data-action="import-json">JSON öffnen …</button>
-          <button type="button" role="menuitem" data-action="export-csv">Als CSV exportieren</button>
+          <button type="button" role="menuitem" data-action="export-json" data-i18n="ui.menu.exportJson"></button>
+          <button type="button" role="menuitem" data-action="import-json" data-i18n="ui.menu.importJson"></button>
+          <button type="button" role="menuitem" data-action="export-csv" data-i18n="ui.menu.exportCsv"></button>
           <hr>
-          <button type="button" role="menuitem" data-action="share">Link zum Teilen kopieren</button>
-          <button type="button" role="menuitem" data-action="print">Drucken / PDF</button>
+          <button type="button" role="menuitem" data-action="share" data-i18n="ui.menu.share"></button>
+          <button type="button" role="menuitem" data-action="print" data-i18n="ui.menu.print"></button>
+          <hr>
+          <div class="menu-label" data-i18n="ui.menu.language"></div>
+          <!-- Sprachnamen bleiben in der jeweiligen Sprache -->
+          <button type="button" role="menuitemradio" data-lang="de" lang="de">Deutsch</button>
+          <button type="button" role="menuitemradio" data-lang="en" lang="en">English</button>
         </div>
       </div>
     </div>
@@ -84,12 +91,12 @@
 
   <main class="layout">
     <section class="matrix-section" aria-labelledby="matrixHeading">
-      <h2 id="matrixHeading" class="visually-hidden">Matrix</h2>
-      <textarea id="description" class="description" rows="1" placeholder="Problemstellung bzw. Gesamtfunktion beschreiben …" aria-label="Problemstellung"></textarea>
+      <h2 id="matrixHeading" class="visually-hidden" data-i18n="ui.matrixHeading"></h2>
+      <textarea id="description" class="description" rows="1" data-i18n-attr="placeholder:ui.descriptionPlaceholder;aria-label:ui.description"></textarea>
 
       <div class="stats" id="stats" aria-live="polite"></div>
 
-      <nav class="cat-nav" id="catNav" aria-label="Kategorien" hidden></nav>
+      <nav class="cat-nav" id="catNav" data-i18n-attr="aria-label:ui.categories" hidden></nav>
 
       <div class="matrix-scroll" id="matrixScroll">
         <div class="matrix-wrap" id="matrixWrap">
@@ -101,11 +108,11 @@
       <div class="below-matrix">
         <button type="button" class="btn btn-dashed" id="addParamBtn">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          Parameter hinzufügen
+          <span data-i18n="ui.addParameter"></span>
         </button>
-        <button type="button" class="btn btn-dashed" id="addCategoryBtn" title="Parameter in Kategorien gliedern (optional)">
+        <button type="button" class="btn btn-dashed" id="addCategoryBtn" data-i18n-attr="title:ui.addCategoryTitle">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7M18 15v6M15 18h6"/></svg>
-          Kategorie hinzufügen
+          <span data-i18n="ui.addCategory"></span>
         </button>
         <p class="hint" id="hint"></p>
       </div>
@@ -113,41 +120,41 @@
 
     <aside class="panel concepts-panel" aria-labelledby="conceptsHeading">
       <div class="panel-head">
-        <h2 id="conceptsHeading">Lösungskonzepte</h2>
+        <h2 id="conceptsHeading" data-i18n="ui.conceptsHeading"></h2>
         <button type="button" class="btn btn-small btn-primary" id="addConceptBtn">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          Konzept
+          <span data-i18n="ui.addConcept"></span>
         </button>
       </div>
       <ul class="concept-list" id="conceptList"></ul>
       <div class="concept-actions">
-        <button type="button" class="btn btn-small" id="randomBtn" title="Für das aktive Konzept je Parameter eine zufällige Ausprägung wählen">
+        <button type="button" class="btn btn-small" id="randomBtn" data-i18n-attr="title:ui.randomTitle">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2" class="fill"/><circle cx="15" cy="15" r="1.2" class="fill"/><circle cx="15" cy="9" r="1.2" class="fill"/><circle cx="9" cy="15" r="1.2" class="fill"/></svg>
-          Zufällig
+          <span data-i18n="ui.random"></span>
         </button>
-        <button type="button" class="btn btn-small" id="clearSelBtn">Auswahl leeren</button>
+        <button type="button" class="btn btn-small" id="clearSelBtn" data-i18n="ui.clearSelection"></button>
       </div>
       <div class="auto-concepts" id="autoConcepts" hidden>
-        <span class="auto-label">Konzept automatisch erstellen</span>
+        <span class="auto-label" data-i18n="ui.autoLabel"></span>
         <div class="auto-buttons">
-          <button type="button" class="btn btn-small" data-generate="max-utility" title="Neues Konzept: je Parameter die Ausprägung mit dem höchsten Nutzwert">Höchster Nutzwert</button>
-          <button type="button" class="btn btn-small" data-generate="min-utility" title="Neues Konzept: je Parameter die Ausprägung mit dem geringsten Nutzwert">Geringster Nutzwert</button>
-          <button type="button" class="btn btn-small" data-generate="min-cost" title="Neues Konzept: je Parameter die günstigste Ausprägung">Geringste Kosten</button>
-          <button type="button" class="btn btn-small" data-generate="max-cost" title="Neues Konzept: je Parameter die teuerste Ausprägung">Höchste Kosten</button>
-          <button type="button" class="btn btn-small" data-generate="best-value" title="Neues Konzept: Kombination mit den geringsten Kosten je Nutzwertpunkt">Beste Preis-Leistung</button>
+          <button type="button" class="btn btn-small" data-generate="max-utility" data-i18n="ui.generators.max-utility.text" data-i18n-attr="title:ui.generators.max-utility.title"></button>
+          <button type="button" class="btn btn-small" data-generate="min-utility" data-i18n="ui.generators.min-utility.text" data-i18n-attr="title:ui.generators.min-utility.title"></button>
+          <button type="button" class="btn btn-small" data-generate="min-cost" data-i18n="ui.generators.min-cost.text" data-i18n-attr="title:ui.generators.min-cost.title"></button>
+          <button type="button" class="btn btn-small" data-generate="max-cost" data-i18n="ui.generators.max-cost.text" data-i18n-attr="title:ui.generators.max-cost.title"></button>
+          <button type="button" class="btn btn-small" data-generate="best-value" data-i18n="ui.generators.best-value.text" data-i18n-attr="title:ui.generators.best-value.title"></button>
         </div>
         <div class="auto-group" id="autoMoscow">
-          <span class="auto-label">Nach Priorität (MoSCoW)</span>
+          <span class="auto-label" data-i18n="ui.autoMoscow"></span>
           <div class="auto-buttons auto-buttons-list">
-            <button type="button" class="btn btn-small" data-generate="moscow-must" title="Neues Konzept: je Parameter die Must-Ausprägung (bei mehreren die günstigste)">MVP – nur Must-haves</button>
-            <button type="button" class="btn btn-small" data-generate="moscow-should" title="Neues Konzept: je Parameter die Should-Ausprägung (bei mehreren die mit dem höchsten Nutzwert)">Standard – Should-haves</button>
-            <button type="button" class="btn btn-small" data-generate="moscow-could" title="Neues Konzept: je Parameter die Could-Ausprägung (bei mehreren die mit dem höchsten Nutzwert)">Premium – Could-haves</button>
+            <button type="button" class="btn btn-small" data-generate="moscow-must" data-i18n="ui.generators.moscow-must.text" data-i18n-attr="title:ui.generators.moscow-must.title"></button>
+            <button type="button" class="btn btn-small" data-generate="moscow-should" data-i18n="ui.generators.moscow-should.text" data-i18n-attr="title:ui.generators.moscow-should.title"></button>
+            <button type="button" class="btn btn-small" data-generate="moscow-could" data-i18n="ui.generators.moscow-could.text" data-i18n-attr="title:ui.generators.moscow-could.title"></button>
           </div>
         </div>
       </div>
       <label class="check">
         <input type="checkbox" id="showLines">
-        Verbindungslinien anzeigen
+        <span data-i18n="ui.showLines"></span>
       </label>
       <div class="summary" id="conceptSummary"></div>
     </aside>
@@ -156,7 +163,7 @@
       <h2 id="compareHeading" class="collapsible-head">
         <button type="button" class="collapse-toggle" id="compareToggle" aria-expanded="true" aria-controls="compareBody">
           <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-          Konzeptvergleich
+          <span data-i18n="ui.compareHeading"></span>
           <span class="collapse-meta" id="compareMeta"></span>
         </button>
       </h2>
@@ -168,20 +175,20 @@
 
   <dialog class="dialog" id="libraryDialog" aria-labelledby="libraryHeading">
     <div class="dialog-head">
-      <h2 id="libraryHeading">Meine Matrizen</h2>
-      <button type="button" class="icon-btn" id="libraryClose" aria-label="Schließen" title="Schließen">
+      <h2 id="libraryHeading" data-i18n="ui.libraryHeading"></h2>
+      <button type="button" class="icon-btn" id="libraryClose" data-i18n-attr="aria-label:ui.close;title:ui.close">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
-    <p class="dialog-hint">Alle Matrizen werden in diesem Browser gespeichert. Jeder Tab bearbeitet seine eigene Matrix – öffnen Sie eine Matrix in einem neuen Tab, um parallel zu arbeiten.</p>
+    <p class="dialog-hint" data-i18n="ui.libraryHint"></p>
     <div class="library-actions">
-      <button type="button" class="btn btn-small" id="backupExportBtn" title="Alle Matrizen als ZIP-Archiv mit je einer JSON-Datei speichern">
+      <button type="button" class="btn btn-small" id="backupExportBtn" data-i18n-attr="title:ui.backupExportTitle">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
-        Backup herunterladen
+        <span data-i18n="ui.backupExport"></span>
       </button>
-      <button type="button" class="btn btn-small" id="backupRestoreBtn" title="ZIP-Archiv oder JSON-Dateien einlesen – vorhandene Matrizen werden nie überschrieben">
+      <button type="button" class="btn btn-small" id="backupRestoreBtn" data-i18n-attr="title:ui.backupRestoreTitle">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>
-        Backup wiederherstellen …
+        <span data-i18n="ui.backupRestore"></span>
       </button>
       <input type="file" id="backupFile" accept=".zip,application/zip,.json,application/json" multiple hidden>
     </div>
@@ -190,37 +197,37 @@
 
   <dialog class="dialog" id="examplesDialog" aria-labelledby="examplesHeading">
     <div class="dialog-head">
-      <h2 id="examplesHeading">Beispiele</h2>
-      <button type="button" class="icon-btn" id="examplesClose" aria-label="Schließen" title="Schließen">
+      <h2 id="examplesHeading" data-i18n="ui.examplesHeading"></h2>
+      <button type="button" class="icon-btn" id="examplesClose" data-i18n-attr="aria-label:ui.close;title:ui.close">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
-    <p class="dialog-hint">Ein Beispiel öffnet sich als neue Matrix in einem eigenen Tab. Änderungen daran wirken sich nicht auf das Beispiel aus.</p>
+    <p class="dialog-hint" data-i18n="ui.examplesHint"></p>
     <ul class="doc-list" id="exampleList"></ul>
   </dialog>
 
   <dialog class="dialog" id="settingsDialog" aria-labelledby="settingsHeading">
     <div class="dialog-head">
-      <h2 id="settingsHeading">Bewertung der Ausprägungen</h2>
-      <button type="button" class="icon-btn" id="settingsClose" aria-label="Schließen" title="Schließen">
+      <h2 id="settingsHeading" data-i18n="ui.settingsHeading"></h2>
+      <button type="button" class="icon-btn" id="settingsClose" data-i18n-attr="aria-label:ui.close;title:ui.close">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
-    <p class="dialog-hint">Die Einstellungen gelten für die gesamte Matrix. Ausgeblendete Werte bleiben erhalten und erscheinen beim erneuten Aktivieren wieder.</p>
+    <p class="dialog-hint" data-i18n="ui.settingsHint"></p>
 
     <div class="setting">
       <label class="check setting-toggle">
         <input type="checkbox" id="setCosts">
-        <span><strong>Kosten</strong> je Ausprägung erfassen</span>
+        <span data-i18n-html="ui.costsToggle"></span>
       </label>
-      <p class="setting-desc">Für jedes Konzept werden die Kosten der gewählten Ausprägungen summiert.</p>
+      <p class="setting-desc" data-i18n="ui.costsDesc"></p>
       <label class="setting-sub">
-        Währung
+        <span data-i18n="ui.currency"></span>
         <select id="setCurrency">
-          <option value="EUR">Euro (€)</option>
-          <option value="USD">US-Dollar ($)</option>
-          <option value="CHF">Schweizer Franken (CHF)</option>
-          <option value="GBP">Britisches Pfund (£)</option>
+          <option value="EUR" data-i18n="ui.currencies.EUR"></option>
+          <option value="USD" data-i18n="ui.currencies.USD"></option>
+          <option value="CHF" data-i18n="ui.currencies.CHF"></option>
+          <option value="GBP" data-i18n="ui.currencies.GBP"></option>
         </select>
       </label>
     </div>
@@ -228,15 +235,15 @@
     <div class="setting">
       <label class="check setting-toggle">
         <input type="checkbox" id="setUtility">
-        <span><strong>Nutzwert</strong> je Ausprägung erfassen</span>
+        <span data-i18n-html="ui.utilityToggle"></span>
       </label>
-      <p class="setting-desc">Wie in der Nutzwertanalyse: Jede Ausprägung erhält einen Erfüllungsgrad, jeder Parameter optional eine Gewichtung (Standard 1). Der Nutzwert eines Konzepts ist die gewichtete Summe der Erfüllungsgrade, geteilt durch die Summe der Gewichte.</p>
+      <p class="setting-desc" data-i18n="ui.utilityDesc"></p>
       <label class="setting-sub">
-        Skala
+        <span data-i18n="ui.scale"></span>
         <select id="setScale">
-          <option value="5">0 bis 5</option>
-          <option value="10">0 bis 10</option>
-          <option value="100">0 bis 100</option>
+          <option value="5" data-i18n="ui.scales.5"></option>
+          <option value="10" data-i18n="ui.scales.10"></option>
+          <option value="100" data-i18n="ui.scales.100"></option>
         </select>
       </label>
     </div>
@@ -244,24 +251,18 @@
     <div class="setting">
       <label class="check setting-toggle">
         <input type="checkbox" id="setMoscow">
-        <span><strong>Priorität (MoSCoW)</strong> je Ausprägung erfassen</span>
+        <span data-i18n-html="ui.moscowToggle"></span>
       </label>
-      <p class="setting-desc">
-        <span class="prio prio-must">M</span> Must have – zwingend nötig (Basis) ·
-        <span class="prio prio-should">S</span> Should have – macht das Produkt rund ·
-        <span class="prio prio-could">C</span> Could have – nice to have, wenn Zeit und Budget bleiben ·
-        <span class="prio prio-wont">W</span> Won't have – bewusst ausgeschlossen.
-        Damit lassen sich automatisch die Konzepte MVP (nur Must), Standard (nur Should) und Premium (nur Could) erstellen.
-      </p>
+      <p class="setting-desc" data-i18n-html="ui.moscowDesc"></p>
     </div>
 
     <div class="dialog-foot">
-      <button type="button" class="btn btn-primary" id="settingsDone">Fertig</button>
+      <button type="button" class="btn btn-primary" id="settingsDone" data-i18n="ui.done"></button>
     </div>
   </dialog>
 
   <input type="file" id="importFile" accept="application/json,.json" hidden>
-  <div class="menu-list tab-menu" id="tabMenu" role="menu" aria-label="Matrix öffnen oder neu anlegen" hidden></div>
+  <div class="menu-list tab-menu" id="tabMenu" role="menu" data-i18n-attr="aria-label:tabs.add" hidden></div>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>

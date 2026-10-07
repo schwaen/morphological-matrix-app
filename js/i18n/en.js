@@ -1,0 +1,371 @@
+/*
+ * English texts (US) – same structure as js/i18n/de.js (checked by the type check and a unit
+ * test). Terminology: Parameter → parameter, Ausprägung → option, Konzept → concept,
+ * Nutzwert → utility, Preis-Leistung → value for money. Provides `TextsEn`.
+ */
+'use strict';
+
+/** @type {typeof TextsDe} */
+const TextsEn = (() => {
+  /** Singular/plural: `plural(1, 'concept', 'concepts')` → “1 concept”. */
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  /** Quotation marks as used in the interface. */
+  const q = s => `“${s}”`;
+
+  return {
+    plural,
+    q,
+
+    meta: {
+      lang: 'en',
+      name: 'English',
+      locale: 'en-US',
+      decimal: '.',
+      csvSeparator: ',',
+      csvDecimal: '.',
+    },
+
+    ui: {
+      metaDescription: 'Create a morphological matrix (Zwicky box) in your browser, combine solution concepts and export them.',
+      mode: 'Mode',
+      modeEdit: 'Edit',
+      modeSelect: 'Combine',
+      undo: 'Undo',
+      undoTitle: 'Undo (Ctrl+Z)',
+      redo: 'Redo',
+      redoTitle: 'Redo (Ctrl+Shift+Z)',
+      menu: {
+        file: 'File',
+        new: 'New blank matrix',
+        open: 'My matrices …',
+        examples: 'Examples …',
+        settings: 'Evaluation: cost, utility & priority …',
+        exportJson: 'Save as JSON',
+        importJson: 'Open JSON …',
+        exportCsv: 'Export as CSV',
+        share: 'Copy share link',
+        print: 'Print / PDF',
+        language: 'Language',
+      },
+      matrixHeading: 'Matrix',
+      description: 'Problem statement',
+      descriptionPlaceholder: 'Describe the problem or overall function …',
+      categories: 'Categories',
+      addParameter: 'Add parameter',
+      addCategory: 'Add category',
+      addCategoryTitle: 'Group parameters into categories (optional)',
+      conceptsHeading: 'Solution concepts',
+      addConcept: 'Concept',
+      random: 'Random',
+      randomTitle: 'Pick a random option per parameter for the active concept',
+      clearSelection: 'Clear selection',
+      autoLabel: 'Create concept automatically',
+      autoMoscow: 'By priority (MoSCoW)',
+      generators: {
+        'max-utility': { text: 'Highest utility', title: 'New concept: the option with the highest utility per parameter' },
+        'min-utility': { text: 'Lowest utility', title: 'New concept: the option with the lowest utility per parameter' },
+        'min-cost': { text: 'Lowest cost', title: 'New concept: the cheapest option per parameter' },
+        'max-cost': { text: 'Highest cost', title: 'New concept: the most expensive option per parameter' },
+        'best-value': { text: 'Best value for money', title: 'New concept: the combination with the lowest cost per utility point' },
+        'moscow-must': { text: 'MVP – must-haves only', title: 'New concept: the must-have option per parameter (if several, the cheapest)' },
+        'moscow-should': { text: 'Standard – should-haves', title: 'New concept: the should-have option per parameter (if several, the one with the highest utility)' },
+        'moscow-could': { text: 'Premium – could-haves', title: 'New concept: the could-have option per parameter (if several, the one with the highest utility)' },
+      },
+      showLines: 'Show connecting lines',
+      compareHeading: 'Concept comparison',
+      close: 'Close',
+      libraryHeading: 'My matrices',
+      libraryHint: 'All matrices are stored in this browser. Each tab edits its own matrix – open a matrix in a new tab to work in parallel.',
+      backupExport: 'Download backup',
+      backupExportTitle: 'Save all matrices as a ZIP archive with one JSON file each',
+      backupRestore: 'Restore backup …',
+      backupRestoreTitle: 'Read a ZIP archive or JSON files – existing matrices are never overwritten',
+      examplesHeading: 'Examples',
+      examplesHint: 'An example opens as a new matrix in its own tab. Your changes do not affect the example.',
+      settingsHeading: 'Evaluating options',
+      settingsHint: 'These settings apply to the whole matrix. Hidden values are kept and reappear when you turn the setting back on.',
+      costsToggle: 'Record <strong>cost</strong> per option',
+      costsDesc: 'For each concept, the costs of the selected options are added up.',
+      currency: 'Currency',
+      currencies: { EUR: 'Euro (€)', USD: 'US dollar ($)', CHF: 'Swiss franc (CHF)', GBP: 'British pound (£)' },
+      utilityToggle: 'Record <strong>utility</strong> per option',
+      utilityDesc: 'As in a weighted scoring model: each option gets a score, each parameter an optional weight (default 1). The utility of a concept is the weighted sum of its scores divided by the sum of the weights.',
+      scale: 'Scale',
+      scales: { 5: '0 to 5', 10: '0 to 10', 100: '0 to 100' },
+      moscowToggle: 'Record <strong>priority (MoSCoW)</strong> per option',
+      moscowDesc: '<span class="prio prio-must">M</span> Must have – essential (baseline) · '
+        + '<span class="prio prio-should">S</span> Should have – makes the product well-rounded · '
+        + '<span class="prio prio-could">C</span> Could have – nice to have if time and budget allow · '
+        + '<span class="prio prio-wont">W</span> Won\'t have – deliberately excluded. '
+        + 'This lets you create the concepts MVP (must only), Standard (should only) and Premium (could only) automatically.',
+      done: 'Done',
+    },
+
+    app: {
+      /** @param {string} title */
+      documentTitle: title => (title ? `${title} – Morphological Matrix` : 'Morphological Matrix'),
+    },
+
+    fallback: {
+      unnamed: 'Untitled',
+      unnamedMatrix: 'Untitled matrix',
+      unnamedConcept: 'Untitled concept',
+      noCategory: 'No category',
+      matrixTitle: 'Morphological matrix',
+      newMatrixTitle: 'New morphological matrix',
+      parameter: n => `Parameter ${n}`,
+      option: n => `Option ${n}`,
+      emptyOption: n => `(Option ${n})`,
+      concept: n => `Concept ${n}`,
+      category: n => `Category ${n}`,
+      copyOf: name => `${name} (copy)`,
+    },
+
+    errors: {
+      invalidFormat: 'Invalid file format: “parameters” is missing.',
+      zipInvalid: 'The ZIP archive is damaged or incomplete.',
+      zipMethod: 'The ZIP archive uses an unsupported compression method.',
+      newerFormat: (version, supported) =>
+        `The data comes from a newer version of the app (format ${version}, supported up to ${supported}).`,
+      fileUnreadable: 'The file could not be read.',
+      fileInvalid: message => `The file could not be read: ${message}`,
+      shareInvalid: 'The share link is invalid.',
+      storageFull: 'Cannot save in the browser – please save as JSON.',
+      docMissing: 'This matrix no longer exists.',
+    },
+
+    toast: {
+      undo: 'Undo',
+      parameterDeleted: name => `Parameter ${q(name)} deleted.`,
+      categoryDeleted: name => `Category ${q(name)} deleted – its parameters were kept.`,
+      conceptDeleted: name => `Concept ${q(name)} deleted.`,
+      noOptions: 'There are no options yet.',
+      newMatrix: 'New matrix created.',
+      exampleOpened: name => `Example ${q(name)} opened as a new matrix.`,
+      opened: title => `${q(title)} opened.`,
+      sharedOpened: title => `Shared matrix ${q(title)} opened as a new matrix.`,
+      linkCopied: 'Link copied to the clipboard.',
+      generated: name => `Concept ${q(name)} created.`,
+      generatedPartial: (name, skipped, missing) =>
+        `Concept ${q(name)} created – ${skipped} ${skipped === 1 ? 'parameter was' : 'parameters were'} left without a selection because ${missing} is missing there.`,
+      generatedExists: (label, name) =>
+        `This combination (${q(label)}) already exists as concept ${q(name)} – it has been selected.`,
+      notGenerated: reason => `No concept created. ${reason}`,
+      missingValues: missing => `Please enter ${missing} for the options first.`,
+    },
+
+    prompt: {
+      newCategory: 'Name of the new category:',
+      shareLink: 'Share link (copy with Ctrl+C):',
+      rescale: (oldMax, max) => `Convert existing utility scores from the 0–${oldMax} scale to 0–${max}?\n\n`
+        + 'OK: convert (e.g. 7 out of 10 becomes 3.5 out of 5)\nCancel: keep the values unchanged',
+      deleteMatrix: title => `Permanently delete matrix ${q(title)}?`,
+    },
+
+    hint: {
+      edit: 'Tip: Press Enter to jump to the next option or add a new one. To combine, switch to “Combine” at the top.',
+      select: name => `Click one option per parameter to assign it to concept ${q(name)}. Click again to remove the selection.`,
+      noConcept: 'Add a concept, then pick one option per parameter.',
+    },
+
+    stats: {
+      parameters: 'Parameters',
+      options: n => (n === 1 ? 'Option' : 'Options'),
+      combinations: one => (one ? 'Possible combination' : 'Possible combinations'),
+      /** Number words for very large counts (short scale), key = power of ten */
+      bigUnits: {
+        12: 'trillion', 15: 'quadrillion', 18: 'quintillion', 21: 'sextillion',
+        24: 'septillion', 27: 'octillion', 30: 'nonillion', 33: 'decillion',
+      },
+      approx: (value, unit) => `≈ ${value} ${unit}`,
+      approxPower: (value, power) => `≈ ${value} · 10${String(power).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(d)])}`,
+      exact: n => `Exactly: ${n}`,
+      concepts: n => (n === 1 ? 'Concept' : 'Concepts'),
+    },
+
+    matrix: {
+      label: 'Morphological matrix',
+      emptyEdit: 'No parameters yet – add the first one below.',
+      emptySelect: 'No parameters yet. Switch to “Edit” mode to build the matrix.',
+      parameterName: n => `Name of parameter ${n}`,
+      optionField: (param, n) => `${param}: option ${n}`,
+      optionCount: n => plural(n, 'option', 'options'),
+      weight: 'Weight',
+      weightOf: param => `Weight of ${param}`,
+      weightShare: percent => `Weight\u00a0${percent}`,
+      moveUp: 'Move up',
+      moveDown: 'Move down',
+      moveLeft: 'Move left (Alt+←)',
+      moveRight: 'Move right (Alt+→)',
+      deleteParameter: 'Delete parameter',
+      deleteOption: 'Delete option',
+      addOption: 'Add option',
+      addOptionTo: param => `Add option to ${param}`,
+      costPlaceholder: 'Cost',
+      costOf: option => `Cost of ${option}`,
+      utilityUnit: 'UT',
+      utilityUnitTitle: 'Utility (score)',
+      utilityOf: (option, max) => `Utility of ${option} (0 to ${max})`,
+      utilityShort: value => `UT ${value}`,
+      selectedIn: names => `Selected in: ${names}`,
+    },
+
+    category: {
+      select: param => `Category of ${param}`,
+      selectTitle: 'Category',
+      newOption: '+ New category …',
+      expand: 'Expand',
+      collapse: 'Collapse',
+      toggle: (name, collapsed) => `${collapsed ? 'Expand' : 'Collapse'} ${name}`,
+      color: name => `Color of ${name}`,
+      changeColor: 'Change color',
+      namePlaceholder: 'Category',
+      nameLabel: 'Category name',
+      count: n => plural(n, 'parameter', 'parameters'),
+      progress: (picked, total) => `${picked}/${total} selected`,
+      progressTitle: concept => `Selection in concept ${q(concept)}`,
+      addParameter: 'Parameter',
+      moveUp: 'Move category up',
+      moveDown: 'Move category down',
+      delete: 'Delete category (parameters are kept)',
+      jumpTo: name => `Jump to ${q(name)}`,
+      expandAll: 'Expand all',
+      collapseAll: 'Collapse all',
+    },
+
+    concept: {
+      color: name => `Color of ${name}`,
+      changeColor: 'Change color',
+      nameLabel: n => `Name of concept ${n}`,
+      duplicate: 'Duplicate concept',
+      delete: 'Delete concept',
+      progressTitle: (filled, total) => `${filled} of ${total} parameters selected`,
+      none: 'No concepts yet.',
+    },
+
+    moscow: {
+      levels: {
+        must: { short: 'M', label: 'Must have' },
+        should: { short: 'S', label: 'Should have' },
+        could: { short: 'C', label: 'Could have' },
+        wont: { short: 'W', label: "Won't have" },
+      },
+      groupLabel: 'Priority',
+      short: 'Prio',
+      setLabel: (level, option) => `Priority of ${option}: ${level}`,
+      wontHint: "Won't have – deliberately excluded; never picked by automatic concepts",
+      profileTitle: 'Selected options per priority',
+      none: 'none',
+      wontNote: n => `contains ${n} × won't`,
+    },
+
+    summary: {
+      noConcept: 'No concept selected.',
+      noParameters: 'The matrix has no parameters yet.',
+      notSelected: 'not selected',
+      totalCost: 'Total cost',
+      utility: 'Utility',
+      utilityValue: (value, max) => `${value} / ${max}`,
+      missing: n => `${n} ${n === 1 ? 'value' : 'values'} missing`,
+    },
+
+    compare: {
+      parameter: 'Parameter',
+      conceptCount: n => plural(n, 'concept', 'concepts'),
+      totalCost: 'Total cost',
+      utility: max => `Utility (max. ${max})`,
+      priceValue: 'Value for money',
+      priceValueNote: 'Cost per utility point',
+      priceValueTitle: 'Total cost divided by utility – the lower, the better',
+      priority: 'Priority (MoSCoW)',
+      best: 'Best',
+    },
+
+    evaluation: {
+      incomplete: 'Cannot be calculated: costs or utility scores are incomplete.',
+      zeroUtility: 'Cannot be calculated: the utility is 0.',
+      needsAllValues: 'This requires options with cost and utility in every parameter.',
+      zeroWeights: 'The sum of the weights is 0.',
+      allScoresZero: 'All entered utility scores are 0.',
+      generators: {
+        'max-utility': { label: 'Highest utility', missing: 'the utility' },
+        'min-utility': { label: 'Lowest utility', missing: 'the utility' },
+        'min-cost': { label: 'Lowest cost', missing: 'the cost' },
+        'max-cost': { label: 'Highest cost', missing: 'the cost' },
+        'best-value': { label: 'Best value for money', missing: 'cost and utility' },
+        'moscow-must': { label: 'MVP (must-haves)', missing: 'the “must” priority' },
+        'moscow-should': { label: 'Standard (should-haves)', missing: 'the “should” priority' },
+        'moscow-could': { label: 'Premium (could-haves)', missing: 'the “could” priority' },
+      },
+    },
+
+    tabs: {
+      label: 'Open matrices',
+      titleLabel: 'Matrix title',
+      renameHint: 'Double-click to rename',
+      add: 'Open or create a matrix',
+      close: 'Close tab',
+      closeNamed: title => `Close ${q(title)}`,
+      external: 'Changed in another browser tab',
+      newBlank: 'New blank matrix',
+      example: 'Open example …',
+      importJson: 'Open JSON …',
+      fromLibrary: 'Open from “My matrices” …',
+      recentlyClosed: 'Recently closed',
+    },
+
+    examples: {
+      meta: (parameters, categories, concepts) => [
+        plural(parameters, 'parameter', 'parameters'),
+        categories ? plural(categories, 'category', 'categories') : null,
+        plural(concepts, 'concept', 'concepts'),
+      ].filter(Boolean).join(' · '),
+      open: 'Open',
+      empty: 'No examples are included.',
+    },
+
+    backup: {
+      copyTitle: title => `${title || 'Matrix'} (from backup)`,
+      saved: n => `Backup with ${plural(n, 'matrix', 'matrices')} saved.`,
+      empty: 'There are no matrices to back up yet.',
+      restored: ({ added, copies, unchanged, failed }) => [
+        added - copies ? `${added - copies} new` : null,
+        copies ? `${copies} as a copy (different version)` : null,
+        unchanged ? `${unchanged} already present` : null,
+        failed ? `${failed} ${failed === 1 ? 'file' : 'files'} unreadable` : null,
+      ].filter(Boolean).join(', '),
+      restoredTitle: summary => `Restored: ${summary}.`,
+      nothing: 'No matrices were found in the backup.',
+      failed: message => `The backup could not be read: ${message}`,
+      storageFull: n => `Storage full – ${plural(n, 'matrix', 'matrices')} could not be restored.`,
+    },
+
+    library: {
+      currentTab: 'active',
+      openTab: 'open',
+      meta: (date, parameters, concepts) =>
+        `${date} · ${plural(parameters, 'parameter', 'parameters')} · ${plural(concepts, 'concept', 'concepts')}`,
+      open: 'Open',
+      show: 'Show',
+      delete: 'Delete matrix',
+      deleteOpen: 'Open matrices cannot be deleted – close the tab first',
+    },
+
+    csv: {
+      title: 'Title',
+      description: 'Description',
+      category: 'Category',
+      parameter: 'Parameter',
+      option: n => `Option ${n}`,
+      optionSingle: 'Option',
+      weight: 'Weight',
+      cost: currency => `Cost (${currency})`,
+      utility: max => `Utility (0–${max})`,
+      priority: 'Priority (MoSCoW)',
+      concept: 'Concept',
+      totalCost: currency => `Total cost (${currency})`,
+      utilityTotal: 'Utility',
+      priceValue: currency => `Cost per utility point (${currency})`,
+    },
+  };
+})();
