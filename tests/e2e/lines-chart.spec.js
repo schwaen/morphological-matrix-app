@@ -1,4 +1,4 @@
-import { test, expect, APP_URL } from './fixtures.js';
+import { test, expect, menu, APP_URL } from './fixtures.js';
 
 /** Darstellung der Verbindungslinien je Konzept-ID. */
 const lineStyles = page => page.evaluate(() => Object.fromEntries([...document.querySelectorAll('#lines path')]
@@ -75,4 +75,24 @@ test('Konzeptvergleich als Verlauf: Linienzüge, Legende, Tooltip, Ansicht bleib
   await page.click('[data-compare-view=table]');
   await expect(page.locator('#compareTable')).toBeVisible();
   await expect(page.locator('#compareChart')).toBeHidden();
+});
+
+test('Große Matrix: Seitenleiste überdeckt den Konzeptvergleich nicht', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await menu(page, 'example');
+  await page.locator('#exampleList .doc', { hasText: 'Lastenrad' }).locator('button').first().click();
+  await expect(page.locator('#title')).toHaveValue(/Lastenrad/);
+
+  for (const view of ['table', 'chart']) {
+    await page.click(`[data-compare-view=${view}]`);
+    await page.locator('#compareSection').evaluate(el => el.scrollIntoView({ block: 'end' }));
+    const [aside, compare] = await Promise.all(['.concepts-panel', '#compareSection'].map(sel =>
+      page.locator(sel).evaluate(el => el.getBoundingClientRect().toJSON())));
+    const overlaps = aside.left < compare.right && compare.left < aside.right
+      && aside.top < compare.bottom && compare.top < aside.bottom;
+    expect(overlaps, `Überlappung in Ansicht ${view}`).toBe(false);
+    // Die Seitenleiste bleibt beim Vergleich im Blick
+    expect(aside.top).toBeGreaterThanOrEqual(0);
+    expect(aside.top).toBeLessThan(900);
+  }
 });
