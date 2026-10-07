@@ -33,6 +33,7 @@ function loadTab(t) {
   prefs.compareView = t.view.compareView || DEFAULT_PREFS.compareView;
   prefs.compareDiff = t.view.compareDiff ?? DEFAULT_PREFS.compareDiff;
   prefs.compareSort = t.view.compareSort || DEFAULT_PREFS.compareSort;
+  prefs.compareHideConflicts = t.view.compareHideConflicts ?? DEFAULT_PREFS.compareHideConflicts;
   prefs.collapsed = t.view.collapsed || {};
   t.external = false;
 }
@@ -61,7 +62,7 @@ function openInTab(id, data, message) {
     const current = activeTab();
     const at = current ? tabs.indexOf(current) + 1 : tabs.length;
     /** @type {AppTab} */
-    const t = { docId: id, view: { mode: prefs.mode, compareOpen: prefs.compareOpen, compareView: prefs.compareView, compareDiff: prefs.compareDiff, compareSort: prefs.compareSort }, state: data, lastSaved: null };
+    const t = { docId: id, view: { mode: prefs.mode, compareOpen: prefs.compareOpen, compareView: prefs.compareView, compareDiff: prefs.compareDiff, compareSort: prefs.compareSort, compareHideConflicts: prefs.compareHideConflicts }, state: data, lastSaved: null };
     tabs.splice(at, 0, t);
     closedTabs = closedTabs.filter(x => x !== id);
     loadTab(t);

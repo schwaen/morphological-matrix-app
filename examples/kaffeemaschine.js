@@ -6,9 +6,9 @@
 Examples.register({
   "id": "kaffeemaschine",
   "name": "Kaffeemaschine",
-  "description": "Produktentwicklung eines Haushaltsgeräts mit Konzepten für Espresso, Outdoor und Smart Home. Kosten, Nutzwerte, Prioritäten (MoSCoW) und einige Notizen sind hinterlegt – zum Ausprobieren unter „Bewertung“ einschalten.",
+  "description": "Produktentwicklung eines Haushaltsgeräts mit Konzepten für Espresso, Outdoor und Smart Home. Kosten, Nutzwerte, Prioritäten (MoSCoW), einige Notizen und Verträglichkeiten sind hinterlegt – zum Ausprobieren unter „Bewertung“ einschalten.",
   "data": {
-    "version": 4,
+    "version": 5,
     "title": "Beispiel: Kaffeemaschine",
     "description": "Gesamtfunktion: Aus Wasser und Kaffee ein heißes Getränk zubereiten.",
     "settings": { "costs": false, "utility": false, "currency": "EUR", "utilityMax": 10, "moscow": false },
@@ -111,6 +111,20 @@ Examples.register({
         "color": "#1baf7a",
         "selections": { "p1": "p1o2", "p2": "p2o3", "p3": "p3o4", "p4": "p4o4", "p5": "p5o1", "p6": "p6o2" }
       }
+    ],
+    "constraints": [
+      { "a": "p1o4", "b": "p5o4", "type": "excluded", "note": "Induktion braucht elektrische Leistung" },
+      { "a": "p1o4", "b": "p5o3", "type": "excluded", "note": "Induktion braucht elektrische Leistung" },
+      { "a": "p1o1", "b": "p5o2", "type": "excluded", "note": "Leistungsbedarf zu hoch für einen Akku" },
+      { "a": "p1o1", "b": "p5o4", "type": "excluded", "note": "Durchlauferhitzer braucht elektrische Leistung" },
+      { "a": "p2o3", "b": "p5o4", "type": "excluded", "note": "Rotationspumpe braucht einen Motor" },
+      { "a": "p4o4", "b": "p5o4", "type": "excluded", "note": "App braucht Elektronik und Strom" },
+      { "a": "p4o3", "b": "p5o4", "type": "excluded", "note": "Display braucht Strom" },
+      { "a": "p5o4", "b": "p6o2", "type": "excluded", "note": "Spülpumpe braucht Strom" },
+      { "a": "p2o1", "b": "p3o2", "type": "excluded", "note": "Kapseln brauchen Druck" },
+      { "a": "p1o3", "b": "p5o2", "type": "conditional", "note": "Nur mit großem Akku (mind. 100 Wh)" },
+      { "a": "p3o4", "b": "p5o4", "type": "conditional", "note": "Nur mit Handmühle" },
+      { "a": "p2o2", "b": "p5o3", "type": "conditional", "note": "Pumpe braucht zusätzlich einen kleinen Akku" }
     ],
     "activeConceptId": "c1"
   }

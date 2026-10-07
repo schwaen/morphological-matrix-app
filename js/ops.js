@@ -38,8 +38,10 @@ const Ops = (() => {
   /** Parameter löschen; Auswahlen der Konzepte für ihn entfallen. @param {Matrix} m @param {string} pid */
   function deleteParameter(m, pid) {
     const before = m.parameters.length;
+    const removed = new Set((param(m, pid) || { options: [] }).options.map(o => o.id));
     m.parameters = m.parameters.filter(p => p.id !== pid);
     m.concepts.forEach(c => { delete c.selections[pid]; });
+    dropConstraints(m, removed);
     return m.parameters.length < before;
   }
 
@@ -75,6 +77,7 @@ const Ops = (() => {
     if (!p) return false;
     p.options = p.options.filter(o => o.id !== oid);
     m.concepts.forEach(c => { if (c.selections[pid] === oid) delete c.selections[pid]; });
+    dropConstraints(m, new Set([oid]));
     return true;
   }
 
@@ -87,6 +90,36 @@ const Ops = (() => {
     const o = p && p.options.find(x => x.id === oid);
     if (!o) return false;
     o.priority = o.priority === priority ? null : priority;
+    return true;
+  }
+
+  // ---------- Verträglichkeiten ----------
+
+  /** Paare entfernen, die eine der Ausprägungen enthalten. @param {Matrix} m @param {Set<string>} oids */
+  function dropConstraints(m, oids) {
+    m.constraints = m.constraints.filter(c => !oids.has(c.a) && !oids.has(c.b));
+  }
+
+  /**
+   * Verträglichkeit eines Paars setzen; `null` = verträglich (Eintrag entfällt). Die Begründung
+   * bleibt beim Wechsel zwischen bedingt und unverträglich erhalten.
+   * @param {Matrix} m @param {string} a @param {string} b @param {MatrixConstraintType | null} type
+   */
+  function setConstraint(m, a, b, type) {
+    const owner = Consistency.paramOf(m);
+    if (a === b || !owner.has(a) || !owner.has(b) || owner.get(a) === owner.get(b)) return false;
+    const existing = Consistency.get(m, a, b);
+    if (!type) {
+      if (!existing) return false;
+      m.constraints = m.constraints.filter(c => c !== existing);
+      return true;
+    }
+    if (existing) {
+      if (existing.type === type) return false;
+      existing.type = type;
+      return true;
+    }
+    m.constraints.push({ a: a < b ? a : b, b: a < b ? b : a, type, note: '' });
     return true;
   }
 
@@ -181,12 +214,17 @@ const Ops = (() => {
   }
 
   /**
-   * Aktives Konzept zufällig belegen (je Parameter mit Ausprägungen eine).
+   * Aktives Konzept zufällig belegen (je Parameter mit Ausprägungen eine; bei Verträglichkeiten
+   * nur verträgliche Kombinationen).
    * @param {Matrix} m @param {() => number} [random] für Tests austauschbar
    */
   function randomizeActive(m, random = Math.random) {
     const c = ensureActiveConcept(m);
     c.selections = {};
+    if (m.constraints.some(x => x.type === 'excluded')) {
+      c.selections = Consistency.randomCombination(m, random);
+      return;
+    }
     for (const p of m.parameters) {
       if (p.options.length) c.selections[p.id] = p.options[Math.floor(random() * p.options.length)].id;
     }
@@ -221,6 +259,7 @@ const Ops = (() => {
     addParameter, moveParameter, deleteParameter,
     addOption, moveOption, deleteOption, togglePriority,
     addCategory, moveCategory, deleteCategory, setParameterCategory,
+    setConstraint,
     ensureActiveConcept, toggleSelection, addConcept, duplicateConcept, deleteConcept, randomizeActive, clearActive,
     changeScale,
   };

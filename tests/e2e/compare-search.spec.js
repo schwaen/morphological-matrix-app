@@ -2,7 +2,7 @@
 import { test, expect, setEvaluation } from './fixtures.js';
 
 const headers = page => page.locator('#compareTable thead th').evaluateAll(els => els.slice(1).map(el => el.textContent.trim()));
-const paramRows = page => page.locator('#compareTable tbody tr:not(.cat-row):not(.note-row) th');
+const paramRows = page => page.locator('#compareTable tbody tr:not(.cat-row):not(.note-row):not(.cons-row) th');
 
 test('Konzeptvergleich: nur Unterschiede zeigen', async ({ page }) => {
   await expect(paramRows(page)).toHaveCount(6);

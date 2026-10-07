@@ -5,12 +5,13 @@ import { loadApp, plain, EXAMPLE_FILES } from './load.js';
 
 const { Model, Examples } = loadApp();
 
-/** Notizen sind in Dateien optional (fehlend = leer); für den Vergleich mit `normalize` ergänzen. */
+/** Notizen und Verträglichkeiten sind in Dateien optional (fehlend = leer); für den Vergleich mit `normalize` ergänzen. */
 function withEmptyNotes(data) {
   const d = plain(data);
   const fill = x => { if (x.note === undefined) x.note = ''; };
   d.parameters.forEach(p => { fill(p); p.options.forEach(fill); });
   d.concepts.forEach(fill);
+  if (d.constraints === undefined) d.constraints = [];
   return d;
 }
 

@@ -2,13 +2,13 @@
 
 Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON-Export, Teilen-Links (`#m=…`, Base64url-kodiertes JSON) und die mitgelieferten Beispiele (`data` in `examples/*.js`, siehe [`examples/README.md`](../examples/README.md)). Typdefinitionen für die Entwicklung stehen in [`types.d.ts`](../types.d.ts).
 
-**Aktuelle Version: 4** (`Model.SCHEMA_VERSION` in `js/model.js`)
+**Aktuelle Version: 5** (`Model.SCHEMA_VERSION` in `js/model.js`)
 
 ## Aufbau
 
 ```jsonc
 {
-  "version": 4,
+  "version": 5,
   "title": "Beispiel: Kaffeemaschine",
   "description": "Gesamtfunktion: …",
   "settings": {
@@ -44,6 +44,11 @@ Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON
       "selections": { "p1": "o1" }   // Parameter-ID → Ausprägungs-ID
     }
   ],
+  "constraints": [           // Verträglichkeiten (optional): nur nicht verträgliche Paare
+    // a < b (Zeichenkettenvergleich), Ausprägungen verschiedener Parameter;
+    // type: "excluded" (unverträglich) | "conditional" (bedingt verträglich)
+    { "a": "o1", "b": "o9", "type": "excluded", "note": "Braucht Netzstrom" }
+  ],
   "activeConceptId": "c1"
 }
 ```
@@ -77,6 +82,7 @@ Beim Wiederherstellen (`IO.parseBackup`, `IO.planRestore`) werden vorhandene Mat
 - Auswahlen, die auf nicht vorhandene Ausprägungen zeigen, und Zuordnungen zu unbekannten Kategorien werden entfernt.
 - Negative Gewichte werden verworfen; ungültige Farben durch Standardfarben ersetzt; unbekannte Prioritäten werden zu `null`.
 - Fehlende Notizen (`note`) werden zu `""` – in Dateien und Beispielen dürfen sie daher fehlen.
+- Verträglichkeiten: Paare mit unbekannten Ausprägungen, aus demselben Parameter, mit unbekannter Art oder doppelt werden verworfen; `a` und `b` werden so geordnet, dass `a < b`. Beim Löschen einer Ausprägung oder eines Parameters entfallen die zugehörigen Paare.
 
 ## Versionen
 
@@ -86,6 +92,7 @@ Beim Wiederherstellen (`IO.parseBackup`, `IO.planRestore`) werden vorhandene Mat
 | 2 | Versioniertes Format; Ausprägungen immer als Objekte `{ id, text, cost, score }` | Texte werden zu Objekten |
 | 3 | Priorität nach MoSCoW: `priority` je Ausprägung, `settings.moscow` | keine Umwandlung nötig (fehlende Felder ergänzt `normalize`); die neue Version verhindert, dass ältere App-Versionen Prioritäten beim Öffnen stillschweigend verwerfen |
 | 4 | Notizen: `note` je Ausprägung (Notiz), Parameter (Beschreibung) und Konzept (Begründung) | keine Umwandlung nötig; die neue Version verhindert, dass ältere App-Versionen Notizen verwerfen |
+| 5 | Verträglichkeiten zwischen Ausprägungen: `constraints` | keine Umwandlung nötig; die neue Version verhindert, dass ältere App-Versionen Verträglichkeiten verwerfen |
 
 ## Eine neue Version einführen
 

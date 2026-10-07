@@ -47,6 +47,18 @@ interface MatrixConcept {
   selections: Record<string, string>;
 }
 
+/** Verträglichkeit eines Paars: unverträglich bzw. bedingt verträglich (fehlt = verträglich) */
+type MatrixConstraintType = 'excluded' | 'conditional';
+
+/** Paar aus zwei Ausprägungen verschiedener Parameter (`a < b`) */
+interface MatrixConstraint {
+  a: string;
+  b: string;
+  type: MatrixConstraintType;
+  /** Begründung (optional, leer = keine) */
+  note: string;
+}
+
 interface MatrixSettings {
   costs: boolean;
   utility: boolean;
@@ -65,6 +77,8 @@ interface Matrix {
   /** Immer nach Kategorien gruppiert sortiert (siehe `sortedByCategory`) */
   parameters: MatrixParameter[];
   concepts: MatrixConcept[];
+  /** Verträglichkeiten zwischen Ausprägungen (nur nicht verträgliche Paare) */
+  constraints: MatrixConstraint[];
   activeConceptId: string | null;
 }
 
@@ -94,6 +108,8 @@ interface TabPrefs {
   compareDiff?: boolean;
   /** Konzeptvergleich: Reihenfolge der Konzepte (`order` = wie in der Liste) */
   compareSort?: 'order' | 'utility' | 'cost' | 'priceValue';
+  /** Konzeptvergleich: Konzepte mit unverträglichem Paar ausblenden */
+  compareHideConflicts?: boolean;
   /** Kategorie-ID (bzw. `__none`) → eingeklappt */
   collapsed?: Record<string, boolean>;
 }
@@ -105,6 +121,7 @@ interface TabView {
   compareView?: TabPrefs['compareView'];
   compareDiff?: boolean;
   compareSort?: TabPrefs['compareSort'];
+  compareHideConflicts?: boolean;
   collapsed?: Record<string, boolean>;
 }
 

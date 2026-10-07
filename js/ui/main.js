@@ -165,6 +165,7 @@ function init() {
   bindEvents();
   initSearch();
   initNotePop();
+  initConstraints();
   save(); // auch eine neu erzeugte Startmatrix sofort sichern (stabile IDs nach Neuladen)
   // Einstellungen und geöffnete Tabs sofort an diesen Browser-Tab binden – sonst übernähme er
   // beim Neuladen die zuletzt in einem anderen Browser-Tab verwendeten (Vorgabe im localStorage).

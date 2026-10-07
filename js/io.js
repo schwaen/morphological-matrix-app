@@ -68,18 +68,40 @@ const IO = (() => {
         }
       }
     }
+    // Verträglichkeiten: je Paar eine Zeile
+    /** @param {string} oid */
+    const ref = oid => {
+      for (const p of m.parameters) {
+        const o = p.options.find(x => x.id === oid);
+        if (o) return { param: p.name, text: o.text };
+      }
+      return { param: '', text: '' };
+    };
+    if (m.constraints.length) {
+      lines.push([], [cell(L.parameter), cell(L.optionSingle), cell(L.parameter), cell(L.optionSingle), cell(L.constraintType), cell(L.constraintNote)]);
+      for (const c of m.constraints) {
+        const a = ref(c.a);
+        const b = ref(c.b);
+        lines.push([cell(a.param), cell(a.text), cell(b.param), cell(b.text), cell(Texts.cons.types[c.type]), cell(c.note)]);
+      }
+    }
     if (m.concepts.length) {
       const conceptNotes = m.concepts.some(c => c.note);
+      const withConstraints = m.constraints.length > 0;
+      /** Unverträgliche Paare eines Konzepts als Text. @param {MatrixConcept} c */
+      const clashes = c => Consistency.conflicts(m, c).excluded.map(x => `${ref(x.a).text} ✕ ${ref(x.b).text}`).join('; ');
       lines.push([], [cell(L.concept), ...m.parameters.map(p => cell(p.name)),
         ...(costs ? [cell(L.totalCost(currency))] : []),
         ...(utility ? [cell(L.utilityTotal)] : []),
         ...(costs && utility ? [cell(L.priceValue(currency))] : []),
+        ...(withConstraints ? [cell(L.conflicts)] : []),
         ...(conceptNotes ? [cell(L.conceptNote)] : [])]);
       for (const { concept: c, cost, utility: util, priceValue } of conceptReport(m)) {
         lines.push([cell(c.name), ...m.parameters.map(p => cell(optionText(p, c.selections[p.id]) || '')),
           ...(cost ? [csvNum(cost.total)] : []),
           ...(util ? [csvNum(util.value)] : []),
           ...(priceValue ? [csvNum(priceValue.value)] : []),
+          ...(withConstraints ? [cell(clashes(c))] : []),
           ...(conceptNotes ? [cell(c.note)] : [])]);
       }
     }
