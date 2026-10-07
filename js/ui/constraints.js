@@ -218,17 +218,25 @@ let consSelected = null;
 
 function openConsDialog() {
   consSelected = null;
+  $('#consBody').replaceChildren(); // beim Öffnen immer frisch aufbauen (z. B. andere Matrix)
   renderConsDialog();
   openDialog($('#consDialog'));
 }
 
-/** Dialog neu aufbauen, falls offen (Bildlauf und Fokus bleiben erhalten). */
+/** Ausprägungstext oder Ersatzname. @param {MatrixOption} o @param {number} oi */
+const optText = (o, oi) => o.text.trim() || Texts.fallback.emptyOption(oi + 1);
+
+/** Merkmal der Tabellenstruktur: Parameter, Ausprägungen und ihre Beschriftungen. */
+function consGridSignature() {
+  return JSON.stringify(state.parameters.map((p, pi) => [p.id, Model.parameterLabel(p, pi), p.options.map((o, oi) => [o.id, optText(o, oi)])]));
+}
+
+/**
+ * Dialog aktualisieren, falls offen. Bleibt die Struktur gleich (z. B. nach einem Klick auf ein
+ * Feld), ändern sich nur Klassen und Symbole der Felder – kein Neuaufbau der großen Tabelle.
+ */
 function renderConsDialog() {
-  const dlg = $('#consDialog');
   const body = $('#consBody');
-  const wrap = $('.cons-grid-wrap', body);
-  const pos = wrap ? { top: wrap.scrollTop, left: wrap.scrollLeft } : null;
-  const focusKey = document.activeElement && dlg.contains(document.activeElement) ? focusKeyOf(document.activeElement) : null;
   const P = state.parameters.map((p, pi) => ({ p, pi })).filter(({ p }) => p.options.length);
   if (P.length < 2) {
     replaceWith(body, h('p', { class: 'summary-empty' }, Texts.cons.tooFew));
@@ -236,52 +244,112 @@ function renderConsDialog() {
     return;
   }
   if (consSelected && (!optionRef(consSelected.a) || !optionRef(consSelected.b))) consSelected = null;
-
-  const cols = P.slice(0, -1);
-  const rows = P.slice(1);
-  const optText = (/** @type {MatrixOption} */ o, /** @type {number} */ oi) => o.text.trim() || Texts.fallback.emptyOption(oi + 1);
-  const head = h('thead', null,
-    h('tr', null, h('th', { class: 'corner', colspan: '2', rowspan: '2' }),
-      cols.map(({ p, pi }) => h('th', { class: 'cg-param', colspan: String(p.options.length), scope: 'colgroup' }, Model.parameterLabel(p, pi)))),
-    h('tr', null, cols.flatMap(({ p }) => p.options.map((o, oi) => h('th', { class: `cg-opt${oi === 0 ? ' grp' : ''}`, scope: 'col' }, h('span', null, optText(o, oi)))))));
-  const tbody = h('tbody', null, rows.flatMap(({ p: rp, pi: rpi }, ri) => rp.options.map((ro, roi) => h('tr', { class: roi === 0 ? 'grp' : null },
-    roi === 0 ? h('th', { class: 'rg-param', rowspan: String(rp.options.length), scope: 'rowgroup' }, Model.parameterLabel(rp, rpi)) : null,
-    h('th', { class: 'rg-opt', scope: 'row' }, optText(ro, roi)),
-    cols.flatMap(({ p: cp }, ci) => cp.options.map((co, coi) => {
-      const grp = coi === 0 ? ' grp' : '';
-      if (ci > ri) return h('td', { class: `na${grp}` });
-      const c = Consistency.get(state, ro.id, co.id);
-      const type = c ? c.type : 'ok';
-      const selected = !!consSelected && Consistency.key(consSelected.a, consSelected.b) === Consistency.key(ro.id, co.id);
-      return h('td', { class: `${type}${grp}${selected ? ' sel' : ''}` }, h('button', {
-        type: 'button', title: c && c.note ? c.note : Texts.cons.stateTitles[type],
-        'aria-label': Texts.cons.cellLabel(optText(ro, roi), optText(co, coi), Texts.cons.states[type]),
-        'aria-pressed': String(selected), dataset: { pair: Consistency.key(ro.id, co.id) },
-        onclick: () => {
-          consSelected = { a: ro.id, b: co.id };
-          const next = type === 'ok' ? 'conditional' : type === 'conditional' ? 'excluded' : null;
-          mutate(m => Ops.setConstraint(m, ro.id, co.id, next));
-        },
-      }, type === 'excluded' ? '✕' : type === 'conditional' ? '!' : ''));
-    }))))));
-
-  replaceWith(body,
-    h('div', { class: 'cons-grid-wrap' }, h('table', { class: 'cons-grid' }, head, tbody)),
-    consDetail());
-  const newWrap = $('.cons-grid-wrap', body);
-  // Zweite Kopfspalte klebt rechts neben der ersten (deren Breite hängt von den Namen ab)
-  const first = $('th.rg-param', newWrap);
-  const opt = $('th.rg-opt', newWrap);
-  if (first) newWrap.style.setProperty('--rg-w', `${first.offsetWidth}px`);
-  // Felder beim Ansteuern (Tastatur) nicht unter den klebenden Köpfen verstecken
-  newWrap.style.scrollPaddingLeft = `${(first ? first.offsetWidth : 0) + (opt ? opt.offsetWidth : 0)}px`;
-  newWrap.style.scrollPaddingTop = `${$('thead', newWrap).offsetHeight}px`;
-  if (pos) { newWrap.scrollTop = pos.top; newWrap.scrollLeft = pos.left; }
-  restoreFocus(dlg, focusKey);
+  const table = $('.cons-grid', body);
+  const sig = consGridSignature();
+  if (table && table.dataset.sig === sig) updateConsGrid(table);
+  else buildConsGrid(body, P, sig);
+  const detail = $('#consDetail');
+  const focusKey = document.activeElement && detail.contains(document.activeElement) ? focusKeyOf(document.activeElement) : null;
+  replaceWith(detail, consDetail());
+  restoreFocus(detail, focusKey);
 
   const total = state.parameters.reduce((n, p) => n * BigInt(p.options.length), 1n);
   const ok = Consistency.countConsistent(state);
   $('#consSummary').textContent = Texts.cons.summary(state.constraints.length, formatCount(total).text, ok == null ? Texts.cons.notCountable : formatCount(ok).text);
+}
+
+/**
+ * Dreiecksmatrix neu aufbauen: Zeilen = Ausprägungen der Parameter 2…n, Spalten = 1…n−1.
+ * Jedes Feld ist eine Zelle `td[data-pair]` (Bedienung per Klick/Tastatur über die Tabelle).
+ * @param {HTMLElement} body @param {Array<{ p: MatrixParameter, pi: number }>} P @param {string} sig
+ */
+function buildConsGrid(body, P, sig) {
+  const cols = P.slice(0, -1);
+  const rows = P.slice(1);
+  const head = h('thead', null,
+    h('tr', null, h('th', { class: 'corner', colspan: '2', rowspan: '2' }),
+      cols.map(({ p, pi }) => h('th', { class: 'cg-param', colspan: String(p.options.length), scope: 'colgroup' }, Model.parameterLabel(p, pi)))),
+    h('tr', null, cols.flatMap(({ p }) => p.options.map((o, oi) => h('th', { class: `cg-opt${oi === 0 ? ' grp' : ''}`, scope: 'col' }, h('span', null, optText(o, oi)))))));
+  const tbody = h('tbody', null, rows.flatMap(({ p: rp, pi: rpi }, ri) => rp.options.map((ro, roi) => {
+    let col = 0;
+    return h('tr', { class: roi === 0 ? 'grp' : null },
+      roi === 0 ? h('th', { class: 'rg-param', rowspan: String(rp.options.length), scope: 'rowgroup' }, Model.parameterLabel(rp, rpi)) : null,
+      h('th', { class: 'rg-opt', scope: 'row' }, optText(ro, roi)),
+      cols.flatMap(({ p: cp }, ci) => cp.options.map((co, coi) => {
+        const base = coi === 0 ? 'grp' : '';
+        const c = col++;
+        if (ci > ri) return h('td', { class: `na ${base}` });
+        return h('td', {
+          role: 'gridcell', dataset: { pair: Consistency.key(ro.id, co.id), a: ro.id, b: co.id, base, col: String(c), names: JSON.stringify([optText(ro, roi), optText(co, coi)]) },
+        });
+      })));
+  })));
+  // Feste Spaltenbreiten (siehe CSS): Der Browser muss nicht jede der vielen Zellen vermessen
+  const colgroup = h('colgroup', null,
+    h('col', { class: 'c-param' }), h('col', { class: 'c-opt' }),
+    cols.flatMap(({ p }) => p.options.map(() => h('col', { class: 'c-cell' }))));
+  const table = h('table', { class: 'cons-grid', role: 'grid', 'aria-label': Texts.ui.constraintsHeading, dataset: { sig } }, colgroup, head, tbody);
+  replaceWith(body, h('div', { class: 'cons-grid-wrap' }, table), h('div', { id: 'consDetail' }));
+  updateConsGrid(table);
+}
+
+/** Klassen, Symbole und Beschriftungen aller Felder nach dem aktuellen Stand setzen. @param {HTMLElement} table */
+function updateConsGrid(table) {
+  const selKey = consSelected ? Consistency.key(consSelected.a, consSelected.b) : null;
+  let focusable = /** @type {HTMLElement | null} */ (null);
+  for (const td of $$('td[data-pair]', table)) {
+    const { a, b, base, pair } = td.dataset;
+    const c = Consistency.get(state, /** @type {string} */ (a), /** @type {string} */ (b));
+    const type = c ? c.type : 'ok';
+    const selected = pair === selKey;
+    const cls = `${type} ${base}${selected ? ' sel' : ''}`;
+    if (td.className !== cls) td.className = cls;
+    const symbol = type === 'excluded' ? '✕' : type === 'conditional' ? '!' : '';
+    if (td.textContent !== symbol) td.textContent = symbol;
+    const [na, nb] = JSON.parse(/** @type {string} */ (td.dataset.names));
+    td.setAttribute('aria-label', Texts.cons.cellLabel(na, nb, Texts.cons.states[type]));
+    td.setAttribute('aria-selected', String(selected));
+    td.title = c && c.note ? c.note : Texts.cons.stateTitles[type];
+    if (selected) focusable = td;
+  }
+  // Ein Tab-Stopp für die ganze Matrix: das gewählte Feld, sonst das erste
+  const current = $('td[tabindex="0"]', table);
+  const target = focusable || current || $('td[data-pair]', table);
+  if (current && current !== target) current.setAttribute('tabindex', '-1');
+  if (target) target.setAttribute('tabindex', '0');
+}
+
+/** Feld umschalten: verträglich → bedingt → unverträglich → verträglich. @param {HTMLElement} td */
+function cycleConsCell(td) {
+  const { a, b } = /** @type {{ a: string, b: string }} */ (td.dataset);
+  const c = Consistency.get(state, a, b);
+  const next = !c ? 'conditional' : c.type === 'conditional' ? 'excluded' : null;
+  consSelected = { a, b };
+  mutate(m => Ops.setConstraint(m, a, b, next));
+  const again = $(`#consBody td[data-pair="${CSS.escape(Consistency.key(a, b))}"]`);
+  if (again) again.focus();
+}
+
+/** Pfeiltasten: zum nächsten Feld in der Richtung (leere Bereiche werden übersprungen). @param {HTMLElement} td @param {string} dir */
+function moveConsFocus(td, dir) {
+  const row = /** @type {HTMLTableRowElement} */ (td.parentElement);
+  const col = Number(td.dataset.col);
+  /** @type {HTMLElement | null} */
+  let target = null;
+  if (dir === 'ArrowLeft' || dir === 'ArrowRight') {
+    const cells = $$('td[data-pair]', row);
+    target = cells[cells.indexOf(td) + (dir === 'ArrowLeft' ? -1 : 1)] || null;
+  } else {
+    let r = /** @type {HTMLElement | null} */ (dir === 'ArrowUp' ? row.previousElementSibling : row.nextElementSibling);
+    while (r && !target) {
+      target = $(`td[data-pair][data-col="${col}"]`, r);
+      r = /** @type {HTMLElement | null} */ (dir === 'ArrowUp' ? r.previousElementSibling : r.nextElementSibling);
+    }
+  }
+  if (!target) return;
+  td.setAttribute('tabindex', '-1');
+  target.setAttribute('tabindex', '0');
+  target.focus();
 }
 
 /** Detailbereich zum gewählten Paar: Verträglichkeit, Begründung, betroffene Konzepte. */
@@ -309,6 +377,17 @@ function refreshConstraintEditors() {
 }
 
 function initConstraints() {
+  const body = $('#consBody');
+  body.addEventListener('click', e => {
+    const td = /** @type {HTMLElement} */ (e.target).closest('td[data-pair]');
+    if (td) cycleConsCell(/** @type {HTMLElement} */ (td));
+  });
+  body.addEventListener('keydown', e => {
+    const td = /** @type {HTMLElement} */ (e.target).closest('td[data-pair]');
+    if (!td) return;
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cycleConsCell(/** @type {HTMLElement} */ (td)); }
+    else if (e.key.startsWith('Arrow')) { e.preventDefault(); moveConsFocus(/** @type {HTMLElement} */ (td), e.key); }
+  });
   $('#consClose').addEventListener('click', () => closeDialog($('#consDialog')));
   $('#consDone').addEventListener('click', () => closeDialog($('#consDialog')));
   $('#consOpenBtn').addEventListener('click', openConsDialog);

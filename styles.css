@@ -726,8 +726,16 @@
   .cons-key.excluded { background: var(--bad-bg); color: var(--bad); }
   .cons-summary { margin-left: auto; color: var(--muted); }
   .cons-body { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; align-items: start; }
-  .cons-grid-wrap { overflow: auto; max-height: min(64vh, 720px); border: 1px solid var(--border); border-radius: var(--radius-sm); }
-  .cons-grid { border-collapse: separate; border-spacing: 0; font-size: .74rem; }
+  .cons-grid-wrap {
+    --rg-w: 130px; --ro-w: 170px; --head-h: 145px;
+    overflow: auto; max-height: min(64vh, 720px); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    /* Felder beim Ansteuern nicht unter den klebenden Köpfen verstecken */
+    scroll-padding: var(--head-h) 0 0 calc(var(--rg-w) + var(--ro-w));
+  }
+  .cons-grid { table-layout: fixed; width: max-content; border-collapse: separate; border-spacing: 0; font-size: .74rem; }
+  .cons-grid col.c-param { width: var(--rg-w); }
+  .cons-grid col.c-opt { width: var(--ro-w); }
+  .cons-grid col.c-cell { width: 24px; }
   .cons-grid th { background: var(--surface); color: var(--text-2); font-weight: 600; white-space: nowrap; }
   .cons-grid thead th { position: sticky; z-index: 2; }
   .cons-grid thead tr:first-child th { top: 0; }
@@ -743,22 +751,18 @@
   .cons-grid tbody th { position: sticky; z-index: 1; }
   .cons-grid th.rg-param {
     left: 0; padding: 5px 8px 0; vertical-align: top; text-align: right; border-top: 2px solid var(--border-strong);
-    font-size: .68rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); max-width: 150px; white-space: normal;
+    font-size: .68rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); overflow: hidden; white-space: normal; overflow-wrap: anywhere;
   }
-  .cons-grid th.rg-opt { left: var(--rg-w, 0); padding: 0 8px; text-align: right; border-right: 1px solid var(--border-strong); max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+  .cons-grid th.rg-opt { left: var(--rg-w); padding: 0 8px; text-align: right; border-right: 1px solid var(--border-strong); overflow: hidden; text-overflow: ellipsis; }
   .cons-grid tr.grp th.rg-opt, .cons-grid tr.grp td { border-top: 2px solid var(--border-strong); }
   .cons-grid td { width: 24px; height: 24px; padding: 0; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; }
   .cons-grid td.grp { border-left: 2px solid var(--border-strong); }
   .cons-grid td.na { background: var(--surface-2); border-color: transparent; }
-  .cons-grid td button {
-    display: grid; place-items: center; width: 100%; height: 100%; min-height: 23px; padding: 0; border: 0;
-    background: transparent; color: inherit; font-size: .74rem; font-weight: 800; cursor: pointer;
-  }
-  .cons-grid td.ok button:hover { background: var(--accent-soft); }
+  .cons-grid td[data-pair] { font-size: .74rem; font-weight: 800; cursor: pointer; }
+  .cons-grid td.ok:hover { background: var(--accent-soft); }
   .cons-grid td.excluded { background: var(--bad-bg); color: var(--bad); }
   .cons-grid td.conditional { background: var(--warn-bg); color: var(--warn); }
-  .cons-grid td.sel button { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .cons-grid td button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .cons-grid td.sel, .cons-grid td[data-pair]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   .cons-detail { position: sticky; top: 0; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); font-size: .83rem; }
   .cons-detail h3 { margin: 0 0 2px; font-size: .92rem; overflow-wrap: anywhere; }
   .cons-detail-params { margin: 0 0 10px; color: var(--muted); font-size: .78rem; }
