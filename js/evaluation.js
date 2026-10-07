@@ -136,6 +136,33 @@ const Evaluation = (() => {
     comparable.forEach(({ f, v }) => { f.best = v === bestValue; });
   }
 
+  /** Sortierschlüssel des Konzeptvergleichs, jeweils mit „besser“-Richtung. */
+  const RANKINGS = {
+    utility: { enabled: (/** @type {MatrixSettings} */ s) => s.utility, value: (/** @type {ConceptFigures} */ r) => r.utility && r.utility.value, higherIsBetter: true },
+    cost: { enabled: (/** @type {MatrixSettings} */ s) => s.costs, value: (/** @type {ConceptFigures} */ r) => (r.cost && !r.cost.missing ? r.cost.total : null), higherIsBetter: false },
+    priceValue: { enabled: (/** @type {MatrixSettings} */ s) => s.costs && s.utility, value: (/** @type {ConceptFigures} */ r) => r.priceValue && r.priceValue.value, higherIsBetter: false },
+  };
+
+  /**
+   * Kennzahlen nach einer Rangfolge sortieren (bester zuerst); Konzepte ohne vergleichbaren Wert
+   * (unvollständig) folgen in ihrer bisherigen Reihenfolge. Gleichstand behält die Reihenfolge.
+   * Unbekannte oder nicht aktivierte Schlüssel ergeben die ursprüngliche Reihenfolge ohne Rang.
+   * @param {Matrix} m @param {ConceptFigures[]} report @param {string} key
+   * @returns {Array<{ figures: ConceptFigures, rank: number | null }>}
+   */
+  function rankConcepts(m, report, key) {
+    const ranking = Object.hasOwn(RANKINGS, key) ? RANKINGS[/** @type {keyof typeof RANKINGS} */ (key)] : null;
+    if (!ranking || !ranking.enabled(m.settings)) return report.map(figures => ({ figures, rank: null }));
+    const withValue = report.map((figures, i) => ({ figures, i, v: ranking.value(figures) }));
+    const ranked = withValue.filter(x => x.v != null)
+      .sort((a, b) => (/** @type {number} */ (ranking.higherIsBetter ? b.v : a.v) - /** @type {number} */ (ranking.higherIsBetter ? a.v : b.v)) || a.i - b.i);
+    const rest = withValue.filter(x => x.v == null);
+    // Gleiche Werte teilen sich den Rang (1, 2, 2, 4 …)
+    const out = ranked.map((x, pos) => ({ figures: x.figures, v: x.v, rank: pos + 1 }));
+    out.forEach((x, pos) => { if (pos > 0 && x.v === out[pos - 1].v) x.rank = out[pos - 1].rank; });
+    return [...out.map(({ figures, rank }) => ({ figures, rank })), ...rest.map(x => ({ figures: x.figures, rank: null }))];
+  }
+
   // ---------- Automatische Konzepte ----------
 
   /**
@@ -285,7 +312,7 @@ const Evaluation = (() => {
 
   return {
     weightOf, totalWeight, clampScore, isEnabled, weightShare,
-    conceptCost, conceptUtility, priceValue, priorityProfile, conceptReport,
+    conceptCost, conceptUtility, priceValue, priorityProfile, conceptReport, rankConcepts, RANKINGS,
     GENERATORS,
   };
 })();

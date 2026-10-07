@@ -78,6 +78,11 @@ const TextsEn = (() => {
       linesActiveTitle: 'Only the active concept stands out – hover over a concept to highlight its line',
       linesOff: 'Off',
       compareHeading: 'Concept comparison',
+      searchPlaceholder: 'Search the matrix …',
+      searchLabel: 'Search parameters and options',
+      searchTitle: 'Search parameters and options (Ctrl+F) – Enter jumps to the next match, Shift+Enter to the previous one, Esc clears the search',
+      searchPrev: 'Previous match',
+      searchNext: 'Next match',
       compareViews: 'Comparison view',
       compareTable: 'Table',
       compareChart: 'Profile',
@@ -278,6 +283,12 @@ const TextsEn = (() => {
       missing: n => `${n} ${n === 1 ? 'value' : 'values'} missing`,
     },
 
+    search: {
+      count: (pos, n) => (pos == null ? plural(n, 'match', 'matches') : `${pos} / ${n}`),
+      none: 'No matches',
+      hits: n => plural(n, 'match', 'matches'),
+    },
+
     chart: {
       label: 'Profile of the concepts across all parameters',
       legend: 'Concepts',
@@ -295,6 +306,12 @@ const TextsEn = (() => {
       priceValueTitle: 'Total cost divided by utility – the lower, the better',
       priority: 'Priority (MoSCoW)',
       best: 'Best',
+      onlyDiff: 'Differences only',
+      diffCount: (n, total) => `${n} of ${total} parameters differ`,
+      noDifferences: 'All concepts have the same choice for every parameter.',
+      sortBy: 'Sort by',
+      sort: { order: 'List order', utility: 'Utility (highest first)', cost: 'Total cost (lowest first)', priceValue: 'Value for money (best first)' },
+      rankTitle: rank => `Rank ${rank}`,
     },
 
     evaluation: {

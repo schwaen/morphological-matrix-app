@@ -138,3 +138,32 @@ test('Datenformat: Version 2 wird ohne Verlust auf Version 3 gebracht', () => {
   assert.equal(m.parameters[0].options[0].cost, 5);
   assert.equal(m.parameters[0].options[0].priority, null);
 });
+
+test('differingParameters: nur Parameter mit unterschiedlicher Wahl, „nicht gewählt“ zählt mit', () => {
+  const m = kaffeemaschine();
+  const all = Model.differingParameters(m);
+  const same = m.parameters.filter(p => !all.has(p.id)).map(p => p.name);
+  assert.deepEqual(same, m.parameters.filter(p => new Set(m.concepts.map(c => c.selections[p.id])).size === 1).map(p => p.name));
+  const p = m.parameters[0];
+  m.concepts.forEach(c => { c.selections[p.id] = p.options[0].id; });
+  assert.equal(Model.differingParameters(m).has(p.id), false);
+  delete m.concepts[1].selections[p.id];
+  assert.equal(Model.differingParameters(m).has(p.id), true);
+  m.concepts.splice(1);
+  assert.equal(Model.differingParameters(m).size, 0);
+});
+
+test('search: Parameternamen und Ausprägungen, ohne Groß-/Kleinschreibung und Akzente', () => {
+  const m = kaffeemaschine();
+  const p = m.parameters[0];
+  p.name = 'Wassererwärmung';
+  p.options[0].text = 'Café-Größe';
+  let r = Model.search(m, 'WAERM');
+  assert.equal(r.hits.length, 0);
+  r = Model.search(m, 'erwarm');
+  assert.deepEqual(plain(r.hits[0]), { pid: p.id, oid: null });
+  r = Model.search(m, 'cafe-gross');
+  assert.deepEqual(plain(r.hits), [{ pid: p.id, oid: p.options[0].id }]);
+  assert.ok(r.params.has(p.id) && r.options.has(p.options[0].id));
+  assert.equal(Model.search(m, '   ').hits.length, 0);
+});

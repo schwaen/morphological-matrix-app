@@ -84,6 +84,10 @@ interface TabPrefs {
   compareOpen: boolean;
   /** Konzeptvergleich als Tabelle oder Verlaufsdiagramm */
   compareView?: 'table' | 'chart';
+  /** Konzeptvergleich: nur Parameter zeigen, bei denen sich die Konzepte unterscheiden */
+  compareDiff?: boolean;
+  /** Konzeptvergleich: Reihenfolge der Konzepte (`order` = wie in der Liste) */
+  compareSort?: 'order' | 'utility' | 'cost' | 'priceValue';
   /** Kategorie-ID (bzw. `__none`) → eingeklappt */
   collapsed?: Record<string, boolean>;
 }
@@ -93,6 +97,8 @@ interface TabView {
   mode: TabPrefs['mode'];
   compareOpen: boolean;
   compareView?: TabPrefs['compareView'];
+  compareDiff?: boolean;
+  compareSort?: TabPrefs['compareSort'];
   collapsed?: Record<string, boolean>;
 }
 
@@ -115,4 +121,12 @@ interface ConceptFigures {
   priceValue: { value: number | null, reason: string | null, best: boolean } | null;
   /** Anzahl gewählter Ausprägungen je Priorität (MoSCoW) */
   priority: Record<MatrixPriority | 'none', number> | null;
+}
+
+/** Inhalt des Konzeptvergleichs (Reihenfolge, Rang, ggf. nur Parameter mit Unterschieden) */
+interface CompareContent {
+  ranked: Array<{ figures: ConceptFigures, rank: number | null }>;
+  groups: Array<{ cat: MatrixCategory | null, items: Array<{ p: MatrixParameter, pi: number }> }>;
+  /** `true`, wenn nur Parameter mit Unterschieden gezeigt werden */
+  filtered: boolean;
 }

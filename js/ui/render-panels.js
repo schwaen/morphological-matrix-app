@@ -252,34 +252,83 @@ function renderCompare() {
   $('#compareTable').hidden = chart;
   $('#compareChart').hidden = !chart;
   if (open) {
-    if (chart) buildCompareChart();
-    else buildCompareTable();
+    const view = compareContent();
+    renderCompareTools();
+    if (chart) buildCompareChart(view);
+    else buildCompareTable(view);
   }
+}
+
+/**
+ * Inhalt des Konzeptvergleichs: Konzepte in der gewählten Reihenfolge (mit Rang) und die
+ * Parametergruppen – bei „Nur Unterschiede“ ohne Parameter, die alle Konzepte gleich gewählt haben.
+ * @returns {CompareContent}
+ */
+function compareContent() {
+  const m = state;
+  const report = Evaluation.conceptReport(m);
+  const ranked = Evaluation.rankConcepts(m, report, prefs.compareSort || 'order');
+  const diff = prefs.compareDiff && m.concepts.length > 1 ? Model.differingParameters(m) : null;
+  const groups = Model.categoryGroups(m).map(g => ({ ...g, items: diff ? g.items.filter(({ p }) => diff.has(p.id)) : g.items }));
+  return { ranked, groups, filtered: !!diff };
+}
+
+/** Schalter „Nur Unterschiede“ und Sortierung über Tabelle bzw. Verlauf. */
+function renderCompareTools() {
+  const m = state;
+  const focused = document.activeElement && document.activeElement.closest('#compareTools') ? document.activeElement.id : null;
+  const differing = Model.differingParameters(m).size;
+  const keys = /** @type {Array<keyof typeof Evaluation.RANKINGS>} */ (Object.keys(Evaluation.RANKINGS))
+    .filter(k => Evaluation.RANKINGS[k].enabled(m.settings));
+  const current = keys.includes(/** @type {any} */ (prefs.compareSort)) ? prefs.compareSort : 'order';
+  replaceWith($('#compareTools'),
+    h('label', { class: 'check compare-diff' },
+      h('input', {
+        type: 'checkbox', id: 'compareDiff', checked: !!prefs.compareDiff, disabled: m.concepts.length < 2,
+        onchange: e => { setPref('compareDiff', e.target.checked); renderCompare(); },
+      }),
+      Texts.compare.onlyDiff,
+      h('span', { class: 'compare-diff-count' }, Texts.compare.diffCount(differing, m.parameters.length))),
+    keys.length
+      ? h('label', { class: 'compare-sort' },
+        h('span', null, Texts.compare.sortBy),
+        h('select', {
+          id: 'compareSort',
+          onchange: e => { setPref('compareSort', e.target.value); renderCompare(); },
+        }, ['order', ...keys].map(k => h('option', { value: k, selected: k === current }, Texts.compare.sort[k]))))
+      : null);
+  if (focused) $(`#${focused}`)?.focus();
 }
 
 /** Klassen einer Kennzahl-Zelle: unvollständig und/oder bester Wert. */
 const metricClass = (incomplete, best) => [incomplete ? 'incomplete' : '', best ? 'best' : ''].join(' ').trim() || null;
 
-function buildCompareTable() {
+/** @param {CompareContent} view */
+function buildCompareTable(view) {
   const m = state;
+  const { ranked, groups } = view;
   const head = h('thead', null, h('tr', null,
     h('th', { scope: 'col' }, Texts.compare.parameter),
-    m.concepts.map(c => h('th', { scope: 'col', style: { '--c': shownColor(c.color) } }, h('span', { 'aria-hidden': 'true' }), Model.nameOrUnnamed(c)))));
+    ranked.map(({ figures: { concept: c }, rank }) => h('th', { scope: 'col', style: { '--c': shownColor(c.color) } },
+      rank != null ? h('span', { class: 'rank', title: Texts.compare.rankTitle(rank) }, `${rank}.`) : null,
+      h('span', { class: 'key', 'aria-hidden': 'true' }), Model.nameOrUnnamed(c)))));
   const showCats = m.categories.length > 0;
-  const body = h('tbody', null, Model.categoryGroups(m).flatMap(g => [
+  const rows = groups.flatMap(g => [
     showCats && g.items.length
       ? h('tr', { class: 'cat-row', style: { '--k': categoryColor(g.cat) } },
         h('th', { scope: 'colgroup', colspan: String(m.concepts.length + 1) }, Model.categoryLabel(g.cat)))
       : null,
     ...g.items.map(({ p, pi }) => h('tr', null,
       h('th', { scope: 'row' }, Model.parameterLabel(p, pi)),
-      m.concepts.map(c => {
+      ranked.map(({ figures: { concept: c } }) => {
         const text = Model.optionText(p, c.selections[p.id]);
         return h('td', text ? null : { class: 'none' }, text || '–');
       }))),
-  ]));
+  ]).filter(Boolean);
+  const body = h('tbody', null, rows.length ? rows
+    : h('tr', null, h('td', { class: 'none', colspan: String(m.concepts.length + 1) }, Texts.compare.noDifferences)));
 
-  const report = Evaluation.conceptReport(m);
+  const report = ranked.map(x => x.figures);
   /**
    * Eine Kennzahl-Zeile, falls die Bewertung aktiv ist (dann ist die jeweilige Kennzahl gesetzt).
    * @param {(r: ConceptFigures) => any} cellOf

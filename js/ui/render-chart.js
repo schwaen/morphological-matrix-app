@@ -36,10 +36,11 @@ function chartLabel(text, px, attrs, charW) {
   return svgEl('text', attrs, shown, shown !== text ? svgEl('title', {}, text) : null);
 }
 
-function buildCompareChart() {
+/** @param {CompareContent} view */
+function buildCompareChart(view) {
   const m = state;
   const root = $('#compareChart');
-  const params = m.parameters;
+  const params = view.groups.flatMap(g => g.items.map(({ p }) => p));
   const n = m.concepts.length;
   const { colW, rowH, padX, gap, bottom } = CHART;
   const catH = m.categories.length ? CHART.catH : 0;
@@ -57,7 +58,7 @@ function buildCompareChart() {
   const bands = [];
   if (catH) {
     let j = 0;
-    for (const g of Model.categoryGroups(m)) {
+    for (const g of view.groups) {
       if (!g.items.length) continue;
       const x = padX + j * colW;
       const w = g.items.length * colW;
@@ -121,17 +122,21 @@ function buildCompareChart() {
   }, bands, guide, axes, marks, labels, hits);
 
   const legend = h('ul', { class: 'pc-legend', 'aria-label': Texts.chart.legend },
-    m.concepts.map(c => h('li', null, h('button', {
+    view.ranked.map(({ figures: { concept: c }, rank }) => h('li', null, h('button', {
       type: 'button', class: 'pc-key', dataset: { cid: c.id }, style: { '--c': shownColor(c.color) },
       'aria-pressed': String(c.id === m.activeConceptId),
       onmouseenter: () => hoverConcept(c.id), onmouseleave: () => hoverConcept(null),
       onfocus: () => hoverConcept(c.id), onblur: () => hoverConcept(null),
       onclick: () => setActiveConcept(c.id),
-    }, h('span', { class: 'pc-swatch', 'aria-hidden': 'true' }), Model.nameOrUnnamed(c)))));
+    }, h('span', { class: 'pc-swatch', 'aria-hidden': 'true' }),
+    rank != null ? h('span', { class: 'pc-rank', title: Texts.compare.rankTitle(rank) }, `${rank}.`) : null,
+    Model.nameOrUnnamed(c)))));
 
   // Fokus in der Legende über das Neuzeichnen hinweg erhalten
   const focused = /** @type {HTMLElement | null} */ (root.querySelector('.pc-key:focus'));
-  root.replaceChildren(legend, h('div', { class: 'pc-plot' }, svg, tip));
+  root.replaceChildren(legend, params.length
+    ? h('div', { class: 'pc-plot' }, svg, tip)
+    : h('p', { class: 'pc-empty' }, Texts.compare.noDifferences));
   if (focused) $(`.pc-key[data-cid="${CSS.escape(focused.dataset.cid || '')}"]`, root)?.focus();
   emphasizeConcepts();
 }

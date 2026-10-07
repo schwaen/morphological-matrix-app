@@ -136,12 +136,18 @@ const Util = (() => {
     return new TextDecoder().decode(Uint8Array.from(bin, ch => ch.charCodeAt(0)));
   }
 
+  /**
+   * Text für die Suche vereinheitlichen: Kleinschreibung, ohne Akzente/Umlaut-Punkte, ß → ss.
+   * @param {string} text
+   */
+  const searchKey = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase(locale).replace(/ß/g, 'ss').trim();
+
   /** Text einer abgefangenen Ausnahme (beliebiger Typ). @param {unknown} e */
   const errorMessage = e => (e instanceof Error ? e.message : String(e));
 
   return {
     errorMessage,
     uid, str, num, isColor, parseNumber, numberToInput, formatNumber, formatInteger, formatPercent, scaleBigInt, formatMoney, currencySymbol,
-    slugify, lexLess, toBase64Url, fromBase64Url,
+    slugify, lexLess, toBase64Url, fromBase64Url, searchKey,
   };
 })();

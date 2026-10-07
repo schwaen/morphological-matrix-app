@@ -32,6 +32,7 @@
   <script src="js/ui/render-matrix.js" defer></script>
   <script src="js/ui/render-panels.js" defer></script>
   <script src="js/ui/render-chart.js" defer></script>
+  <script src="js/ui/search.js" defer></script>
   <script src="js/ui/lines.js" defer></script>
   <script src="js/ui/dialogs.js" defer></script>
   <script src="js/ui/main.js" defer></script>
@@ -96,6 +97,16 @@
       <textarea id="description" class="description" rows="1" data-i18n-attr="placeholder:ui.descriptionPlaceholder;aria-label:ui.description"></textarea>
 
       <div class="stats" id="stats" aria-live="polite"></div>
+
+      <div class="matrix-search" role="search">
+        <label class="search-field">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
+          <input type="search" id="matrixSearch" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:ui.searchPlaceholder;aria-label:ui.searchLabel;title:ui.searchTitle">
+        </label>
+        <span class="search-count" id="searchCount" aria-live="polite"></span>
+        <button type="button" class="icon-btn small" id="searchPrev" data-i18n-attr="title:ui.searchPrev;aria-label:ui.searchPrev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+        <button type="button" class="icon-btn small" id="searchNext" data-i18n-attr="title:ui.searchNext;aria-label:ui.searchNext"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      </div>
 
       <nav class="cat-nav" id="catNav" data-i18n-attr="aria-label:ui.categories" hidden></nav>
 
@@ -177,6 +188,7 @@
         </div>
       </h2>
       <div class="compare-scroll" id="compareBody">
+        <div class="compare-tools" id="compareTools"></div>
         <table class="compare" id="compareTable"></table>
         <div class="pc" id="compareChart" hidden></div>
       </div>
