@@ -11,6 +11,7 @@ const tabById = id => tabs.find(t => t.docId === id) || null;
 
 /** Stand des aktiven Tabs in seinem Eintrag ablegen (vor einem Wechsel). */
 function stashActiveTab() {
+  flushSave(); // ausstehende Eingaben noch unter der bisherigen Matrix speichern
   const t = activeTab();
   if (!t) return;
   Object.assign(t, {

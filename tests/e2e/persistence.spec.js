@@ -108,3 +108,36 @@ test('Bibliothek: geöffnete Matrizen markiert, Öffnen als App-Tab, Löschen nu
   await docs.filter({ hasText: 'Matrix A' }).locator('.icon-btn.danger').click();
   await expect(docs).toHaveCount(1);
 });
+
+test('Speichern beim Tippen gebündelt – Eingaben gehen beim Neuladen nicht verloren', async ({ page }) => {
+  const stored = () => page.evaluate(() => {
+    const id = JSON.parse(sessionStorage.getItem('morphologische-matrix:workspace')).active;
+    return JSON.parse(localStorage.getItem('morphologische-matrix:doc:' + id)).data.description;
+  });
+  await page.locator('#description').fill('');
+  await page.evaluate(() => {
+    window.__writes = 0;
+    const orig = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k, v) { if (k.includes(':doc:')) window.__writes++; return orig.call(this, k, v); };
+  });
+  await page.locator('#description').pressSequentially('Neue Problemstellung', { delay: 5 });
+  // Nach der Pause genau einmal gespeichert statt bei jedem Tastendruck
+  await expect.poll(stored).toBe('Neue Problemstellung');
+  expect(await page.evaluate(() => window.__writes)).toBeLessThanOrEqual(2);
+
+  // Direkt nach dem Tippen neu laden (ohne Pause, ohne das Feld zu verlassen)
+  await page.locator('#description').fill('Sofort neu geladen');
+  await page.reload();
+  await expect(page.locator('#description')).toHaveValue('Sofort neu geladen');
+});
+
+test('Ausstehende Eingaben werden vor einem Tab-Wechsel gespeichert', async ({ page }) => {
+  await page.locator('#description').fill('Vor dem Wechsel');
+  await page.click('#tabAddBtn');
+  await page.locator('#tabMenu button', { hasText: 'Neue leere Matrix' }).click();
+  const saved = await page.evaluate(() => {
+    const ws = JSON.parse(sessionStorage.getItem('morphologische-matrix:workspace'));
+    return JSON.parse(localStorage.getItem('morphologische-matrix:doc:' + ws.tabs[0].docId)).data.description;
+  });
+  expect(saved).toBe('Vor dem Wechsel');
+});

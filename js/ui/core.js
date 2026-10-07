@@ -8,7 +8,8 @@
  *
  * Regeln für Änderungen:
  *  - Strukturelle Änderungen laufen über `mutate()` (Verlaufseintrag, Speichern, komplettes Neuzeichnen).
- *  - Texteingaben laufen über `bindField()` (kein Neuzeichnen beim Tippen, Verlaufseintrag beim Verlassen).
+ *  - Texteingaben laufen über `bindField()` (kein Neuzeichnen beim Tippen, verzögertes Speichern,
+ *    Verlaufseintrag beim Verlassen).
  *  - Ansichtseinstellungen über `setPref()`; sie sind nicht Teil des Verlaufs.
  */
 'use strict';
@@ -107,11 +108,33 @@ const money = n => Util.formatMoney(n, state.settings.currency);
 // ---------- Speichern ----------
 
 let lastSaved = null;
+/** Verzögerung beim Speichern während des Tippens (ms). */
+const SAVE_DELAY = 300;
+let saveTimer = 0;
+
+/** Sofort speichern (und ein ausstehendes verzögertes Speichern erledigen). */
 function save() {
+  clearTimeout(saveTimer);
+  saveTimer = 0;
   const json = JSON.stringify(state);
   if (json === lastSaved) return;
   lastSaved = json;
   if (!Store.writeDoc(docId, state)) toast(Texts.errors.storageFull);
+}
+
+/**
+ * Speichern bündeln: Beim Tippen wird erst nach einer kurzen Pause geschrieben statt bei
+ * jedem Tastendruck. `save()` (z. B. beim Verlassen des Felds, Tab-Wechsel, Verlassen der
+ * Seite) schreibt einen ausstehenden Stand sofort.
+ */
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, SAVE_DELAY);
+}
+
+/** Ausstehendes verzögertes Speichern sofort erledigen (no-op, wenn nichts aussteht). */
+function flushSave() {
+  if (saveTimer) save();
 }
 
 /** Geöffnete Tabs, aktiven Tab und deren Ansichten merken. @param {{ tabOnly?: boolean }} [opts] */
@@ -190,10 +213,11 @@ function bindField(el, apply, after = refreshLight) {
   el.addEventListener('input', () => {
     if (el._snap == null) el._snap = snapshot();
     apply(el.value);
-    save();
+    scheduleSave();
     after();
   });
   el.addEventListener('change', () => {
+    flushSave();
     if (el._snap != null && el._snap !== snapshot()) pushHistory(el._snap);
     el._snap = snapshot();
   });

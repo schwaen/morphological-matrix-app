@@ -129,6 +129,10 @@ function bindEvents() {
     scheduleLines();
   });
 
+  // Beim Verlassen der Seite bzw. Wechsel in den Hintergrund ausstehende Eingaben sofort speichern
+  window.addEventListener('pagehide', flushSave);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flushSave(); });
+
   // Änderungen anderer Browser-Tabs an hier geöffneten Matrizen übernehmen.
   window.addEventListener('storage', e => {
     const id = Store.docIdFromKey(e.key);
