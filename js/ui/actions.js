@@ -1,6 +1,7 @@
 /*
- * Aktionen der Oberfläche: alle Änderungen an Parametern, Ausprägungen, Kategorien,
- * Konzepten und Einstellungen. Jede strukturelle Änderung läuft über `mutate()`.
+ * Aktionen der Oberfläche: verbinden Bedienelemente mit den Änderungen aus `Ops` (js/ops.js).
+ * Jede strukturelle Änderung läuft über `mutate()`; hier bleibt nur, was zur Oberfläche gehört
+ * (Fokus, Hinweise, Rückfragen, Ansichtswechsel).
  */
 'use strict';
 
@@ -14,25 +15,16 @@ function addParameter(categoryId = null) {
   const p = Model.newParameter(categoryId);
   pendingFocus = `param:${p.id}`;
   if (categoryId) setCollapsed(categoryId, false);
-  mutate(m => {
-    m.parameters.push(p);
-    Model.resort(m);
-  });
+  mutate(m => Ops.addParameter(m, p));
 }
 
 function moveParameter(index, delta) {
-  mutate(m => {
-    const [p] = m.parameters.splice(index, 1);
-    m.parameters.splice(index + delta, 0, p);
-  });
+  mutate(m => Ops.moveParameter(m, index, delta));
 }
 
 function deleteParameter(pid) {
   const p = state.parameters.find(x => x.id === pid);
-  mutate(m => {
-    m.parameters = m.parameters.filter(x => x.id !== pid);
-    m.concepts.forEach(c => { delete c.selections[pid]; });
-  });
+  mutate(m => Ops.deleteParameter(m, pid));
   toast(Texts.toast.parameterDeleted(Model.nameOrUnnamed(p)), true);
 }
 
@@ -41,11 +33,7 @@ function deleteParameter(pid) {
 function addOption(pid, afterIndex) {
   const o = Model.newOption();
   pendingFocus = `opt:${o.id}`;
-  mutate(m => {
-    const p = m.parameters.find(x => x.id === pid);
-    const at = afterIndex == null ? p.options.length : afterIndex + 1;
-    p.options.splice(at, 0, o);
-  });
+  mutate(m => Ops.addOption(m, pid, o, afterIndex));
 }
 
 /** Ausprägung innerhalb ihres Parameters nach links (−1) oder rechts (+1) verschieben. */
@@ -56,19 +44,11 @@ function moveOption(pid, index, delta) {
   const focused = /** @type {HTMLElement | null} */ (document.activeElement);
   pendingFocus = focused && focused.dataset.fid === `opt:${p.options[index].id}`
     ? `opt:${p.options[index].id}` : null;
-  mutate(m => {
-    const opts = m.parameters.find(x => x.id === pid).options;
-    const [o] = opts.splice(index, 1);
-    opts.splice(target, 0, o);
-  });
+  mutate(m => Ops.moveOption(m, pid, index, delta));
 }
 
 function deleteOption(pid, oid) {
-  mutate(m => {
-    const p = m.parameters.find(x => x.id === pid);
-    p.options = p.options.filter(o => o.id !== oid);
-    m.concepts.forEach(c => { if (c.selections[pid] === oid) delete c.selections[pid]; });
-  });
+  mutate(m => Ops.deleteOption(m, pid, oid));
 }
 
 // ---------- Kategorien ----------
@@ -77,24 +57,16 @@ function addCategory() {
   const k = { id: Util.uid(), name: Texts.fallback.category(state.categories.length + 1), color: Model.nextCategoryColor(state.categories) };
   pendingFocus = `cat:${k.id}`;
   if (prefs.mode !== 'edit') setPref('mode', 'edit');
-  mutate(m => { m.categories.push(k); });
+  mutate(m => Ops.addCategory(m, k));
 }
 
 function moveCategory(index, delta) {
-  mutate(m => {
-    const [k] = m.categories.splice(index, 1);
-    m.categories.splice(index + delta, 0, k);
-    Model.resort(m);
-  });
+  mutate(m => Ops.moveCategory(m, index, delta));
 }
 
 function deleteCategory(cid) {
   const k = Model.categoryById(state, cid);
-  mutate(m => {
-    m.categories = m.categories.filter(x => x.id !== cid);
-    m.parameters.forEach(p => { if (p.categoryId === cid) p.categoryId = null; });
-    Model.resort(m);
-  });
+  mutate(m => Ops.deleteCategory(m, cid));
   toast(Texts.toast.categoryDeleted(Model.nameOrUnnamed(k)), true);
 }
 
@@ -105,17 +77,13 @@ function setParameterCategory(pid, cid) {
     if (name == null) { renderMatrix(); return; } // Auswahlfeld zurücksetzen
     const k = { id: Util.uid(), name: name.trim(), color: Model.nextCategoryColor(state.categories) };
     mutate(m => {
-      m.categories.push(k);
-      m.parameters.find(p => p.id === pid).categoryId = k.id;
-      Model.resort(m);
+      Ops.addCategory(m, k);
+      Ops.setParameterCategory(m, pid, k.id);
     });
     return;
   }
   if (cid) setCollapsed(cid, false);
-  mutate(m => {
-    m.parameters.find(p => p.id === pid).categoryId = cid || null;
-    Model.resort(m);
-  });
+  mutate(m => Ops.setParameterCategory(m, pid, cid || null));
 }
 
 /** @param {string | null} cid */
@@ -142,54 +110,23 @@ function jumpToCategory(cid) {
 
 // ---------- Konzepte ----------
 
-/** Aktives Konzept (legt bei Bedarf eines an) – nur innerhalb von `mutate()` verwenden. @param {Matrix} m */
-function ensureActiveConcept(m) {
-  let c = m.concepts.find(x => x.id === m.activeConceptId);
-  if (!c) {
-    c = Model.newConcept(m);
-    m.concepts.push(c);
-    m.activeConceptId = c.id;
-  }
-  return c;
-}
-
 function toggleSelection(pid, oid) {
-  mutate(m => {
-    const c = ensureActiveConcept(m);
-    if (c.selections[pid] === oid) delete c.selections[pid];
-    else c.selections[pid] = oid;
-  });
+  mutate(m => Ops.toggleSelection(m, pid, oid));
 }
 
 function addConcept() {
   const c = Model.newConcept(state);
-  mutate(m => {
-    m.concepts.push(c);
-    m.activeConceptId = c.id;
-  });
+  mutate(m => Ops.addConcept(m, c));
   if (prefs.mode !== 'select') setMode('select');
 }
 
 function duplicateConcept(cid) {
-  mutate(m => {
-    const idx = m.concepts.findIndex(x => x.id === cid);
-    const src = m.concepts[idx];
-    const copy = { ...Model.newConcept(m, Texts.fallback.copyOf(src.name)), selections: { ...src.selections } };
-    m.concepts.splice(idx + 1, 0, copy);
-    m.activeConceptId = copy.id;
-  });
+  mutate(m => Ops.duplicateConcept(m, cid));
 }
 
 function deleteConcept(cid) {
   const c = state.concepts.find(x => x.id === cid);
-  mutate(m => {
-    const idx = m.concepts.findIndex(x => x.id === cid);
-    m.concepts.splice(idx, 1);
-    if (m.activeConceptId === cid) {
-      const next = m.concepts[Math.min(idx, m.concepts.length - 1)];
-      m.activeConceptId = next ? next.id : null;
-    }
-  });
+  mutate(m => Ops.deleteConcept(m, cid));
   toast(Texts.toast.conceptDeleted(Model.nameOrUnnamed(c)), true);
 }
 
@@ -216,20 +153,14 @@ function randomizeActive() {
     toast(Texts.toast.noOptions);
     return;
   }
-  mutate(m => {
-    const c = ensureActiveConcept(m);
-    c.selections = {};
-    for (const p of m.parameters) {
-      if (p.options.length) c.selections[p.id] = p.options[Math.floor(Math.random() * p.options.length)].id;
-    }
-  });
+  mutate(m => Ops.randomizeActive(m));
   if (prefs.mode !== 'select') setMode('select');
 }
 
 function clearActive() {
   const c = activeConcept();
   if (!c || !Object.keys(c.selections).length) return;
-  mutate(m => { m.concepts.find(x => x.id === m.activeConceptId).selections = {}; });
+  mutate(m => Ops.clearActive(m));
 }
 
 /** Konzept nach einer Strategie aus `Evaluation.GENERATORS` erstellen. @param {string} key */
@@ -249,10 +180,7 @@ function generateConcept(key) {
     return;
   }
   const c = { ...Model.newConcept(state, gen.label), selections };
-  mutate(m => {
-    m.concepts.push(c);
-    m.activeConceptId = c.id;
-  });
+  mutate(m => Ops.addConcept(m, c));
   if (prefs.mode !== 'select') setMode('select');
   toast(skipped ? Texts.toast.generatedPartial(c.name, skipped, gen.missing) : Texts.toast.generated(c.name), true);
 }
@@ -264,10 +192,7 @@ function generateConcept(key) {
  * @param {string} pid @param {string} oid @param {MatrixPriority} priority
  */
 function setPriority(pid, oid, priority) {
-  mutate(m => {
-    const o = m.parameters.find(p => p.id === pid).options.find(x => x.id === oid);
-    o.priority = o.priority === priority ? null : priority;
-  });
+  mutate(m => Ops.togglePriority(m, pid, oid, priority));
 }
 
 /** @template {keyof MatrixSettings} K @param {K} key @param {MatrixSettings[K]} value */
@@ -282,13 +207,5 @@ function changeScale(max) {
   if (max === oldMax) return;
   const hasScores = state.parameters.some(p => p.options.some(o => o.score != null));
   const rescale = hasScores && window.confirm(Texts.prompt.rescale(oldMax, max));
-  mutate(m => {
-    m.settings.utilityMax = max;
-    if (!rescale) return;
-    for (const p of m.parameters) {
-      for (const o of p.options) {
-        if (o.score != null) o.score = Math.round((o.score / oldMax) * max * 100) / 100;
-      }
-    }
-  });
+  mutate(m => Ops.changeScale(m, max, rescale));
 }

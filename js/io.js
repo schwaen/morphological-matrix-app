@@ -6,7 +6,7 @@
 
 const IO = (() => {
   const { categoryById, optionText } = Model;
-  const { weightOf, conceptCost, conceptUtility, priceValue } = Evaluation;
+  const { weightOf, conceptReport } = Evaluation;
 
   const L = Texts.csv;
 
@@ -63,11 +63,11 @@ const IO = (() => {
         ...(costs ? [cell(L.totalCost(currency))] : []),
         ...(utility ? [cell(L.utilityTotal)] : []),
         ...(costs && utility ? [cell(L.priceValue(currency))] : [])]);
-      for (const c of m.concepts) {
+      for (const { concept: c, cost, utility: util, priceValue } of conceptReport(m)) {
         lines.push([cell(c.name), ...m.parameters.map(p => cell(optionText(p, c.selections[p.id]) || '')),
-          ...(costs ? [csvNum(conceptCost(m, c).total)] : []),
-          ...(utility ? [csvNum(conceptUtility(m, c).value)] : []),
-          ...(costs && utility ? [csvNum(priceValue(m, c).value)] : [])]);
+          ...(cost ? [csvNum(cost.total)] : []),
+          ...(util ? [csvNum(util.value)] : []),
+          ...(priceValue ? [csvNum(priceValue.value)] : [])]);
       }
     }
     return '\ufeff' + lines.map(l => l.join(';')).join('\r\n');

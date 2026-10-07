@@ -214,3 +214,44 @@ test('Prioritätsprofil zählt die gewählten Ausprägungen je Priorität', () =
   m.parameters[1].options.forEach(o => { o.priority = null; });
   assert.deepEqual(plain(Evaluation.priorityProfile(m, outdoor)), { must: 2, should: 1, could: 0, wont: 1, none: 1 });
 });
+
+test('Kennzahlenbericht: alle Werte einmal berechnet, beste Werte markiert', () => {
+  const m = kaffeemaschine();
+  Object.assign(m.settings, { costs: true, utility: true, moscow: true });
+  const rows = Evaluation.conceptReport(m);
+  const by = name => rows.find(r => r.concept.name === name);
+  assert.equal(rows.length, 3);
+  assert.equal(by('Kompakt-Espresso').cost.total, 54);
+  assert.deepEqual(plain(rows.filter(r => r.cost.best).map(r => r.concept.name)), ['Kompakt-Espresso']);
+  assert.deepEqual(plain(rows.filter(r => r.utility.best).map(r => r.concept.name)), ['Smart Home']);
+  assert.deepEqual(plain(rows.filter(r => r.priceValue.best).map(r => r.concept.name)), ['Kompakt-Espresso']);
+  assert.deepEqual(plain(by('Outdoor').priority), { must: 2, should: 1, could: 1, wont: 2, none: 0 });
+  // Gleiche Werte wie die Einzelfunktionen
+  for (const r of rows) {
+    assert.equal(r.cost.total, Evaluation.conceptCost(m, r.concept).total);
+    assert.equal(r.utility.value, Evaluation.conceptUtility(m, r.concept).value);
+    assert.equal(r.priceValue.value, Evaluation.priceValue(m, r.concept).value);
+  }
+});
+
+test('Kennzahlenbericht: nur aktive Bewertungen; bester Wert erst ab zwei vergleichbaren Konzepten', () => {
+  const m = kaffeemaschine();
+  const off = Evaluation.conceptReport(m)[0];
+  assert.deepEqual([off.cost, off.utility, off.priceValue, off.priority], [null, null, null, null]);
+
+  m.settings.costs = true;
+  // Unvollständige Kosten zählen nie als bester Wert, auch wenn sie am niedrigsten sind
+  m.parameters[0].options.forEach(o => { o.cost = null; });
+  const rows = Evaluation.conceptReport(m);
+  assert.ok(rows.every(r => r.cost.missing === 1 && !r.cost.best));
+  m.concepts = [m.concepts[0]];
+  assert.equal(Evaluation.conceptReport(m)[0].cost.best, false);
+});
+
+test('Kennzahlenbericht: Gleichstand markiert alle Bestwerte', () => {
+  const m = kaffeemaschine();
+  m.settings.costs = true;
+  m.concepts.push({ ...m.concepts[0], id: 'kopie', name: 'Kopie' });
+  const best = Evaluation.conceptReport(m).filter(r => r.cost.best).map(r => r.concept.name);
+  assert.deepEqual(plain(best), ['Kompakt-Espresso', 'Kopie']);
+});
