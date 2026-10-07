@@ -16,6 +16,7 @@ const IO = (() => {
   /** @param {Matrix} m */
   const toJson = m => JSON.stringify(m, null, 2);
 
+  /** Textzelle in Anführungszeichen. @param {unknown} v */
   const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
   /** Zahl mit Dezimalkomma (Excel, deutsch); leer für fehlende Werte. @param {number | null} n */
   const csvNum = n => (n == null ? '' : String(Math.round(n * 100) / 100).replace('.', ','));
@@ -30,6 +31,7 @@ const IO = (() => {
     const maxOptions = Math.max(0, ...m.parameters.map(p => p.options.length));
     const withCats = m.categories.length > 0;
     const catHead = withCats ? [cell(L.category)] : [];
+    /** @param {MatrixParameter} p */
     const catCell = p => (withCats ? [cell((categoryById(m, p.categoryId) || { name: '' }).name)] : []);
     const lines = [
       [cell(L.title), cell(m.title)],
@@ -39,6 +41,7 @@ const IO = (() => {
       ...m.parameters.map(p => [...catCell(p), cell(p.name), ...p.options.map(o => cell(o.text))]),
     ];
     const { costs, utility, currency, utilityMax, moscow } = m.settings;
+    /** @param {MatrixOption} o */
     const prio = o => (o.priority ? Texts.moscow.levels[o.priority].label : '');
     if (costs || utility || moscow) {
       lines.push([], [...catHead, cell(L.parameter),
@@ -129,6 +132,7 @@ const IO = (() => {
    * @returns {{ items: Array<{ file: string, id: string | null, savedAt: number | null, data: Matrix }>, errors: Array<{ file: string, message: string }> }}
    */
   function parseBackup(files) {
+    /** @param {{ name: string }} f */
     const isMatrixFile = f => /\.json$/i.test(f.name) && !/(^|\/)(__MACOSX\/|\.)/.test(f.name);
     let meta = new Map();
     const manifestFile = files.find(f => f.name.split('/').pop() === BACKUP_MANIFEST);
@@ -136,7 +140,7 @@ const IO = (() => {
       try {
         const manifest = JSON.parse(manifestFile.text);
         if (manifest && manifest.format === BACKUP_FORMAT && Array.isArray(manifest.matrices)) {
-          meta = new Map(manifest.matrices.map(e => [e.file, e]));
+          meta = new Map(manifest.matrices.map(/** @param {any} e */ e => [e.file, e]));
         }
       } catch (e) { /* ohne Übersicht weiter */ }
     }
@@ -144,7 +148,7 @@ const IO = (() => {
     const errors = [];
     for (const f of files) {
       if (f === manifestFile || !isMatrixFile(f)) continue;
-      const base = f.name.split('/').pop();
+      const base = f.name.split('/').pop() || f.name;
       try {
         const data = Model.normalize(JSON.parse(f.text));
         const info = meta.get(base) || meta.get(f.name) || {};
@@ -155,7 +159,7 @@ const IO = (() => {
           data,
         });
       } catch (e) {
-        errors.push({ file: base, message: e.message });
+        errors.push({ file: base, message: Util.errorMessage(e) });
       }
     }
     return { items, errors };

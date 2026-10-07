@@ -22,7 +22,7 @@ function importJson(file) {
       const next = Model.normalize(JSON.parse(String(reader.result)));
       openNewDoc(next, Texts.toast.opened(next.title || file.name));
     } catch (e) {
-      toast(Texts.errors.fileInvalid(e.message));
+      toast(Texts.errors.fileInvalid(Util.errorMessage(e)));
     }
   };
   reader.onerror = () => toast(Texts.errors.fileUnreadable);
@@ -134,10 +134,11 @@ function openExample(id) {
   try {
     data = Examples.load(id);
   } catch (e) {
-    toast(Texts.errors.fileInvalid(e.message));
+    toast(Texts.errors.fileInvalid(Util.errorMessage(e)));
     return;
   }
-  if (data) openNewDoc(data, Texts.toast.exampleOpened(Examples.get(id).name));
+  const ex = Examples.get(id);
+  if (data && ex) openNewDoc(data, Texts.toast.exampleOpened(ex.name));
 }
 
 // ---------- Backup ----------
@@ -172,7 +173,7 @@ async function restoreBackup(files) {
       }
     }
   } catch (e) {
-    toast(Texts.backup.failed(e.message));
+    toast(Texts.backup.failed(Util.errorMessage(e)));
     return;
   }
   const { items, errors } = IO.parseBackup(texts);

@@ -83,6 +83,7 @@ function renderStats() {
   const O = state.parameters.reduce((n, p) => n + p.options.length, 0);
   const combos = P ? state.parameters.reduce((n, p) => n * BigInt(p.options.length), 1n) : 0n;
   const C = state.concepts.length;
+  /** @param {string} value @param {string} label @param {string | null} [title] */
   const stat = (value, label, title = null) => h('span', { class: 'stat', title }, h('strong', null, value), ` ${label}`);
   const count = formatCount(combos);
   $('#stats').replaceChildren(
@@ -160,7 +161,7 @@ function updateProgress() {
 function renderGenerators() {
   let any = false;
   $$('[data-generate]').forEach(btn => {
-    const gen = Evaluation.GENERATORS[btn.dataset.generate];
+    const gen = Evaluation.GENERATORS[btn.dataset.generate || ''];
     const on = !!gen && gen.available(state);
     btn.hidden = !on;
     any = any || on;
@@ -272,21 +273,24 @@ function buildCompareTable() {
   ]));
 
   const report = Evaluation.conceptReport(m);
-  /** Eine Kennzahl-Zeile, falls die Bewertung aktiv ist. @param {(r: ConceptFigures) => any} cellOf */
+  /**
+   * Eine Kennzahl-Zeile, falls die Bewertung aktiv ist (dann ist die jeweilige Kennzahl gesetzt).
+   * @param {(r: ConceptFigures) => any} cellOf
+   */
   const row = (th, active, cellOf) => (active ? h('tr', null, th, report.map(cellOf)) : null);
   const footRows = [
-    row(h('th', { scope: 'row', title: Texts.moscow.profileTitle }, Texts.compare.priority), m.settings.moscow, ({ priority }) =>
+    row(h('th', { scope: 'row', title: Texts.moscow.profileTitle }, Texts.compare.priority), m.settings.moscow, ({ priority }) => priority &&
       h('td', null, priorityProfileView(priority, false),
         priority.wont ? h('small', { class: 'prio-note' }, Texts.moscow.wontNote(priority.wont)) : null)),
-    row(h('th', { scope: 'row' }, Texts.compare.totalCost), m.settings.costs, ({ cost }) =>
+    row(h('th', { scope: 'row' }, Texts.compare.totalCost), m.settings.costs, ({ cost }) => cost &&
       h('td', { class: metricClass(cost.missing, cost.best), title: cost.missing ? missingNote(cost.missing) : null },
         money(cost.total) + (cost.missing ? ' *' : ''))),
-    row(h('th', { scope: 'row' }, Texts.compare.utility(m.settings.utilityMax)), m.settings.utility, ({ utility }) =>
+    row(h('th', { scope: 'row' }, Texts.compare.utility(m.settings.utilityMax)), m.settings.utility, ({ utility }) => utility &&
       h('td', { class: metricClass(utility.missing, utility.best), title: utility.missing ? missingNote(utility.missing) : null },
         utility.value == null ? '–' : Util.formatNumber(utility.value) + (utility.missing ? ' *' : ''))),
     row(h('th', { scope: 'row', title: Texts.compare.priceValueTitle },
       Texts.compare.priceValue, h('small', { class: 'th-note' }, Texts.compare.priceValueNote)),
-    m.settings.costs && m.settings.utility, ({ priceValue }) =>
+    m.settings.costs && m.settings.utility, ({ priceValue }) => priceValue &&
       h('td', { class: priceValue.value == null ? 'incomplete' : (priceValue.best ? 'best' : null), title: priceValue.reason },
         priceValue.value == null ? '–' : money(priceValue.value))),
   ].filter(Boolean);
