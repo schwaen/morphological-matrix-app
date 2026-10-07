@@ -31,6 +31,7 @@
   <script src="js/ui/actions.js" defer></script>
   <script src="js/ui/render-matrix.js" defer></script>
   <script src="js/ui/render-panels.js" defer></script>
+  <script src="js/ui/render-chart.js" defer></script>
   <script src="js/ui/lines.js" defer></script>
   <script src="js/ui/dialogs.js" defer></script>
   <script src="js/ui/main.js" defer></script>
@@ -152,23 +153,32 @@
           </div>
         </div>
       </div>
-      <label class="check">
-        <input type="checkbox" id="showLines">
-        <span data-i18n="ui.showLines"></span>
-      </label>
+      <div class="line-mode">
+        <span id="lineModeLabel" data-i18n="ui.lines"></span>
+        <div class="segmented" role="group" aria-labelledby="lineModeLabel">
+          <button type="button" data-lines="all" data-i18n="ui.linesAll" data-i18n-attr="title:ui.linesAllTitle"></button>
+          <button type="button" data-lines="active" data-i18n="ui.linesActive" data-i18n-attr="title:ui.linesActiveTitle"></button>
+          <button type="button" data-lines="off" data-i18n="ui.linesOff"></button>
+        </div>
+      </div>
       <div class="summary" id="conceptSummary"></div>
     </aside>
 
-    <section class="panel compare-section" id="compareSection" aria-labelledby="compareHeading">
+    <section class="panel compare-section" id="compareSection" aria-labelledby="compareTitle">
       <h2 id="compareHeading" class="collapsible-head">
         <button type="button" class="collapse-toggle" id="compareToggle" aria-expanded="true" aria-controls="compareBody">
           <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-          <span data-i18n="ui.compareHeading"></span>
+          <span id="compareTitle" data-i18n="ui.compareHeading"></span>
           <span class="collapse-meta" id="compareMeta"></span>
         </button>
+        <div class="segmented compare-views" role="group" data-i18n-attr="aria-label:ui.compareViews">
+          <button type="button" data-compare-view="table" data-i18n="ui.compareTable"></button>
+          <button type="button" data-compare-view="chart" data-i18n="ui.compareChart" data-i18n-attr="title:ui.compareChartTitle"></button>
+        </div>
       </h2>
       <div class="compare-scroll" id="compareBody">
         <table class="compare" id="compareTable"></table>
+        <div class="pc" id="compareChart" hidden></div>
       </div>
     </section>
   </main>

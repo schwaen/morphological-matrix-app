@@ -76,8 +76,17 @@ const TextsDe = (() => {
         'moscow-should': { text: 'Standard – Should-haves', title: 'Neues Konzept: je Parameter die Should-Ausprägung (bei mehreren die mit dem höchsten Nutzwert)' },
         'moscow-could': { text: 'Premium – Could-haves', title: 'Neues Konzept: je Parameter die Could-Ausprägung (bei mehreren die mit dem höchsten Nutzwert)' },
       },
-      showLines: 'Verbindungslinien anzeigen',
+      lines: 'Linien',
+      linesAll: 'Alle',
+      linesAllTitle: 'Alle Konzepte gleich deutlich',
+      linesActive: 'Aktives',
+      linesActiveTitle: 'Nur das aktive Konzept deutlich – beim Darüberfahren über ein Konzept wird dessen Linie hervorgehoben',
+      linesOff: 'Aus',
       compareHeading: 'Konzeptvergleich',
+      compareViews: 'Darstellung des Vergleichs',
+      compareTable: 'Tabelle',
+      compareChart: 'Verlauf',
+      compareChartTitle: 'Konzepte als Linienzug über alle Parameter (Parallelkoordinaten)',
       close: 'Schließen',
       libraryHeading: 'Meine Matrizen',
       libraryHint: 'Alle Matrizen werden in diesem Browser gespeichert. Jeder Tab bearbeitet seine eigene Matrix – öffnen Sie eine Matrix in einem neuen Tab, um parallel zu arbeiten.',
@@ -278,6 +287,13 @@ const TextsDe = (() => {
       utility: 'Nutzwert',
       utilityValue: (value, max) => `${value} / ${max}`,
       missing: n => `${n} ${n === 1 ? 'Wert fehlt' : 'Werte fehlen'}`,
+    },
+
+    chart: {
+      label: 'Verlauf der Konzepte über alle Parameter',
+      legend: 'Konzepte',
+      axisLabel: (param, options) => `${param}: ${options}`,
+      noOptions: 'keine Ausprägungen',
     },
 
     compare: {

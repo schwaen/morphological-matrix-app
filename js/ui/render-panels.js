@@ -12,10 +12,8 @@ function render() {
   const desc = $('#description');
   if (document.activeElement !== desc) desc.value = state.description;
 
-  $$('.segmented button').forEach(b => {
-    b.setAttribute('aria-pressed', String(b.dataset.mode === prefs.mode));
-  });
-  $('#showLines').checked = prefs.showLines;
+  $$('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === prefs.mode)));
+  $$('[data-lines]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lines === prefs.lines)));
   $('#addParamBtn').hidden = prefs.mode !== 'edit';
   $('#addCategoryBtn').hidden = prefs.mode !== 'edit';
 
@@ -108,8 +106,10 @@ function renderConcepts() {
     const isActive = c.id === state.activeConceptId;
     const li = h('li', {
       class: `concept${isActive ? ' is-active' : ''}`,
-      style: { '--c': c.color },
+      style: { '--c': shownColor(c.color) },
       dataset: { cid: c.id },
+      onmouseenter: () => hoverConcept(c.id),
+      onmouseleave: () => hoverConcept(null),
       onclick: e => {
         if (e.target.closest('button, input, textarea')) return;
         setActiveConcept(c.id);
@@ -117,7 +117,7 @@ function renderConcepts() {
     });
     const color = h('input', { type: 'color', class: 'swatch', value: c.color, 'aria-label': Texts.concept.color(c.name), title: Texts.concept.changeColor });
     bindField(color, v => { c.color = v; }, () => {
-      li.style.setProperty('--c', c.color);
+      li.style.setProperty('--c', shownColor(c.color));
       renderMatrix();
       refreshLight();
     });
@@ -213,7 +213,7 @@ function renderSummary() {
       : null,
   ].filter(Boolean) : [];
   replaceWith(box,
-    h('h3', { style: { '--c': c.color } }, c.name || Texts.fallback.unnamedConcept),
+    h('h3', { style: { '--c': shownColor(c.color) } }, c.name || Texts.fallback.unnamedConcept),
     metrics.length ? h('div', { class: 'metrics' }, metrics) : null,
     fig && fig.priority ? priorityProfileView(fig.priority, true) : null,
     rows.some(Boolean) ? h('dl', null, rows) : h('p', { class: 'summary-empty' }, Texts.summary.noParameters),
@@ -247,7 +247,14 @@ function renderCompare() {
   $('#compareBody').hidden = !open;
   const n = state.concepts.length;
   $('#compareMeta').textContent = Texts.compare.conceptCount(n);
-  if (open) buildCompareTable();
+  const chart = prefs.compareView === 'chart';
+  $$('[data-compare-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.compareView === prefs.compareView)));
+  $('#compareTable').hidden = chart;
+  $('#compareChart').hidden = !chart;
+  if (open) {
+    if (chart) buildCompareChart();
+    else buildCompareTable();
+  }
 }
 
 /** Klassen einer Kennzahl-Zelle: unvollständig und/oder bester Wert. */
@@ -257,7 +264,7 @@ function buildCompareTable() {
   const m = state;
   const head = h('thead', null, h('tr', null,
     h('th', { scope: 'col' }, Texts.compare.parameter),
-    m.concepts.map(c => h('th', { scope: 'col', style: { '--c': c.color } }, h('span', { 'aria-hidden': 'true' }), Model.nameOrUnnamed(c)))));
+    m.concepts.map(c => h('th', { scope: 'col', style: { '--c': shownColor(c.color) } }, h('span', { 'aria-hidden': 'true' }), Model.nameOrUnnamed(c)))));
   const showCats = m.categories.length > 0;
   const body = h('tbody', null, Model.categoryGroups(m).flatMap(g => [
     showCats && g.items.length

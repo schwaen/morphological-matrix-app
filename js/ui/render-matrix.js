@@ -188,7 +188,7 @@ function renderOptionPick(p, o, oi, active) {
     class: `opt-cell pick${isActive ? ' is-active' : ''}${o.text.trim() ? '' : ' is-empty'}${state.settings.moscow && o.priority === 'wont' ? ' is-wont' : ''}`,
     'aria-pressed': String(isActive),
     title: selectedBy.length ? Texts.matrix.selectedIn(selectedBy.map(Model.nameOrUnnamed).join(', ')) : null,
-    style: isActive ? { '--c': active.color } : null,
+    style: isActive ? { '--c': shownColor(active.color) } : null,
     dataset: { cell: `${p.id}:${o.id}` },
     onclick: () => toggleSelection(p.id, o.id),
   },
@@ -197,7 +197,7 @@ function renderOptionPick(p, o, oi, active) {
     metrics || badge ? h('span', { class: 'opt-metrics-view' }, badge, metrics) : null),
   selectedBy.length
     ? h('span', { class: 'markers', 'aria-hidden': 'true' },
-      selectedBy.map(c => h('span', { class: 'marker', style: { '--c': c.color } })))
+      selectedBy.map(c => h('span', { class: 'marker', style: { '--c': shownColor(c.color) } })))
     : null);
 }
 

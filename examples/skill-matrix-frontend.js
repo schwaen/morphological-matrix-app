@@ -216,19 +216,19 @@ Examples.register({
       {
         "id": "m1",
         "name": "Anna (Senior)",
-        "color": "#e8590c",
+        "color": "#2a78d6",
         "selections": { "s1": "s1l3", "s2": "s2l2", "s3": "s3l3", "s4": "s4l2", "s5": "s5l3", "s6": "s6l3", "s7": "s7l3", "s8": "s8l3", "s9": "s9l3", "s10": "s10l2", "s11": "s11l3", "s12": "s12l3", "s13": "s13l2", "s14": "s14l3", "s15": "s15l2", "s16": "s16l3" }
       },
       {
         "id": "m2",
         "name": "Ben (UI-Fokus)",
-        "color": "#1c7ed6",
+        "color": "#eb6834",
         "selections": { "s1": "s1l2", "s2": "s2l3", "s3": "s3l2", "s4": "s4l3", "s5": "s5l1", "s6": "s6l3", "s7": "s7l3", "s8": "s8l2", "s9": "s9l1", "s10": "s10l3", "s11": "s11l2", "s12": "s12l1", "s13": "s13l0", "s14": "s14l2", "s15": "s15l1", "s16": "s16l1" }
       },
       {
         "id": "m3",
         "name": "Clara (Junior)",
-        "color": "#2b8a3e",
+        "color": "#1baf7a",
         "selections": { "s1": "s1l2", "s2": "s2l2", "s3": "s3l1", "s4": "s4l1", "s5": "s5l0", "s6": "s6l2", "s7": "s7l1", "s8": "s8l1", "s9": "s9l0", "s10": "s10l1", "s11": "s11l1", "s12": "s12l0", "s13": "s13l1", "s14": "s14l1", "s15": "s15l2", "s16": "s16l0" }
       }
     ],

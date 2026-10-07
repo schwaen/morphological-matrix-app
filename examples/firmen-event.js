@@ -238,31 +238,31 @@ Examples.register({
       {
         "id": "c1",
         "name": "Sommerfest",
-        "color": "#e8590c",
+        "color": "#2a78d6",
         "selections": { "p1": "p1o1", "p2": "p2o2", "p3": "p3o3", "p4": "p4o5", "p5": "p5o1", "p6": "p6o1", "p7": "p7o1", "p8": "p8o1", "p9": "p9o4", "p10": "p10o2", "p11": "p11o2", "p12": "p12o3", "p13": "p13o2", "p14": "p14o2", "p15": "p15o2", "p16": "p16o1", "p17": "p17o3", "p18": "p18o1" }
       },
       {
         "id": "c2",
         "name": "Teamtag Natur",
-        "color": "#1c7ed6",
+        "color": "#eb6834",
         "selections": { "p1": "p1o2", "p2": "p2o1", "p3": "p3o1", "p4": "p4o3", "p5": "p5o3", "p6": "p6o1", "p7": "p7o1", "p8": "p8o3", "p9": "p9o5", "p10": "p10o1", "p11": "p11o5", "p12": "p12o3", "p13": "p13o4", "p14": "p14o3", "p15": "p15o1", "p16": "p16o1", "p17": "p17o2", "p18": "p18o3" }
       },
       {
         "id": "c3",
         "name": "Offsite",
-        "color": "#2b8a3e",
+        "color": "#1baf7a",
         "selections": { "p1": "p1o3", "p2": "p2o1", "p3": "p3o1", "p4": "p4o4", "p5": "p5o4", "p6": "p6o3", "p7": "p7o2", "p8": "p8o2", "p9": "p9o2", "p10": "p10o3", "p11": "p11o4", "p12": "p12o4", "p13": "p13o2", "p14": "p14o2", "p15": "p15o2", "p16": "p16o2", "p17": "p17o1", "p18": "p18o2" }
       },
       {
         "id": "c4",
         "name": "Jahresauftakt",
-        "color": "#ae3ec9",
+        "color": "#eda100",
         "selections": { "p1": "p1o1", "p2": "p2o2", "p3": "p3o4", "p4": "p4o2", "p5": "p5o2", "p6": "p6o1", "p7": "p7o2", "p8": "p8o4", "p9": "p9o1", "p10": "p10o4", "p11": "p11o3", "p12": "p12o5", "p13": "p13o3", "p14": "p14o3", "p15": "p15o2", "p16": "p16o3", "p17": "p17o4", "p18": "p18o2" }
       },
       {
         "id": "c5",
         "name": "Büro-Budget",
-        "color": "#e03131",
+        "color": "#e87ba4",
         "selections": { "p1": "p1o1", "p2": "p2o2", "p3": "p3o1", "p4": "p4o1", "p5": "p5o1", "p6": "p6o1", "p7": "p7o1", "p8": "p8o1", "p9": "p9o1", "p10": "p10o2", "p11": "p11o4", "p12": "p12o1", "p13": "p13o2", "p14": "p14o2", "p15": "p15o1", "p16": "p16o1", "p17": "p17o1", "p18": "p18o1" }
       }
     ],

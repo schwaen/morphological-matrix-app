@@ -1,10 +1,14 @@
 /*
  * Verbindungslinien der Konzepte im Modus „Kombinieren“ (SVG über der Matrix).
  * Linien verlaufen in den Zeilenabständen und enden an eingeklappten Kategorien.
+ * Modus (prefs.lines): „all“ alle deutlich, „active“ nur das aktive Konzept deutlich (andere
+ * dezent), „off“ keine. Beim Darüberfahren über ein Konzept wird dessen Linie hervorgehoben.
  */
 'use strict';
 
 let linesFrame = 0;
+/** Konzept, über dem gerade der Mauszeiger steht (Hervorhebung), sonst `null`. @type {string | null} */
+let hoveredConcept = null;
 /** Linien im nächsten Frame neu zeichnen (fasst mehrere Anforderungen zusammen). */
 function scheduleLines() {
   cancelAnimationFrame(linesFrame);
@@ -15,7 +19,7 @@ function drawLines() {
   const svg = $('#lines');
   const wrap = $('#matrixWrap');
   svg.replaceChildren();
-  if (prefs.mode !== 'select' || !prefs.showLines) return;
+  if (prefs.mode !== 'select' || prefs.lines === 'off') return;
 
   const wr = wrap.getBoundingClientRect();
   svg.style.width = `${wrap.scrollWidth}px`;
@@ -55,12 +59,44 @@ function drawLines() {
       d += `M${a.x.toFixed(1)},${a.bottom.toFixed(1)} C${a.x.toFixed(1)},${(a.bottom + dy).toFixed(1)} ${b.x.toFixed(1)},${(b.top - dy).toFixed(1)} ${b.x.toFixed(1)},${b.top.toFixed(1)} `;
     }
     if (!d) continue;
-    const isActive = c.id === state.activeConceptId;
     const path = document.createElementNS(ns, 'path');
     path.setAttribute('d', d);
-    path.setAttribute('stroke', c.color);
-    path.setAttribute('stroke-width', isActive ? '3' : '2');
-    path.setAttribute('opacity', isActive ? '1' : '.55');
+    path.setAttribute('stroke', shownColor(c.color));
+    path.dataset.cid = c.id;
     svg.append(path);
   }
+  emphasizeConcepts();
+}
+
+/**
+ * Deutlichkeit der Linien nach Modus, aktivem und hervorgehobenem Konzept setzen – ohne neu zu
+ * zeichnen (auch für das Verlaufsdiagramm im Konzeptvergleich).
+ */
+function emphasizeConcepts() {
+  const dimmed = prefs.lines === 'active' ? '.12' : '.55';
+  $$('#lines path, #compareChart [data-cid]').forEach(el => {
+    const cid = /** @type {HTMLElement} */ (/** @type {unknown} */ (el)).dataset.cid;
+    const strong = cid === state.activeConceptId || cid === hoveredConcept;
+    const faint = hoveredConcept != null && !strong;
+    el.classList.toggle('is-strong', strong);
+    if (el.closest('#lines')) {
+      el.setAttribute('stroke-width', strong ? '3' : '2');
+      el.setAttribute('opacity', strong ? '1' : (faint ? '.08' : dimmed));
+    } else {
+      el.classList.toggle('is-faint', faint);
+    }
+  });
+  // Aktives und hervorgehobenes Konzept nach oben (in dieser Reihenfolge)
+  for (const cid of [state.activeConceptId, hoveredConcept]) {
+    if (!cid) continue;
+    $$(`#lines [data-cid="${CSS.escape(cid)}"], #compareChart g[data-cid="${CSS.escape(cid)}"]`)
+      .forEach(el => el.parentNode && el.parentNode.append(el));
+  }
+}
+
+/** Konzept beim Darüberfahren hervorheben (`null` = keines). @param {string | null} cid */
+function hoverConcept(cid) {
+  if (hoveredConcept === cid) return;
+  hoveredConcept = cid;
+  emphasizeConcepts();
 }

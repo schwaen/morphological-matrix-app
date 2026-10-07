@@ -71,8 +71,17 @@ const TextsEn = (() => {
         'moscow-should': { text: 'Standard – should-haves', title: 'New concept: the should-have option per parameter (if several, the one with the highest utility)' },
         'moscow-could': { text: 'Premium – could-haves', title: 'New concept: the could-have option per parameter (if several, the one with the highest utility)' },
       },
-      showLines: 'Show connecting lines',
+      lines: 'Lines',
+      linesAll: 'All',
+      linesAllTitle: 'All concepts equally visible',
+      linesActive: 'Active',
+      linesActiveTitle: 'Only the active concept stands out – hover over a concept to highlight its line',
+      linesOff: 'Off',
       compareHeading: 'Concept comparison',
+      compareViews: 'Comparison view',
+      compareTable: 'Table',
+      compareChart: 'Profile',
+      compareChartTitle: 'Concepts as a line across all parameters (parallel coordinates)',
       close: 'Close',
       libraryHeading: 'My matrices',
       libraryHint: 'All matrices are stored in this browser. Each tab edits its own matrix – open a matrix in a new tab to work in parallel.',
@@ -267,6 +276,13 @@ const TextsEn = (() => {
       utility: 'Utility',
       utilityValue: (value, max) => `${value} / ${max}`,
       missing: n => `${n} ${n === 1 ? 'value' : 'values'} missing`,
+    },
+
+    chart: {
+      label: 'Profile of the concepts across all parameters',
+      legend: 'Concepts',
+      axisLabel: (param, options) => `${param}: ${options}`,
+      noOptions: 'no options',
     },
 
     compare: {

@@ -77,8 +77,13 @@ interface ExampleDef {
 /** Ansichtseinstellungen pro Tab (sessionStorage) */
 interface TabPrefs {
   mode: 'edit' | 'select';
-  showLines: boolean;
+  /** Verbindungslinien: alle Konzepte, nur das aktive kräftig (andere dezent) oder keine */
+  lines: 'all' | 'active' | 'off';
+  /** Frühere Einstellung (an/aus) – wird beim Laden in `lines` übernommen */
+  showLines?: boolean;
   compareOpen: boolean;
+  /** Konzeptvergleich als Tabelle oder Verlaufsdiagramm */
+  compareView?: 'table' | 'chart';
   /** Kategorie-ID (bzw. `__none`) → eingeklappt */
   collapsed?: Record<string, boolean>;
 }
@@ -87,6 +92,7 @@ interface TabPrefs {
 interface TabView {
   mode: TabPrefs['mode'];
   compareOpen: boolean;
+  compareView?: TabPrefs['compareView'];
   collapsed?: Record<string, boolean>;
 }
 

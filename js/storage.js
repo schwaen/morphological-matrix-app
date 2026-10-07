@@ -113,7 +113,11 @@ const Store = (() => {
   function loadPrefs(defaults) {
     const raw = get('sessionStorage', PREFS_KEY) || get('localStorage', PREFS_KEY);
     try {
-      return { ...defaults, ...JSON.parse(raw || '{}') };
+      const stored = JSON.parse(raw || '{}');
+      // Frühere Einstellung „Verbindungslinien anzeigen“ (an/aus) → `lines`
+      if (stored.showLines === false && !stored.lines) stored.lines = 'off';
+      delete stored.showLines;
+      return { ...defaults, ...stored };
     } catch (e) {
       return { ...defaults };
     }
