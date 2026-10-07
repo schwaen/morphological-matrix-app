@@ -78,8 +78,12 @@ function renderParameterEdit(p, pi, showBands) {
     },
   });
   bindField(name, v => { p.name = v; });
+  const label = Model.parameterLabel(p, pi);
   return h('div', { class: 'param-cell', style: categoryStyle(p) },
     name,
+    showNote(p, p.id)
+      ? noteField(p, p.id, { cls: 'param-note', placeholder: Texts.notes.paramPlaceholder, label: Texts.notes.paramLabel(label) })
+      : null,
     showBands ? categorySelect(p) : null,
     h('div', { class: 'param-foot' },
       state.settings.utility
@@ -93,6 +97,7 @@ function renderParameterEdit(p, pi, showBands) {
           h('span', { class: 'weight-pct', dataset: { weightPct: p.id } }, weightPercent(p)))
         : null,
       h('div', { class: 'row-tools' },
+        noteButton(p, p.id, [Texts.notes.addParam, Texts.notes.editParam]),
         iconBtn('up', Texts.matrix.moveUp, () => moveParameter(pi, -1), { disabled: !Model.canMoveParameter(state, pi, -1) }),
         iconBtn('down', Texts.matrix.moveDown, () => moveParameter(pi, 1), { disabled: !Model.canMoveParameter(state, pi, 1) }),
         iconBtn('trash', Texts.matrix.deleteParameter, () => deleteParameter(p.id), { danger: true }),
@@ -100,8 +105,13 @@ function renderParameterEdit(p, pi, showBands) {
 }
 
 function renderParameterView(p, pi) {
-  return h('div', { class: 'param-cell', style: categoryStyle(p) },
-    h('span', { class: 'param-label' }, Model.parameterLabel(p, pi)),
+  const label = Model.parameterLabel(p, pi);
+  return h('div', {
+    class: 'param-cell', style: categoryStyle(p),
+    dataset: p.note ? { note: p.note, noteLabel: Texts.notes.paramTitle(label) } : null,
+    'aria-description': p.note || null,
+  },
+  h('span', { class: 'param-label' }, label, p.note ? noteMark() : null),
     h('span', { class: 'param-meta' },
       Texts.matrix.optionCount(p.options.length)
       + (state.settings.utility ? ` · ${Texts.matrix.weightShare(weightPercent(p))}` : '')));
@@ -140,7 +150,11 @@ function renderOptionEdit(p, pi, o, oi) {
   const { costs, utility, currency, utilityMax, moscow } = state.settings;
   return h('div', { class: 'opt-cell edit' },
     h('div', { class: 'opt-main' }, ta),
+    showNote(o, o.id)
+      ? noteField(o, o.id, { cls: 'opt-note', placeholder: Texts.notes.placeholder, label: Texts.notes.label(optLabel) })
+      : null,
     h('div', { class: 'opt-tools' },
+      noteButton(o, o.id, [Texts.notes.add, Texts.notes.edit]),
       iconBtn('left', Texts.matrix.moveLeft, () => moveOption(p.id, oi, -1), { disabled: oi === 0 }),
       iconBtn('right', Texts.matrix.moveRight, () => moveOption(p.id, oi, 1), { disabled: oi === p.options.length - 1 }),
       iconBtn('x', Texts.matrix.deleteOption, () => deleteOption(p.id, o.id), { danger: true })),
@@ -192,18 +206,21 @@ function renderOptionPick(p, o, oi, active) {
   const isActive = !!active && active.selections[p.id] === o.id;
   const metrics = optionMetricsText(o);
   const badge = priorityBadge(o);
+  const text = o.text.trim() || Texts.fallback.emptyOption(oi + 1);
   return h('button', {
     type: 'button',
     class: `opt-cell pick${isActive ? ' is-active' : ''}${o.text.trim() ? '' : ' is-empty'}${state.settings.moscow && o.priority === 'wont' ? ' is-wont' : ''}`,
     'aria-pressed': String(isActive),
     title: selectedBy.length ? Texts.matrix.selectedIn(selectedBy.map(Model.nameOrUnnamed).join(', ')) : null,
     style: isActive ? { '--c': shownColor(active.color) } : null,
-    dataset: { cell: `${p.id}:${o.id}` },
+    dataset: { cell: `${p.id}:${o.id}`, ...(o.note ? { note: o.note, noteLabel: Texts.notes.title(text) } : {}) },
+    'aria-description': o.note || null,
     onclick: () => toggleSelection(p.id, o.id),
   },
   h('span', { class: 'opt-label' },
-    h('span', null, o.text.trim() || Texts.fallback.emptyOption(oi + 1)),
+    h('span', null, text),
     metrics || badge ? h('span', { class: 'opt-metrics-view' }, badge, metrics) : null),
+  o.note ? noteMark() : null,
   selectedBy.length
     ? h('span', { class: 'markers', 'aria-hidden': 'true' },
       selectedBy.map(c => h('span', { class: 'marker', style: { '--c': shownColor(c.color) } })))

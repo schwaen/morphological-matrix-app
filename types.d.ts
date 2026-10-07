@@ -12,6 +12,8 @@ interface MatrixOption {
   score: number | null;
   /** Priorität nach MoSCoW, `null` = nicht festgelegt */
   priority: MatrixPriority | null;
+  /** Notiz (Freitext, optional leer) */
+  note: string;
 }
 
 /** MoSCoW: Must have, Should have, Could have, Won't have */
@@ -20,6 +22,8 @@ type MatrixPriority = 'must' | 'should' | 'could' | 'wont';
 interface MatrixParameter {
   id: string;
   name: string;
+  /** Beschreibung (Freitext, optional leer) */
+  note: string;
   /** Gewichtung für den Nutzwert, `null` = Standard 1 */
   weight: number | null;
   /** Zugeordnete Kategorie, `null` = ohne Kategorie */
@@ -37,6 +41,8 @@ interface MatrixConcept {
   id: string;
   name: string;
   color: string;
+  /** Begründung / Notiz (Freitext, optional leer) */
+  note: string;
   /** Parameter-ID → gewählte Ausprägungs-ID */
   selections: Record<string, string>;
 }

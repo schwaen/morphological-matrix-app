@@ -26,8 +26,16 @@ test('CSV: BOM, Semikolon, Kategorien, Konzepte', () => {
   assert.ok(!csv.includes('Gesamtkosten'), 'ohne Bewertung keine Kennzahlen');
 });
 
-test('CSV mit Bewertung: Kennzahlen mit Dezimalkomma', () => {
+/** Beispiel ohne Notizen (für die Spaltenprüfung der Bewertung). */
+function withoutNotes() {
   const m = kaffeemaschine();
+  m.parameters.forEach(p => { p.note = ''; p.options.forEach(o => { o.note = ''; }); });
+  m.concepts.forEach(c => { c.note = ''; });
+  return m;
+}
+
+test('CSV mit Bewertung: Kennzahlen mit Dezimalkomma', () => {
+  const m = withoutNotes();
   m.settings.costs = true;
   m.settings.utility = true;
   const csv = IO.toCsv(m);
@@ -36,11 +44,22 @@ test('CSV mit Bewertung: Kennzahlen mit Dezimalkomma', () => {
 });
 
 test('CSV mit Priorität (MoSCoW)', () => {
-  const m = kaffeemaschine();
+  const m = withoutNotes();
   m.settings.moscow = true;
   const csv = IO.toCsv(m);
   assert.match(csv, /"Kategorie";"Parameter";"Ausprägung";"Priorität \(MoSCoW\)"/);
   assert.match(csv, /"Wassererwärmung";"Boiler";"Won't have"/);
+});
+
+test('CSV mit Notizen: Beschreibung, Notiz je Ausprägung und Begründung je Konzept', () => {
+  const csv = IO.toCsv(kaffeemaschine());
+  assert.match(csv, /"Kategorie";"Parameter";"Beschreibung des Parameters";"Ausprägung";"Notiz"\r\n/);
+  assert.match(csv, /"Brühsystem";"Druckerzeugung";"Bestimmt Crema-Qualität und Geräuschpegel.";"Vibrationspumpe";"Bis 15 bar/);
+  assert.match(csv, /"Brühsystem";"Wassererwärmung";"";"Boiler";""\r\n/);
+  assert.match(csv, /"Begründung"\r\n/);
+  assert.match(csv, /"Kompakt-Espresso";.*;"Günstigster Einstieg[^"]*\nOffen: Lautstärke/);
+  assert.match(csv, /"Smart Home";.*;""(\r\n|$)/);
+  assert.doesNotMatch(IO.toCsv(withoutNotes()), /Notiz|Begründung/);
 });
 
 test('CSV maskiert Anführungszeichen', () => {

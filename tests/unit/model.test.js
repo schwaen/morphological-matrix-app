@@ -129,14 +129,28 @@ test('Priorität (MoSCoW): gültige Werte bleiben, ungültige werden verworfen',
   assert.deepEqual(plain(m.parameters[0].options.map(o => o.priority)), ['must', 'wont', null, null]);
 });
 
-test('Datenformat: Version 2 wird ohne Verlust auf Version 3 gebracht', () => {
+test('Datenformat: Version 2 wird ohne Verlust auf die aktuelle Version gebracht', () => {
   const v2 = { version: 2, settings: { costs: true }, parameters: [{ id: 'p', options: [{ id: 'o', text: 'x', cost: 5 }] }] };
   const m = Model.normalize(v2);
-  assert.equal(m.version, 3);
+  assert.equal(m.version, 4);
   assert.equal(m.settings.costs, true);
   assert.equal(m.settings.moscow, false);
   assert.equal(m.parameters[0].options[0].cost, 5);
   assert.equal(m.parameters[0].options[0].priority, null);
+  assert.equal(m.parameters[0].options[0].note, '');
+});
+
+test('Notizen: Version 3 ohne Notizen wird übernommen, Notizen bleiben beim Normalisieren erhalten', () => {
+  const v3 = { version: 3, parameters: [{ id: 'p', options: [{ id: 'o', text: 'x' }] }], concepts: [{ id: 'c', selections: {} }] };
+  const m = Model.normalize(v3);
+  assert.equal(m.version, 4);
+  assert.deepEqual([m.parameters[0].note, m.parameters[0].options[0].note, m.concepts[0].note], ['', '', '']);
+  m.parameters[0].note = 'Beschreibung';
+  m.parameters[0].options[0].note = 'Notiz';
+  m.concepts[0].note = 'Begründung\nzweite Zeile';
+  assert.deepEqual(plain(Model.normalize(plain(m))), plain(m));
+  m.parameters[0].options[0].note = null;
+  assert.equal(Model.normalize(plain(m)).parameters[0].options[0].note, '');
 });
 
 test('differingParameters: nur Parameter mit unterschiedlicher Wahl, „nicht gewählt“ zählt mit', () => {
@@ -166,4 +180,9 @@ test('search: Parameternamen und Ausprägungen, ohne Groß-/Kleinschreibung und 
   assert.deepEqual(plain(r.hits), [{ pid: p.id, oid: p.options[0].id }]);
   assert.ok(r.params.has(p.id) && r.options.has(p.options[0].id));
   assert.equal(Model.search(m, '   ').hits.length, 0);
+  // Notizen werden mit durchsucht
+  p.options[1].note = 'Zischt im Betrieb';
+  m.parameters[1].note = 'Beeinflusst den Schaumkranz';
+  assert.deepEqual(plain(Model.search(m, 'zischt').hits), [{ pid: p.id, oid: p.options[1].id }]);
+  assert.deepEqual(plain(Model.search(m, 'schaumkranz').hits), [{ pid: m.parameters[1].id, oid: null }]);
 });

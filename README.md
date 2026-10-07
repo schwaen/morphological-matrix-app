@@ -21,6 +21,11 @@ python3 -m http.server 8000
   - **Linien:** *Aktives* (Standard) zeigt nur das aktive Konzept deutlich, die übrigen dezent; *Alle* zeigt alle gleich deutlich; *Aus* blendet die Linien aus. Beim Darüberfahren über ein Konzept wird dessen Linie hervorgehoben.
   - Die Konzeptfarben stammen aus einer auf Farbsehschwächen geprüften Farbreihe; im dunklen Farbschema werden sie in einer passenden dunklen Stufe angezeigt (gespeichert bleibt die helle Farbe). Bestehende Matrizen behalten ihre Farben.
 - Konzepte anlegen, duplizieren, umbenennen, umfärben, zufällig befüllen.
+- **Notizen und Begründungen:**
+  - Im Bearbeiten-Modus lässt sich je Ausprägung eine **Notiz** und je Parameter eine **Beschreibung** erfassen (Notiz-Knopf in der Werkzeugleiste der Zelle; ein leeres Notizfeld verschwindet beim Verlassen wieder).
+  - Im Kombinieren-Modus zeigt ein Symbol, dass es eine Notiz gibt; beim Überfahren erscheint sie in einem kleinen Fenster (für Screenreader als Beschreibung der Zelle).
+  - Je Konzept gibt es in der Seitenleiste das Feld **Begründung / Notiz** (z. B. Vor- und Nachteile, offene Punkte). Die Zusammenfassung zeigt darunter die Notizen der gewählten Ausprägungen – so sind sie auch auf dem Handy und im Ausdruck sichtbar.
+  - Der Konzeptvergleich zeigt die Begründungen als erste Zeile; Ausprägungen mit Notiz tragen das Notiz-Symbol (Notiz als Tooltip). Suche und CSV-Export beziehen Notizen ein.
 - Kennzahlen: Anzahl Parameter, Ausprägungen und mögliche Kombinationen.
 - **Optionale Bewertung** (pro Matrix über **Datei → Bewertung: Kosten, Nutzwert & Priorität** zuschaltbar, standardmäßig aus):
   - **Kosten** je Ausprägung in wählbarer Währung (EUR, USD, CHF, GBP); je Konzept werden die Gesamtkosten summiert.
@@ -31,7 +36,7 @@ python3 -m http.server 8000
   - **Priorität nach MoSCoW** je Ausprägung: *Must have*, *Should have*, *Could have*, *Won't have*. Die Kürzel M/S/C/W stehen in den Zellen; Won't-Ausprägungen sind abgeschwächt, bleiben aber wählbar (z. B. für Negativ-Konzepte). Zusammenfassung und Konzeptvergleich zeigen je Konzept, wie viele Ausprägungen welcher Priorität gewählt sind.
   - **Konzepte nach Priorität** (bei aktivierter Priorität): *MVP* wählt je Parameter die Must-Ausprägung (bei mehreren die günstigste), *Standard* die Should-, *Premium* die Could-Ausprägung (bei mehreren jeweils die mit dem höchsten Nutzwert). Es gibt keinen Rückfall auf eine andere Stufe: Parameter ohne passende Priorität bleiben leer, ein Hinweis nennt ihre Anzahl. Won't wird nie gewählt.
   - Ausgeblendete Werte bleiben erhalten.
-- **Suche in der Matrix** (Suchfeld über der Matrix, `Strg+F`): markiert Parameter und Ausprägungen, deren Text die Eingabe enthält (ohne Groß-/Kleinschreibung und Akzente, auch im Bearbeiten-Modus), und blendet Zeilen ohne Treffer ab. Kategorie-Chips und eingeklappte Kategorien zeigen ihre Trefferzahl. `Enter`/`Umschalt+Enter` (oder die Pfeile) springen von Treffer zu Treffer und klappen dabei die Kategorie auf; `Esc` leert die Suche. Ein zweites `Strg+F` im Suchfeld öffnet die Suche des Browsers.
+- **Suche in der Matrix** (Suchfeld über der Matrix, `Strg+F`): markiert Parameter und Ausprägungen, deren Text oder Notiz die Eingabe enthält (ohne Groß-/Kleinschreibung und Akzente, auch im Bearbeiten-Modus), und blendet Zeilen ohne Treffer ab. Kategorie-Chips und eingeklappte Kategorien zeigen ihre Trefferzahl. `Enter`/`Umschalt+Enter` (oder die Pfeile) springen von Treffer zu Treffer und klappen dabei die Kategorie auf; `Esc` leert die Suche. Ein zweites `Strg+F` im Suchfeld öffnet die Suche des Browsers.
 - Konzeptvergleich als **Tabelle** oder als **Verlauf** (Parallelkoordinaten: je Parameter eine Achse mit seinen Ausprägungen, je Konzept ein Linienzug; Legende zum Hervorheben und Auswählen, Tooltip je Parameter), ein- und ausklappbar (Ansicht und Zustand werden je Tab gemerkt; beim Drucken immer als Tabelle).
   - **Nur Unterschiede** blendet Parameter aus, bei denen alle Konzepte dasselbe gewählt haben (auch „nicht gewählt“ zählt als Wahl); die Anzahl der unterschiedlichen Parameter steht daneben.
   - **Sortierung** (bei aktivierter Bewertung): nach Nutzwert (höchster zuerst), Gesamtkosten (niedrigste zuerst) oder Preis-Leistung (beste zuerst), mit Rang vor dem Konzeptnamen; gleiche Werte teilen sich den Rang, unvollständig bewertete Konzepte stehen am Ende. Beides gilt für Tabelle und Verlauf und wird je Tab gemerkt.
@@ -64,7 +69,7 @@ python3 -m http.server 8000
 | `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, geöffnete Tabs, Einstellungen pro Browser-Tab) |
 | `js/examples.js` | `Examples` – Verzeichnis der mitgelieferten Beispiele |
 | `examples/` | Mitgelieferte Beispiele, je Beispiel eine Datei (Anleitung in `examples/README.md`) |
-| `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `tabs` (App-Tabs), `actions`, `render-matrix`, `render-panels`, `render-chart` (Verlauf), `search` (Suche), `lines`, `dialogs`, `main` (Start) |
+| `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `tabs` (App-Tabs), `actions`, `render-matrix`, `render-panels`, `render-chart` (Verlauf), `search` (Suche), `notes` (Notizen), `lines`, `dialogs`, `main` (Start) |
 | `types.d.ts` | Typen des Datenmodells (nur Entwicklung) |
 | `docs/DATENFORMAT.md` | Datenformat (JSON, Speicherung, Teilen-Links), Versionen und Migrationen |
 | `tests/unit/` | Unit-Tests der Logik (`node:test`) |

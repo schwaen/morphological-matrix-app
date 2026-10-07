@@ -1,0 +1,93 @@
+/*
+ * Notizen: Eingabefelder für Notizen an Ausprägungen und Beschreibungen an Parametern
+ * (Bearbeiten-Modus) und das Popover, das sie im Modus „Kombinieren“ beim Überfahren zeigt.
+ * Die Begründung je Konzept steht in der Zusammenfassung (render-panels.js).
+ */
+'use strict';
+
+/** IDs (Ausprägung oder Parameter), deren leeres Notizfeld gerade geöffnet ist. */
+const openNotes = new Set();
+
+/**
+ * Notizfeld eines Elements; ist es beim Verlassen leer, verschwindet es wieder.
+ * @param {{ note: string }} target Ausprägung oder Parameter
+ * @param {string} id @param {{ cls: string, placeholder: string, label: string }} opts
+ */
+function noteField(target, id, { cls, placeholder, label }) {
+  const ta = h('textarea', {
+    class: `note-field ${cls} autosize`, rows: 1, value: target.note, placeholder,
+    'aria-label': label, dataset: { fid: `note:${id}` },
+  });
+  bindField(ta, v => { target.note = v; }, () => { autosize(ta); syncNoteButton(id, !!target.note); refreshLight(); });
+  // Offen gehalten wird nur bis zum Verlassen; danach entscheidet allein, ob es eine Notiz gibt
+  ta.addEventListener('blur', () => {
+    openNotes.delete(id);
+    if (!ta.value) ta.remove();
+  });
+  return ta;
+}
+
+/**
+ * Knopf zum Öffnen der Notiz; zeigt an, ob es schon eine gibt.
+ * @param {{ note: string }} target @param {string} id @param {[string, string]} labels hinzufügen, bearbeiten
+ */
+function noteButton(target, id, labels) {
+  const btn = iconBtn('note', target.note ? labels[1] : labels[0], () => openNote(id), { active: !!target.note });
+  btn.dataset.noteBtn = id;
+  btn.dataset.labels = JSON.stringify(labels);
+  return btn;
+}
+
+/** Knopf nach dem Tippen aktualisieren (ohne die Matrix neu zu zeichnen). @param {string} id @param {boolean} has */
+function syncNoteButton(id, has) {
+  const btn = $(`[data-note-btn="${CSS.escape(id)}"]`);
+  if (!btn) return;
+  const label = JSON.parse(btn.dataset.labels)[has ? 1 : 0];
+  btn.classList.toggle('is-on', has);
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
+}
+
+/** Notizfeld öffnen (bzw. das vorhandene fokussieren). @param {string} id */
+function openNote(id) {
+  openNotes.add(id);
+  pendingFocus = `note:${id}`;
+  renderMatrix();
+  applyPendingFocus();
+}
+
+/** Ob das Notizfeld angezeigt wird. @param {{ note: string }} target @param {string} id */
+const showNote = (target, id) => !!target.note || openNotes.has(id);
+
+/** Kleines Notiz-Symbol (den Text erhalten Screenreader über `aria-description` der Zelle). */
+const noteMark = () => h('span', { class: 'note-ico', 'aria-hidden': 'true' }, icon('note'));
+
+// ---------- Popover beim Überfahren ----------
+
+/** Zeigt die Notiz von `el` (Attribute `data-note` und `data-note-label`) unter dem Element. @param {HTMLElement} el */
+function showNotePop(el) {
+  const pop = $('#notePop');
+  replaceWith(pop, h('strong', null, el.dataset.noteLabel), el.dataset.note);
+  pop.hidden = false;
+  const r = el.getBoundingClientRect();
+  const below = r.bottom + 6 + pop.offsetHeight <= window.innerHeight;
+  pop.style.top = `${below ? r.bottom + 6 : Math.max(4, r.top - pop.offsetHeight - 6)}px`;
+  pop.style.left = `${Math.max(4, Math.min(r.left + 12, window.innerWidth - pop.offsetWidth - 4))}px`;
+}
+
+function hideNotePop() {
+  $('#notePop').hidden = true;
+}
+
+function initNotePop() {
+  const matrix = $('#matrix');
+  /** @param {Event} e */
+  const target = e => /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest('[data-note]'));
+  const show = e => { const el = target(e); if (el && prefs.mode === 'select') showNotePop(el); };
+  const hide = e => { const el = target(e); if (el && !el.contains(/** @type {Node | null} */ (e.relatedTarget))) hideNotePop(); };
+  matrix.addEventListener('mouseover', show);
+  matrix.addEventListener('focusin', show);
+  matrix.addEventListener('mouseout', hide);
+  matrix.addEventListener('focusout', hide);
+  window.addEventListener('scroll', hideNotePop, { passive: true, capture: true });
+}

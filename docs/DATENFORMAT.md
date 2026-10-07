@@ -2,13 +2,13 @@
 
 Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON-Export, Teilen-Links (`#m=…`, Base64url-kodiertes JSON) und die mitgelieferten Beispiele (`data` in `examples/*.js`, siehe [`examples/README.md`](../examples/README.md)). Typdefinitionen für die Entwicklung stehen in [`types.d.ts`](../types.d.ts).
 
-**Aktuelle Version: 3** (`Model.SCHEMA_VERSION` in `js/model.js`)
+**Aktuelle Version: 4** (`Model.SCHEMA_VERSION` in `js/model.js`)
 
 ## Aufbau
 
 ```jsonc
 {
-  "version": 3,
+  "version": 4,
   "title": "Beispiel: Kaffeemaschine",
   "description": "Gesamtfunktion: …",
   "settings": {
@@ -25,11 +25,13 @@ Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON
     {
       "id": "p1",
       "name": "Wassererwärmung",
+      "note": "",            // Beschreibung des Parameters (optional, leer = keine)
       "weight": 3,           // Gewichtung für den Nutzwert, null = 1
       "categoryId": "k1",    // null = ohne Kategorie
       "options": [
-        // cost/score/priority: null = nicht erfasst; priority: "must" | "should" | "could" | "wont"
-        { "id": "o1", "text": "Durchlauferhitzer", "cost": 18, "score": 6, "priority": "must" }
+        // cost/score/priority: null = nicht erfasst; priority: "must" | "should" | "could" | "wont";
+        // note: Notiz zur Ausprägung (optional, leer = keine)
+        { "id": "o1", "text": "Durchlauferhitzer", "cost": 18, "score": 6, "priority": "must", "note": "" }
       ]
     }
   ],
@@ -37,7 +39,8 @@ Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON
     {
       "id": "c1",
       "name": "Kompakt-Espresso",
-      "color": "#e8590c",
+      "color": "#2a78d6",
+      "note": "Günstigster Einstieg …",  // Begründung / Notiz (optional, leer = keine)
       "selections": { "p1": "o1" }   // Parameter-ID → Ausprägungs-ID
     }
   ],
@@ -73,6 +76,7 @@ Beim Wiederherstellen (`IO.parseBackup`, `IO.planRestore`) werden vorhandene Mat
 - Fehlende oder ungültige Felder werden mit Standardwerten ergänzt; doppelte IDs werden ersetzt.
 - Auswahlen, die auf nicht vorhandene Ausprägungen zeigen, und Zuordnungen zu unbekannten Kategorien werden entfernt.
 - Negative Gewichte werden verworfen; ungültige Farben durch Standardfarben ersetzt; unbekannte Prioritäten werden zu `null`.
+- Fehlende Notizen (`note`) werden zu `""` – in Dateien und Beispielen dürfen sie daher fehlen.
 
 ## Versionen
 
@@ -81,6 +85,7 @@ Beim Wiederherstellen (`IO.parseBackup`, `IO.planRestore`) werden vorhandene Mat
 | 1 | Erste Fassungen ohne Versionierung bzw. mit `version: 1`; Ausprägungen anfangs als reine Texte, Bewertung und Kategorien kamen später als optionale Felder hinzu | – |
 | 2 | Versioniertes Format; Ausprägungen immer als Objekte `{ id, text, cost, score }` | Texte werden zu Objekten |
 | 3 | Priorität nach MoSCoW: `priority` je Ausprägung, `settings.moscow` | keine Umwandlung nötig (fehlende Felder ergänzt `normalize`); die neue Version verhindert, dass ältere App-Versionen Prioritäten beim Öffnen stillschweigend verwerfen |
+| 4 | Notizen: `note` je Ausprägung (Notiz), Parameter (Beschreibung) und Konzept (Begründung) | keine Umwandlung nötig; die neue Version verhindert, dass ältere App-Versionen Notizen verwerfen |
 
 ## Eine neue Version einführen
 

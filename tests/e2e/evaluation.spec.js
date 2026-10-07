@@ -77,7 +77,7 @@ test('Ausgeschaltete Bewertung behält die Werte', async ({ page }) => {
 test('CSV enthält Bewertungsspalten', async ({ page }) => {
   await setEvaluation(page, { costs: true, utility: true });
   const { text } = await downloadText(page, 'export-csv');
-  expect(text).toContain('"Kategorie";"Parameter";"Gewicht";"Ausprägung";"Kosten (EUR)";"Nutzwert (0–10)"');
+  expect(text).toContain('"Kategorie";"Parameter";"Beschreibung des Parameters";"Gewicht";"Ausprägung";"Kosten (EUR)";"Nutzwert (0–10)";"Notiz"');
   expect(text).toContain('"Gesamtkosten (EUR)";"Nutzwert";"Kosten je Nutzwertpunkt (EUR)"');
   expect(text).toMatch(/"Kompakt-Espresso";.*;54;7,25;7,45/);
 });

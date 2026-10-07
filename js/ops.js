@@ -159,7 +159,7 @@ const Ops = (() => {
     const idx = m.concepts.findIndex(x => x.id === cid);
     if (idx < 0) return null;
     const src = m.concepts[idx];
-    const copy = { ...Model.newConcept(m, Texts.fallback.copyOf(src.name)), selections: { ...src.selections } };
+    const copy = { ...Model.newConcept(m, Texts.fallback.copyOf(src.name)), note: src.note, selections: { ...src.selections } };
     m.concepts.splice(idx + 1, 0, copy);
     m.activeConceptId = copy.id;
     return copy;

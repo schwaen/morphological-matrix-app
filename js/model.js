@@ -31,7 +31,7 @@ const Model = (() => {
    * Beschreibung: docs/DATENFORMAT.md. Bei inkompatiblen Änderungen erhöhen und in
    * MIGRATIONS eine Umwandlung von der Vorgängerversion ergänzen.
    */
-  const SCHEMA_VERSION = 3;
+  const SCHEMA_VERSION = 4;
 
   /**
    * Umwandlungen von Version n auf n + 1. Sie erhalten die Rohdaten und liefern Rohdaten;
@@ -51,6 +51,9 @@ const Model = (() => {
     // Keine Umwandlung nötig – die neue Version verhindert, dass ältere App-Versionen
     // die Prioritäten beim Öffnen stillschweigend verwerfen.
     2: data => data,
+    // 3 → 4: optionale Notizen (`note`) je Ausprägung, Parameter und Konzept. Keine Umwandlung
+    // nötig – die neue Version verhindert, dass ältere App-Versionen die Notizen verwerfen.
+    3: data => data,
   };
 
   /**
@@ -78,12 +81,12 @@ const Model = (() => {
 
   /** @returns {MatrixOption} */
   function newOption() {
-    return { id: uid(), text: '', cost: null, score: null, priority: null };
+    return { id: uid(), text: '', cost: null, score: null, priority: null, note: '' };
   }
 
   /** @param {string | null} [categoryId] @returns {MatrixParameter} */
   function newParameter(categoryId = null, name = '') {
-    return { id: uid(), name, weight: null, categoryId, options: [newOption(), newOption()] };
+    return { id: uid(), name, note: '', weight: null, categoryId, options: [newOption(), newOption()] };
   }
 
   /** Erste noch nicht verwendete Farbe einer Palette. @param {string[]} palette @param {string[]} used */
@@ -103,6 +106,7 @@ const Model = (() => {
       id: uid(),
       name: uniqueName(m.concepts.map(c => c.name), base || Texts.fallback.concept(m.concepts.length + 1)),
       color: nextConceptColor(m.concepts),
+      note: '',
       selections: {},
     };
   }
@@ -119,7 +123,7 @@ const Model = (() => {
   /** @returns {Matrix} */
   function blankState() {
     const parameters = [1, 2, 3].map(i => newParameter(null, Texts.fallback.parameter(i)));
-    const concept = { id: uid(), name: Texts.fallback.concept(1), color: COLORS[0], selections: {} };
+    const concept = { id: uid(), name: Texts.fallback.concept(1), color: COLORS[0], note: '', selections: {} };
     return {
       version: SCHEMA_VERSION,
       title: Texts.fallback.newMatrixTitle,
@@ -158,12 +162,14 @@ const Model = (() => {
       return {
         id: id(p && p.id),
         name: str(p && p.name),
+        note: str(p && p.note),
         weight: weight != null && weight >= 0 ? weight : null,
         categoryId: str(p && p.categoryId) || null,
         options: (Array.isArray(p && p.options) ? p.options : []).map(/** @param {any} o */ o =>
           ({
             id: id(o && o.id), text: str(o && o.text), cost: num(o && o.cost), score: num(o && o.score),
             priority: PRIORITIES.includes(o && o.priority) ? o.priority : null,
+            note: str(o && o.note),
           })),
       };
     });
@@ -197,6 +203,7 @@ const Model = (() => {
         id: id(c && c.id),
         name: str(c && c.name, Texts.fallback.concept(i + 1)),
         color: isColor(c && c.color) ? c.color : COLORS[i % COLORS.length],
+        note: str(c && c.note),
         selections,
       };
     });
@@ -303,20 +310,22 @@ const Model = (() => {
   }
 
   /**
-   * Suche in Parameternamen und Ausprägungen (ohne Groß-/Kleinschreibung und Akzente).
+   * Suche in Parameternamen, Ausprägungen und deren Notizen (ohne Groß-/Kleinschreibung und Akzente).
    * @param {Matrix} m @param {string} query
    * @returns {{ params: Set<string>, options: Set<string>, hits: Array<{ pid: string, oid: string | null }> }}
-   *   `params`: Parameter mit Treffer (im Namen oder in einer Ausprägung), `options`: getroffene
-   *   Ausprägungen, `hits`: alle Treffer in Anzeige-Reihenfolge (Parametername mit `oid: null`)
+   *   `params`: Parameter mit Treffer (in Name/Beschreibung oder einer Ausprägung), `options`: getroffene
+   *   Ausprägungen (Text oder Notiz), `hits`: alle Treffer in Anzeige-Reihenfolge (Parameter mit `oid: null`)
    */
   function search(m, query) {
     const q = Util.searchKey(query);
     const result = { params: new Set(), options: new Set(), hits: /** @type {Array<{ pid: string, oid: string | null }>} */ ([]) };
     if (!q) return result;
+    /** @param {string[]} texts */
+    const matches = texts => texts.some(t => Util.searchKey(t).includes(q));
     for (const p of m.parameters) {
-      if (Util.searchKey(p.name).includes(q)) result.hits.push({ pid: p.id, oid: null });
+      if (matches([p.name, p.note])) result.hits.push({ pid: p.id, oid: null });
       for (const o of p.options) {
-        if (!Util.searchKey(o.text).includes(q)) continue;
+        if (!matches([o.text, o.note])) continue;
         result.options.add(o.id);
         result.hits.push({ pid: p.id, oid: o.id });
       }

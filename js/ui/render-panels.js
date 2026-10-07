@@ -193,9 +193,11 @@ function renderSummary() {
       : null,
     ...g.items.flatMap(({ p, pi }) => {
       const text = Model.optionText(p, c.selections[p.id]);
+      const o = Model.selectedOption(p, c);
       return [
         h('dt', null, Model.parameterLabel(p, pi)),
-        h('dd', text ? null : { class: 'none' }, text || Texts.summary.notSelected),
+        h('dd', text ? null : { class: 'none' }, text || Texts.summary.notSelected,
+          o && o.note ? h('span', { class: 'dd-note' }, o.note) : null),
       ];
     }),
   ]);
@@ -212,12 +214,36 @@ function renderSummary() {
         fig.utility.missing)
       : null,
   ].filter(Boolean) : [];
-  replaceWith(box,
-    h('h3', { style: { '--c': shownColor(c.color) } }, c.name || Texts.fallback.unnamedConcept),
+  // Das Begründungsfeld bleibt beim Aktualisieren erhalten (sonst ginge beim Tippen der Fokus verloren)
+  const note = conceptNoteField(c);
+  [...box.children].forEach(el => { if (el !== note) el.remove(); });
+  box.prepend(h('h3', { style: { '--c': shownColor(c.color) } }, c.name || Texts.fallback.unnamedConcept));
+  if (!note.isConnected) box.append(note);
+  note.after(...[
     metrics.length ? h('div', { class: 'metrics' }, metrics) : null,
     fig && fig.priority ? priorityProfileView(fig.priority, true) : null,
     rows.some(Boolean) ? h('dl', null, rows) : h('p', { class: 'summary-empty' }, Texts.summary.noParameters),
-  );
+  ].filter(Boolean));
+}
+
+/**
+ * Feld „Begründung / Notiz“ des aktiven Konzepts – das vorhandene, wenn es zum Konzept gehört.
+ * @param {MatrixConcept} c
+ */
+function conceptNoteField(c) {
+  const existing = /** @type {HTMLElement | null} */ ($('#conceptSummary .concept-note'));
+  if (existing && existing.dataset.cid === c.id) {
+    const ta = $('textarea', existing);
+    if (document.activeElement !== ta && ta.value !== c.note) { ta.value = c.note; autosize(ta); }
+    return existing;
+  }
+  const ta = h('textarea', {
+    id: 'conceptNote', class: 'autosize', rows: 2, value: c.note,
+    placeholder: Texts.notes.conceptPlaceholder,
+  });
+  bindField(ta, v => { c.note = v; }, () => { autosize(ta); renderCompare(); });
+  return h('div', { class: 'concept-note', dataset: { cid: c.id } },
+    h('label', { for: 'conceptNote' }, Texts.notes.conceptLabel), ta);
 }
 
 /**
@@ -322,10 +348,18 @@ function buildCompareTable(view) {
       h('th', { scope: 'row' }, Model.parameterLabel(p, pi)),
       ranked.map(({ figures: { concept: c } }) => {
         const text = Model.optionText(p, c.selections[p.id]);
-        return h('td', text ? null : { class: 'none' }, text || '–');
+        const o = Model.selectedOption(p, c);
+        return h('td', text ? null : { class: 'none' }, text || '–',
+          o && o.note ? h('span', { class: 'note-ico', title: o.note, role: 'img', 'aria-label': Texts.notes.title(text || '') }, icon('note')) : null);
       }))),
   ]).filter(Boolean);
-  const body = h('tbody', null, rows.length ? rows
+  // Begründungen der Konzepte als erste Zeile, sobald eines eine hat
+  const noteRow = ranked.some(({ figures: { concept: c } }) => c.note.trim())
+    ? h('tr', { class: 'note-row' },
+      h('th', { scope: 'row' }, Texts.compare.conceptNote),
+      ranked.map(({ figures: { concept: c } }) => h('td', c.note.trim() ? null : { class: 'none' }, c.note.trim() || '–')))
+    : null;
+  const body = h('tbody', null, noteRow, rows.length ? rows
     : h('tr', null, h('td', { class: 'none', colspan: String(m.concepts.length + 1) }, Texts.compare.noDifferences)));
 
   const report = ranked.map(x => x.figures);

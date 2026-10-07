@@ -14,6 +14,7 @@ const ICONS = {
   x: 'M6 6l12 12M18 6L6 18',
   plus: 'M12 5v14M5 12h14',
   copy: 'M9 9h10v10H9zM5 15V5h10',
+  note: 'M5 4h14v11l-5 5H5zM14 20v-5h5M8.5 9h7M8.5 12.5h4',
 };
 
 /**
@@ -70,12 +71,12 @@ function icon(name) {
  * @param {keyof typeof ICONS} name
  * @param {string} label
  * @param {(e: Event) => void} onclick
- * @param {{ disabled?: boolean, danger?: boolean, small?: boolean }} [opts]
+ * @param {{ disabled?: boolean, danger?: boolean, small?: boolean, active?: boolean }} [opts]
  */
-function iconBtn(name, label, onclick, { disabled = false, danger = false, small = true } = {}) {
+function iconBtn(name, label, onclick, { disabled = false, danger = false, small = true, active = false } = {}) {
   return h('button', {
     type: 'button',
-    class: `icon-btn${small ? ' small' : ''}${danger ? ' danger' : ''}`,
+    class: `icon-btn${small ? ' small' : ''}${danger ? ' danger' : ''}${active ? ' is-on' : ''}`,
     title: label,
     'aria-label': label,
     disabled,
