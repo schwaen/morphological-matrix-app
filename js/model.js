@@ -287,6 +287,44 @@ const Model = (() => {
     return ka.length === Object.keys(b).length && ka.every(k => a[k] === b[k]);
   }
 
+  /**
+   * Parameter, bei denen sich die Konzepte unterscheiden („nicht gewählt“ zählt als eigene Wahl).
+   * Bei weniger als zwei Konzepten unterscheidet sich nichts.
+   * @param {Matrix} m @returns {Set<string>} Parameter-IDs
+   */
+  function differingParameters(m) {
+    const ids = new Set();
+    if (m.concepts.length < 2) return ids;
+    for (const p of m.parameters) {
+      const first = m.concepts[0].selections[p.id];
+      if (m.concepts.some(c => c.selections[p.id] !== first)) ids.add(p.id);
+    }
+    return ids;
+  }
+
+  /**
+   * Suche in Parameternamen und Ausprägungen (ohne Groß-/Kleinschreibung und Akzente).
+   * @param {Matrix} m @param {string} query
+   * @returns {{ params: Set<string>, options: Set<string>, hits: Array<{ pid: string, oid: string | null }> }}
+   *   `params`: Parameter mit Treffer (im Namen oder in einer Ausprägung), `options`: getroffene
+   *   Ausprägungen, `hits`: alle Treffer in Anzeige-Reihenfolge (Parametername mit `oid: null`)
+   */
+  function search(m, query) {
+    const q = Util.searchKey(query);
+    const result = { params: new Set(), options: new Set(), hits: /** @type {Array<{ pid: string, oid: string | null }>} */ ([]) };
+    if (!q) return result;
+    for (const p of m.parameters) {
+      if (Util.searchKey(p.name).includes(q)) result.hits.push({ pid: p.id, oid: null });
+      for (const o of p.options) {
+        if (!Util.searchKey(o.text).includes(q)) continue;
+        result.options.add(o.id);
+        result.hits.push({ pid: p.id, oid: o.id });
+      }
+    }
+    result.hits.forEach(hit => result.params.add(hit.pid));
+    return result;
+  }
+
   // Ersatznamen für leere Felder – an einer Stelle, damit Anzeige und Export übereinstimmen
   /** @param {MatrixParameter} p @param {number} index */
   const parameterLabel = (p, index) => p.name || Texts.fallback.parameter(index + 1);
@@ -300,6 +338,7 @@ const Model = (() => {
     defaultSettings, newOption, newParameter, newConcept, nextConceptColor, nextCategoryColor, uniqueName,
     blankState, normalize, sortedByCategory, resort,
     categoryById, categoryGroups, canMoveParameter, selectedOption, optionText, sameSelections,
+    differingParameters, search,
     parameterLabel, categoryLabel, nameOrUnnamed,
   };
 })();

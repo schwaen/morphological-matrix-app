@@ -83,6 +83,11 @@ const TextsDe = (() => {
       linesActiveTitle: 'Nur das aktive Konzept deutlich – beim Darüberfahren über ein Konzept wird dessen Linie hervorgehoben',
       linesOff: 'Aus',
       compareHeading: 'Konzeptvergleich',
+      searchPlaceholder: 'In der Matrix suchen …',
+      searchLabel: 'In Parametern und Ausprägungen suchen',
+      searchTitle: 'Parameter und Ausprägungen suchen (Strg+F) – Enter springt zum nächsten Treffer, Umschalt+Enter zum vorherigen, Esc leert die Suche',
+      searchPrev: 'Vorheriger Treffer',
+      searchNext: 'Nächster Treffer',
       compareViews: 'Darstellung des Vergleichs',
       compareTable: 'Tabelle',
       compareChart: 'Verlauf',
@@ -289,6 +294,12 @@ const TextsDe = (() => {
       missing: n => `${n} ${n === 1 ? 'Wert fehlt' : 'Werte fehlen'}`,
     },
 
+    search: {
+      count: (pos, n) => (pos == null ? plural(n, 'Treffer', 'Treffer') : `${pos} / ${n}`),
+      none: 'Keine Treffer',
+      hits: n => plural(n, 'Treffer', 'Treffer'),
+    },
+
     chart: {
       label: 'Verlauf der Konzepte über alle Parameter',
       legend: 'Konzepte',
@@ -306,6 +317,12 @@ const TextsDe = (() => {
       priceValueTitle: 'Gesamtkosten geteilt durch Nutzwert – je niedriger, desto besser',
       priority: 'Priorität (MoSCoW)',
       best: 'Bester Wert',
+      onlyDiff: 'Nur Unterschiede',
+      diffCount: (n, total) => `${n} von ${total} Parametern unterschiedlich`,
+      noDifferences: 'Alle Konzepte sind bei allen Parametern gleich gewählt.',
+      sortBy: 'Sortierung',
+      sort: { order: 'Reihenfolge der Liste', utility: 'Nutzwert (höchster zuerst)', cost: 'Gesamtkosten (niedrigste zuerst)', priceValue: 'Preis-Leistung (beste zuerst)' },
+      rankTitle: rank => `Rang ${rank}`,
     },
 
     evaluation: {

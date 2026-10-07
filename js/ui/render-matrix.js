@@ -21,26 +21,35 @@ function renderMatrix() {
       editing ? Texts.matrix.emptyEdit : Texts.matrix.emptySelect));
   }
 
-  const ctx = { editing, cols, active: activeConcept(), showBands: state.categories.length > 0 };
+  const found = searchResult();
+  matrix.classList.toggle('is-searching', !!found);
+  const ctx = { editing, cols, active: activeConcept(), showBands: state.categories.length > 0, found };
   for (const group of Model.categoryGroups(state)) {
     const cid = group.cat ? group.cat.id : null;
-    if (ctx.showBands) cells.push(renderBand(group, editing, ctx.active));
+    if (ctx.showBands) cells.push(renderBand(group, editing, ctx.active, found));
     if (ctx.showBands && isCollapsed(cid)) continue;
     group.items.forEach(({ p, pi }) => cells.push(...renderParameterRow(p, pi, ctx)));
   }
 
   matrix.replaceChildren(...cells);
+  markCurrentMatch(found);
 }
 
 /**
  * Alle Gitterzellen einer Parameterzeile (Kopf, Ausprägungen, Plus-Knopf, Füllzellen).
  * @param {MatrixParameter} p @param {number} pi
- * @param {{ editing: boolean, cols: number, active: MatrixConcept | null, showBands: boolean }} ctx
+ * @param {{ editing: boolean, cols: number, active: MatrixConcept | null, showBands: boolean, found: ReturnType<typeof Model.search> | null }} ctx
  */
 function renderParameterRow(p, pi, ctx) {
-  const cells = [ctx.editing ? renderParameterEdit(p, pi, ctx.showBands) : renderParameterView(p, pi)];
+  const head = ctx.editing ? renderParameterEdit(p, pi, ctx.showBands) : renderParameterView(p, pi);
+  head.dataset.pid = p.id;
+  head.className += searchClass(ctx.found, p.id, null);
+  const cells = [head];
   p.options.forEach((o, oi) => {
-    cells.push(ctx.editing ? renderOptionEdit(p, pi, o, oi) : renderOptionPick(p, o, oi, ctx.active));
+    const cell = ctx.editing ? renderOptionEdit(p, pi, o, oi) : renderOptionPick(p, o, oi, ctx.active);
+    cell.dataset.oid = o.id;
+    cell.className += searchClass(ctx.found, p.id, o.id);
+    cells.push(cell);
   });
   let used = p.options.length;
   if (ctx.editing) {
@@ -273,7 +282,7 @@ function groupProgress(group, concept) {
   return { picks, cost };
 }
 
-function renderBand(group, editing, active) {
+function renderBand(group, editing, active, found) {
   const k = group.cat;
   const cid = k ? k.id : null;
   const collapsed = isCollapsed(cid);
@@ -312,6 +321,7 @@ function renderBand(group, editing, active) {
   toggle,
   title,
   h('span', { class: 'cat-meta' }, Texts.category.count(n)),
+  found ? searchBadge(group, found) : null,
   collapsed && !editing && picks.length
     ? h('span', { class: 'cat-picks' }, picks.map(o => h('span', null, o.text.trim() || '–')))
     : null,
@@ -329,6 +339,12 @@ function renderBand(group, editing, active) {
       : null));
 }
 
+/** Trefferzahl einer Kategorie während der Suche (nichts, wenn sie keine Treffer hat). */
+function searchBadge(group, found) {
+  const n = found.hits.filter(x => group.items.some(({ p }) => p.id === x.pid)).length;
+  return n ? h('span', { class: 'search-badge' }, Texts.search.hits(n)) : null;
+}
+
 function renderCategoryNav() {
   const nav = $('#catNav');
   if (!state.categories.length) {
@@ -337,6 +353,7 @@ function renderCategoryNav() {
   }
   nav.hidden = false;
   const active = activeConcept();
+  const found = searchResult();
   const groups = Model.categoryGroups(state);
   const allCollapsed = groups.every(g => isCollapsed(g.cat ? g.cat.id : null));
   const allOpen = groups.every(g => !isCollapsed(g.cat ? g.cat.id : null));
@@ -353,7 +370,8 @@ function renderCategoryNav() {
       },
       h('span', { class: 'cat-dot', 'aria-hidden': 'true' }),
       Model.categoryLabel(g.cat),
-      active ? h('span', { class: 'cat-chip-count' }, `${picks.length}/${g.items.length}`) : null);
+      active ? h('span', { class: 'cat-chip-count' }, `${picks.length}/${g.items.length}`) : null,
+      found ? searchBadge(g, found) : null);
     })),
     h('div', { class: 'cat-nav-actions' },
       h('button', { type: 'button', class: 'btn btn-small', disabled: allOpen, onclick: () => setAllCollapsed(false) }, Texts.category.expandAll),

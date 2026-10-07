@@ -106,7 +106,13 @@ function bindEvents() {
     if (!(e.ctrlKey || e.metaKey)) return;
     const inField = /** @type {HTMLElement} */ (e.target).closest('input, textarea');
     const key = e.key.toLowerCase();
-    if (key === 's') {
+    if (key === 'f' && !e.shiftKey && !e.altKey && document.activeElement !== $('#matrixSearch')) {
+      // Strg+F: Suche der App (findet auch Text in Eingabefeldern und eingeklappten Kategorien);
+      // ein zweites Strg+F im Suchfeld öffnet die Suche des Browsers
+      e.preventDefault();
+      $('#matrixSearch').focus();
+      $('#matrixSearch').select();
+    } else if (key === 's') {
       e.preventDefault();
       exportJson();
     } else if (!inField && key === 'z') {
@@ -126,7 +132,7 @@ function bindEvents() {
   window.addEventListener('beforeprint', () => {
     printing = true;
     renderMatrix();
-    buildCompareTable();
+    buildCompareTable(compareContent());
     $('#compareTable').hidden = false;
     $('#compareChart').hidden = true;
     $('#compareBody').hidden = false;
@@ -157,6 +163,7 @@ function bindEvents() {
 function init() {
   applyStaticTexts();
   bindEvents();
+  initSearch();
   save(); // auch eine neu erzeugte Startmatrix sofort sichern (stabile IDs nach Neuladen)
   // Einstellungen und geöffnete Tabs sofort an diesen Browser-Tab binden – sonst übernähme er
   // beim Neuladen die zuletzt in einem anderen Browser-Tab verwendeten (Vorgabe im localStorage).

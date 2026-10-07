@@ -255,3 +255,23 @@ test('Kennzahlenbericht: Gleichstand markiert alle Bestwerte', () => {
   const best = Evaluation.conceptReport(m).filter(r => r.cost.best).map(r => r.concept.name);
   assert.deepEqual(plain(best), ['Kompakt-Espresso', 'Kopie']);
 });
+
+test('rankConcepts: Sortierung nach Nutzwert, Kosten und Preis-Leistung', () => {
+  const m = example();
+  const order = key => Evaluation.rankConcepts(m, Evaluation.conceptReport(m), key)
+    .map(x => [x.figures.concept.id, x.rank]);
+  assert.deepEqual(plain(order('utility')), [['c3', 1], ['c1', 2], ['c2', 3]]);
+  assert.deepEqual(plain(order('cost')), [['c1', 1], ['c2', 2], ['c3', 3]]);
+  assert.deepEqual(plain(order('priceValue')), [['c1', 1], ['c2', 2], ['c3', 3]]);
+  assert.deepEqual(plain(order('order')), [['c1', null], ['c2', null], ['c3', null]]);
+});
+
+test('rankConcepts: Unvollständige zuletzt, Gleichstand teilt den Rang, inaktive Bewertung ohne Rang', () => {
+  const m = example();
+  Model.selectedOption(m.parameters[0], m.concepts[0]).cost = null; // c1 unvollständig
+  m.concepts[2].selections = { ...m.concepts[1].selections }; // c3 = c2
+  const ranked = Evaluation.rankConcepts(m, Evaluation.conceptReport(m), 'cost').map(x => [x.figures.concept.id, x.rank]);
+  assert.deepEqual(plain(ranked), [['c2', 1], ['c3', 1], ['c1', null]]);
+  m.settings.costs = false;
+  assert.ok(Evaluation.rankConcepts(m, Evaluation.conceptReport(m), 'cost').every(x => x.rank == null));
+});
