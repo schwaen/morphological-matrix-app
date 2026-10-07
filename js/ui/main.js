@@ -33,6 +33,8 @@ function bindEvents() {
   // Menü
   $('#menuBtn').addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
   $('#menuList').addEventListener('click', e => {
+    const lang = e.target.closest('[data-lang]');
+    if (lang) { toggleMenu(false); switchLanguage(lang.dataset.lang); return; }
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     toggleMenu(false);
@@ -142,6 +144,7 @@ function bindEvents() {
 }
 
 function init() {
+  applyStaticTexts();
   bindEvents();
   save(); // auch eine neu erzeugte Startmatrix sofort sichern (stabile IDs nach Neuladen)
   // Einstellungen und geöffnete Tabs sofort an diesen Browser-Tab binden – sonst übernähme er

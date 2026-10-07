@@ -58,7 +58,7 @@ function printMatrix() {
 
 // ---------- Bibliothek ----------
 
-const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
+const dateFormat = new Intl.DateTimeFormat(Texts.meta.locale, { dateStyle: 'medium', timeStyle: 'short' });
 
 function openLibrary() {
   renderLibrary();
@@ -220,6 +220,19 @@ function toggleMenu(open) {
   list.hidden = !willOpen;
   btn.setAttribute('aria-expanded', String(willOpen));
   if (willOpen) list.querySelector('button').focus();
+}
+
+/**
+ * Sprache wechseln: Wahl merken und die Seite neu laden (auch statische Texte und Formate
+ * wechseln). Ausstehende Eingaben werden vorher gespeichert; die geöffneten Tabs bleiben.
+ * @param {string} lang
+ */
+function switchLanguage(lang) {
+  if (lang === Texts.meta.lang || !Languages.packs[lang]) return;
+  save();
+  saveWorkspace();
+  Languages.choose(lang);
+  location.reload();
 }
 
 /** Aktionen der Menüeinträge (`data-action` in index.html). */

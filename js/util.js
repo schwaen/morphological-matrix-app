@@ -5,7 +5,9 @@
 'use strict';
 
 const Util = (() => {
-  const numberFormat = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 });
+  // Zahlen- und Währungsformat der aktiven Sprache (Texts.meta)
+  const locale = Texts.meta.locale;
+  const numberFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
 
   /** Kurze, praktisch eindeutige ID. */
   function uid() {
@@ -28,22 +30,41 @@ const Util = (() => {
   }
 
   /**
-   * Liest Zahlen in deutscher oder englischer Schreibweise („1.200,50“, „1200.5“).
+   * Liest Zahlen in der Schreibweise der Sprache: Dezimalkomma („1.200,50“) bzw. Dezimalpunkt
+   * („1,200.50“). Nachsichtig: Im Deutschen wird „1200.5“ verstanden, im Englischen „3,5“
+   * (ein Komma ohne Tausendergruppe gilt dort als Dezimaltrenner).
    * @param {any} text
+   * @param {string} [decimal] Dezimaltrenner (Standard: aktive Sprache)
    * @returns {number | null} `null` bei leerer Eingabe, `NaN` bei ungültiger
    */
-  function parseNumber(text) {
+  function parseNumber(text, decimal = Texts.meta.decimal) {
     let s = String(text).trim().replace(/[\s€$£]|CHF/g, '');
     if (!s) return null;
-    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
-    else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    if (decimal === ',') {
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    } else if (s.includes('.') || /^-?\d{1,3}(,\d{3})+$/.test(s)) {
+      s = s.replace(/,/g, '');
+    } else {
+      s = s.replace(',', '.');
+    }
     return /^-?\d*\.?\d+$/.test(s) ? Number(s) : NaN;
   }
 
-  /** Zahl für ein Eingabefeld (Dezimalkomma, ohne Tausenderpunkte). @param {number | null} n */
-  function numberToInput(n) {
-    return n == null ? '' : String(n).replace('.', ',');
+  /**
+   * Zahl für ein Eingabefeld (Dezimaltrenner der Sprache, ohne Tausendertrenner).
+   * @param {number | null} n @param {string} [decimal]
+   */
+  function numberToInput(n, decimal = Texts.meta.decimal) {
+    return n == null ? '' : String(n).replace('.', decimal);
   }
+
+  const percentFormat = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 });
+  /** Anteil (0–1) als Prozent in der Schreibweise der Sprache („25 %“ bzw. „25%“). @param {number} share */
+  const formatPercent = share => percentFormat.format(share);
+
+  /** Ganzzahl mit Tausendertrennern der Sprache (auch BigInt). @param {number | bigint} n */
+  const formatInteger = n => n.toLocaleString(locale);
 
   /** @param {number} n */
   function formatNumber(n) {
@@ -66,7 +87,7 @@ const Util = (() => {
   /** @param {number} n @param {string} currency */
   function formatMoney(n, currency) {
     try {
-      return new Intl.NumberFormat('de-DE', { style: 'currency', currency }).format(n);
+      return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(n);
     } catch (e) {
       return `${numberFormat.format(n)} ${currency}`;
     }
@@ -75,7 +96,7 @@ const Util = (() => {
   /** @param {string} currency */
   function currencySymbol(currency) {
     try {
-      const part = new Intl.NumberFormat('de-DE', { style: 'currency', currency })
+      const part = new Intl.NumberFormat(locale, { style: 'currency', currency })
         .formatToParts(0).find(x => x.type === 'currency');
       return part ? part.value : currency;
     } catch (e) {
@@ -120,7 +141,7 @@ const Util = (() => {
 
   return {
     errorMessage,
-    uid, str, num, isColor, parseNumber, numberToInput, formatNumber, scaleBigInt, formatMoney, currencySymbol,
+    uid, str, num, isColor, parseNumber, numberToInput, formatNumber, formatInteger, formatPercent, scaleBigInt, formatMoney, currencySymbol,
     slugify, lexLess, toBase64Url, fromBase64Url,
   };
 })();

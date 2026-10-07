@@ -18,11 +18,11 @@ const IO = (() => {
 
   /** Textzelle in Anführungszeichen. @param {unknown} v */
   const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  /** Zahl mit Dezimalkomma (Excel, deutsch); leer für fehlende Werte. @param {number | null} n */
-  const csvNum = n => (n == null ? '' : String(Math.round(n * 100) / 100).replace('.', ','));
+  /** Zahl mit dem Dezimaltrenner der Sprache (Excel); leer für fehlende Werte. @param {number | null} n */
+  const csvNum = n => (n == null ? '' : String(Math.round(n * 100) / 100).replace('.', Texts.meta.csvDecimal));
 
   /**
-   * CSV für Excel (Semikolon, UTF-8 mit BOM): Matrix, optional Bewertung je Ausprägung
+   * CSV für Excel (Trennzeichen der Sprache: Semikolon/Dezimalkomma bzw. Komma/Dezimalpunkt; UTF-8 mit BOM): Matrix, optional Bewertung je Ausprägung
    * und die Konzepte mit ihren Kennzahlen.
    * @param {Matrix} m
    * @returns {string}
@@ -73,7 +73,7 @@ const IO = (() => {
           ...(priceValue ? [csvNum(priceValue.value)] : [])]);
       }
     }
-    return '\ufeff' + lines.map(l => l.join(';')).join('\r\n');
+    return '\ufeff' + lines.map(l => l.join(Texts.meta.csvSeparator)).join('\r\n');
   }
 
   /** Teil hinter `#m=` eines Teilen-Links. @param {Matrix} m */

@@ -212,7 +212,7 @@ function optionMetricsText(o) {
 /** Gewichtsanteil eines Parameters als Text („25 %“). @param {MatrixParameter} p */
 function weightPercent(p) {
   const share = Evaluation.weightShare(state, p);
-  return share == null ? '–' : `${Util.formatNumber(Math.round(share * 1000) / 10)}\u00a0%`;
+  return share == null ? '–' : Util.formatPercent(share);
 }
 
 /**

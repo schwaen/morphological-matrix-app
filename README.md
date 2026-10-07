@@ -40,6 +40,7 @@ python3 -m http.server 8000
 - Teilen per Link (die Matrix steckt komplett in der URL).
 - Druckansicht bzw. PDF-Export über den Browser.
 - Helles und dunkles Farbschema (folgt der Systemeinstellung).
+- **Deutsch und Englisch (US):** beim ersten Start nach der Browsersprache, umschaltbar unter **Datei → Sprache**. Zahlen, Währung, Datum, Zahleneingabe und CSV-Export folgen der Sprache (Deutsch: `1.234,5` und CSV mit Semikolon; Englisch: `1,234.5` und CSV mit Komma). Die Inhalte der Matrizen werden nicht übersetzt.
 
 ## Dateien
 
@@ -47,7 +48,8 @@ python3 -m http.server 8000
 |---|---|
 | `index.html` | Seitengerüst, lädt die Skripte in fester Reihenfolge |
 | `styles.css` | Design in Kaskaden-Ebenen (`@layer`): Tokens, Grundstile, Bausteine, Bereiche, Druck |
-| `js/texts.js` | `Texts` – alle Texte, die das JavaScript anzeigt (Hinweise, Beschriftungen, Fehlermeldungen, CSV-Spalten) |
+| `js/i18n/de.js`, `js/i18n/en.js` | Alle Texte der Oberfläche je Sprache – vom JavaScript erzeugte und unter `ui` die statischen Texte der Seite; `de.js` ist maßgeblich |
+| `js/texts.js` | `Texts` (Texte der aktiven Sprache) und `Languages` (Sprachwahl) |
 | `js/util.js` | `Util` – Zahlen, Texte, Kodierung (ohne DOM) |
 | `js/model.js` | `Model` – Datenmodell, Normalisierung, Abfragen (ohne DOM) |
 | `js/evaluation.js` | `Evaluation` – Kosten, Nutzwert, Preis-Leistung, Prioritätsprofil, Kennzahlenbericht, automatische Konzepte (ohne DOM) |
@@ -63,7 +65,7 @@ python3 -m http.server 8000
 | `tests/unit/` | Unit-Tests der Logik (`node:test`) |
 | `tests/e2e/` | Browser-Tests (Playwright) |
 
-**Texte:** Statische Texte stehen in `index.html`, alle vom JavaScript erzeugten Texte in `js/texts.js` – Formulierungen ändern oder übersetzen betrifft nur diese beiden Dateien. Inhalte der Beispiele sind Daten und stehen je Beispiel in einer eigenen Datei unter `examples/`.
+**Texte und Sprachen:** Alle Texte stehen je Sprache in `js/i18n/` – `index.html` enthält nur Schlüssel (`data-i18n` für Text, `data-i18n-html` für Text mit Formatierung, `data-i18n-attr="title:…;aria-label:…"` für Attribute), die beim Start gefüllt werden. Formulierungen ändern betrifft also nur die Sprachdateien. `en.js` muss dieselbe Struktur wie `de.js` haben; das prüfen die Typprüfung und ein Unit-Test (`tests/unit/i18n.test.js`, auch für alle Schlüssel aus `index.html`). Eine weitere Sprache: Datei `js/i18n/<code>.js` nach dem Muster von `en.js` anlegen, in `index.html` einbinden, in `Languages` (`js/texts.js`) und im Menü (`data-lang`) ergänzen. Inhalte der Beispiele sind Daten und stehen je Beispiel in einer eigenen Datei unter `examples/`.
 
 **Datenformat:** Gespeicherte Matrizen, JSON-Export und Teilen-Links tragen eine Formatversion; ältere Daten werden beim Öffnen automatisch umgewandelt, Daten aus einer neueren App-Version werden abgelehnt. Details in [`docs/DATENFORMAT.md`](docs/DATENFORMAT.md).
 
@@ -85,7 +87,7 @@ npm test            # alles zusammen
 ```
 
 - **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). Die Skripte nutzen diese Typen über JSDoc-Kommentare; `tsc` prüft auch die Bezüge zwischen den Dateien.
-- **Typprüfung in zwei Stufen:** `jsconfig.json` prüft den gesamten Code im `strict`-Modus (u. a. `null`/`undefined`-Prüfungen). `tsconfig.logic.json` verlangt für die DOM-freien Logik-Dateien unter `js/` zusätzlich Typangaben für alle Parameter (`noImplicitAny`); ausgenommen ist `js/texts.js`, das nur Textbausteine enthält.
-- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Backup, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, MoSCoW, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
+- **Typprüfung in zwei Stufen:** `jsconfig.json` prüft den gesamten Code im `strict`-Modus (u. a. `null`/`undefined`-Prüfungen). `tsconfig.logic.json` verlangt für die DOM-freien Logik-Dateien unter `js/` zusätzlich Typangaben für alle Parameter (`noImplicitAny`); ausgenommen sind `js/texts.js` und die Sprachdateien unter `js/i18n/`, die nur Textbausteine enthalten.
+- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Backup, Sprachen, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, MoSCoW, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
 - **Unit-Tests:** `tests/unit/` lädt die DOM-freien Skripte in einen isolierten Node-Kontext (`tests/unit/load.js`) – so, wie der Browser sie ausführt. Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft.
 - **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung, Unit- und Browser-Tests bei jedem Pull Request aus.

@@ -9,6 +9,8 @@ export default defineConfig({
   use: {
     trace: 'retain-on-failure',
     acceptDownloads: true,
+    // Die meisten Tests prüfen deutsche Texte; englische Tests stellen die Sprache selbst um.
+    locale: 'de-DE',
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },

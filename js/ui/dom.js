@@ -149,3 +149,36 @@ function autosizeAll() {
   if (supportsFieldSizing) return;
   $$('textarea.autosize, #description').forEach(autosize);
 }
+
+// ---------- Statische Texte (index.html) ----------
+
+/** Text zu einem Schlüssel wie „ui.menu.file“ aus der aktiven Sprache. @param {string} key */
+function textFor(key) {
+  /** @type {any} */
+  const value = key.split('.').reduce((/** @type {any} */ o, k) => (o == null ? o : o[k]), Texts);
+  if (typeof value !== 'string') {
+    console.warn(`Text „${key}“ fehlt in der Sprache ${Texts.meta.lang}.`);
+    return key;
+  }
+  return value;
+}
+
+/**
+ * Statische Texte der Seite aus der aktiven Sprache setzen:
+ * `data-i18n` (Textinhalt), `data-i18n-html` (Inhalt mit Formatierung, nur eigene Texte) und
+ * `data-i18n-attr="attribut:schlüssel;…"` (z. B. title, aria-label, placeholder).
+ */
+function applyStaticTexts() {
+  document.documentElement.lang = Texts.meta.lang;
+  // Beschriftung „bester Wert“ im Konzeptvergleich (CSS ::after)
+  document.documentElement.style.setProperty('--best-label', JSON.stringify(Texts.compare.best));
+  $$('[data-i18n]').forEach(el => { el.textContent = textFor(/** @type {string} */ (el.dataset.i18n)); });
+  $$('[data-i18n-html]').forEach(el => { el.innerHTML = textFor(/** @type {string} */ (el.dataset.i18nHtml)); });
+  $$('[data-i18n-attr]').forEach(el => {
+    for (const pair of /** @type {string} */ (el.dataset.i18nAttr).split(';')) {
+      const [attr, key] = pair.split(':');
+      el.setAttribute(attr.trim(), textFor(key.trim()));
+    }
+  });
+  $$('[data-lang]').forEach(el => el.setAttribute('aria-checked', String(el.dataset.lang === Texts.meta.lang)));
+}
