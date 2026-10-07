@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures.js';
 
-const firstRow = page => page.locator('.opt-cell.edit textarea')
+const firstRow = page => page.locator('.opt-cell.edit .opt-main textarea')
   .evaluateAll(els => els.slice(0, 4).map(e => e.value));
 
 test('Ausprägungen per Leiste und Alt+Pfeil verschieben', async ({ page }) => {

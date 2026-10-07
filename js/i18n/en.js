@@ -283,6 +283,21 @@ const TextsEn = (() => {
       missing: n => `${n} ${n === 1 ? 'value' : 'values'} missing`,
     },
 
+    notes: {
+      add: 'Add note',
+      edit: 'Edit note',
+      placeholder: 'Note …',
+      label: option => `Note on “${option}”`,
+      title: option => `Note · ${option}`,
+      addParam: 'Add description',
+      editParam: 'Edit description',
+      paramPlaceholder: 'Description …',
+      paramLabel: param => `Description of “${param}”`,
+      paramTitle: param => `Description · ${param}`,
+      conceptLabel: 'Rationale / note',
+      conceptPlaceholder: 'Why this concept? Pros and cons, open questions …',
+    },
+
     search: {
       count: (pos, n) => (pos == null ? plural(n, 'match', 'matches') : `${pos} / ${n}`),
       none: 'No matches',
@@ -306,6 +321,7 @@ const TextsEn = (() => {
       priceValueTitle: 'Total cost divided by utility – the lower, the better',
       priority: 'Priority (MoSCoW)',
       best: 'Best',
+      conceptNote: 'Rationale',
       onlyDiff: 'Differences only',
       diffCount: (n, total) => `${n} of ${total} parameters differ`,
       noDifferences: 'All concepts have the same choice for every parameter.',
@@ -399,6 +415,9 @@ const TextsEn = (() => {
       totalCost: currency => `Total cost (${currency})`,
       utilityTotal: 'Utility',
       priceValue: currency => `Cost per utility point (${currency})`,
+      parameterNote: 'Parameter description',
+      note: 'Note',
+      conceptNote: 'Rationale',
     },
   };
 })();

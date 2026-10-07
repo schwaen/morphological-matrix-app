@@ -8,7 +8,7 @@ Examples.register({
   "name": "Skill-Matrix Frontend-Team",
   "description": "Kompetenzen von drei Mitarbeitenden in Soft- und Hardskills eines Frontend-Entwicklers. Skala je Skill von 0 (keine Kenntnisse) bis 3 (Expertenwissen); der Nutzwert zeigt den gewichteten Kompetenzgrad.",
   "data": {
-    "version": 3,
+    "version": 4,
     "title": "Beispiel: Skill-Matrix Frontend-Team",
     "description": "Fähigkeiten im Frontend-Team je Skill einschätzen – 0 = keine Kenntnisse, 1 = Grundkenntnisse, 2 = fortgeschrittene Fähigkeiten, 3 = Expertenwissen. Jedes Konzept steht für eine Person; der Nutzwert zeigt den nach Wichtigkeit gewichteten Kompetenzgrad in Prozent.",
     "settings": { "costs": false, "utility": true, "currency": "EUR", "utilityMax": 100, "moscow": false },

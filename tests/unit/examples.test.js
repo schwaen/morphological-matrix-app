@@ -5,6 +5,15 @@ import { loadApp, plain, EXAMPLE_FILES } from './load.js';
 
 const { Model, Examples } = loadApp();
 
+/** Notizen sind in Dateien optional (fehlend = leer); für den Vergleich mit `normalize` ergänzen. */
+function withEmptyNotes(data) {
+  const d = plain(data);
+  const fill = x => { if (x.note === undefined) x.note = ''; };
+  d.parameters.forEach(p => { fill(p); p.options.forEach(fill); });
+  d.concepts.forEach(fill);
+  return d;
+}
+
 test('Jede eingebundene Beispiel-Datei meldet genau ein Beispiel an', () => {
   assert.ok(EXAMPLE_FILES.length > 0, 'mindestens ein Beispiel in index.html eingebunden');
   assert.deepEqual(plain(Examples.all().map(e => e.id)), EXAMPLE_FILES.map(f => path.basename(f, '.js')),
@@ -17,7 +26,7 @@ for (const ex of Examples.all()) {
     assert.equal(ex.data.version, Model.SCHEMA_VERSION, 'version');
     // Die Prüfung darf nichts ergänzen, verwerfen oder umbenennen – sonst ist die Datei fehlerhaft
     // (z. B. Konzeptauswahl verweist auf eine nicht vorhandene Ausprägung, doppelte IDs).
-    assert.deepEqual(plain(Model.normalize(plain(ex.data))), plain(ex.data));
+    assert.deepEqual(plain(Model.normalize(plain(ex.data))), withEmptyNotes(ex.data));
     assert.ok(ex.data.title, 'Titel fehlt');
     assert.ok(ex.data.parameters.length > 0, 'keine Parameter');
   });

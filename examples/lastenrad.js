@@ -8,7 +8,7 @@ Examples.register({
   "name": "Elektro-Lastenrad (umfangreich)",
   "description": "Große Matrix zum Erkunden: 30 Parameter in 6 Kategorien mit bis zu 8 Ausprägungen, 7 Konzepte, Kosten und Nutzwerte aktiv – inklusive offener Werte und eines unvollständigen Entwurfs.",
   "data": {
-    "version": 3,
+    "version": 4,
     "title": "Beispiel: Elektro-Lastenrad",
     "description": "Baukasten für eine Lastenrad-Produktfamilie: Welche Teillösungen ergeben welche Fahrzeugvariante? Kosten = Mehrkosten je Rad in Euro gegenüber der einfachsten Lösung, Nutzwert 0–10, Gewichtung nach Bedeutung für die Kundschaft.",
     "settings": { "costs": true, "utility": true, "currency": "EUR", "utilityMax": 10, "moscow": false },

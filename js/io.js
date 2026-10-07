@@ -22,8 +22,9 @@ const IO = (() => {
   const csvNum = n => (n == null ? '' : String(Math.round(n * 100) / 100).replace('.', Texts.meta.csvDecimal));
 
   /**
-   * CSV für Excel (Trennzeichen der Sprache: Semikolon/Dezimalkomma bzw. Komma/Dezimalpunkt; UTF-8 mit BOM): Matrix, optional Bewertung je Ausprägung
-   * und die Konzepte mit ihren Kennzahlen.
+   * CSV für Excel (Trennzeichen der Sprache: Semikolon/Dezimalkomma bzw. Komma/Dezimalpunkt; UTF-8 mit BOM): Matrix, optional
+   * Bewertung und Notizen je Ausprägung und die Konzepte mit ihren Kennzahlen und Begründungen. Spalten für Notizen
+   * erscheinen nur, wenn mindestens eine Notiz vorhanden ist.
    * @param {Matrix} m
    * @returns {string}
    */
@@ -43,34 +44,43 @@ const IO = (() => {
     const { costs, utility, currency, utilityMax, moscow } = m.settings;
     /** @param {MatrixOption} o */
     const prio = o => (o.priority ? Texts.moscow.levels[o.priority].label : '');
-    if (costs || utility || moscow) {
+    const paramNotes = m.parameters.some(p => p.note);
+    const optionNotes = m.parameters.some(p => p.options.some(o => o.note));
+    if (costs || utility || moscow || paramNotes || optionNotes) {
       lines.push([], [...catHead, cell(L.parameter),
+        ...(paramNotes ? [cell(L.parameterNote)] : []),
         ...(utility ? [cell(L.weight)] : []),
         cell(L.optionSingle),
         ...(costs ? [cell(L.cost(currency))] : []),
         ...(utility ? [cell(L.utility(utilityMax))] : []),
-        ...(moscow ? [cell(L.priority)] : [])]);
+        ...(moscow ? [cell(L.priority)] : []),
+        ...(optionNotes ? [cell(L.note)] : [])]);
       for (const p of m.parameters) {
         for (const o of p.options) {
           lines.push([...catCell(p), cell(p.name),
+            ...(paramNotes ? [cell(p.note)] : []),
             ...(utility ? [csvNum(weightOf(p))] : []),
             cell(o.text),
             ...(costs ? [csvNum(o.cost)] : []),
             ...(utility ? [csvNum(o.score)] : []),
-            ...(moscow ? [cell(prio(o))] : [])]);
+            ...(moscow ? [cell(prio(o))] : []),
+            ...(optionNotes ? [cell(o.note)] : [])]);
         }
       }
     }
     if (m.concepts.length) {
+      const conceptNotes = m.concepts.some(c => c.note);
       lines.push([], [cell(L.concept), ...m.parameters.map(p => cell(p.name)),
         ...(costs ? [cell(L.totalCost(currency))] : []),
         ...(utility ? [cell(L.utilityTotal)] : []),
-        ...(costs && utility ? [cell(L.priceValue(currency))] : [])]);
+        ...(costs && utility ? [cell(L.priceValue(currency))] : []),
+        ...(conceptNotes ? [cell(L.conceptNote)] : [])]);
       for (const { concept: c, cost, utility: util, priceValue } of conceptReport(m)) {
         lines.push([cell(c.name), ...m.parameters.map(p => cell(optionText(p, c.selections[p.id]) || '')),
           ...(cost ? [csvNum(cost.total)] : []),
           ...(util ? [csvNum(util.value)] : []),
-          ...(priceValue ? [csvNum(priceValue.value)] : [])]);
+          ...(priceValue ? [csvNum(priceValue.value)] : []),
+          ...(conceptNotes ? [cell(c.note)] : [])]);
       }
     }
     return '\ufeff' + lines.map(l => l.join(Texts.meta.csvSeparator)).join('\r\n');

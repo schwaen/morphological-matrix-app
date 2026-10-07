@@ -294,6 +294,21 @@ const TextsDe = (() => {
       missing: n => `${n} ${n === 1 ? 'Wert fehlt' : 'Werte fehlen'}`,
     },
 
+    notes: {
+      add: 'Notiz hinzufügen',
+      edit: 'Notiz bearbeiten',
+      placeholder: 'Notiz …',
+      label: option => `Notiz zu „${option}“`,
+      title: option => `Notiz · ${option}`,
+      addParam: 'Beschreibung hinzufügen',
+      editParam: 'Beschreibung bearbeiten',
+      paramPlaceholder: 'Beschreibung …',
+      paramLabel: param => `Beschreibung von „${param}“`,
+      paramTitle: param => `Beschreibung · ${param}`,
+      conceptLabel: 'Begründung / Notiz',
+      conceptPlaceholder: 'Warum dieses Konzept? Vor- und Nachteile, offene Punkte …',
+    },
+
     search: {
       count: (pos, n) => (pos == null ? plural(n, 'Treffer', 'Treffer') : `${pos} / ${n}`),
       none: 'Keine Treffer',
@@ -317,6 +332,7 @@ const TextsDe = (() => {
       priceValueTitle: 'Gesamtkosten geteilt durch Nutzwert – je niedriger, desto besser',
       priority: 'Priorität (MoSCoW)',
       best: 'Bester Wert',
+      conceptNote: 'Begründung',
       onlyDiff: 'Nur Unterschiede',
       diffCount: (n, total) => `${n} von ${total} Parametern unterschiedlich`,
       noDifferences: 'Alle Konzepte sind bei allen Parametern gleich gewählt.',
@@ -410,6 +426,9 @@ const TextsDe = (() => {
       totalCost: currency => `Gesamtkosten (${currency})`,
       utilityTotal: 'Nutzwert',
       priceValue: currency => `Kosten je Nutzwertpunkt (${currency})`,
+      parameterNote: 'Beschreibung des Parameters',
+      note: 'Notiz',
+      conceptNote: 'Begründung',
     },
   };
 })();

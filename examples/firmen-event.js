@@ -8,7 +8,7 @@ Examples.register({
   "name": "Firmen-Event planen",
   "description": "Event für rund 80 Mitarbeitende: Ort, Programm, Verpflegung und Kommunikation zu Varianten wie Sommerfest oder Strategie-Offsite kombinieren und nach Gesamtkosten und Zufriedenheit (0–5) vergleichen.",
   "data": {
-    "version": 3,
+    "version": 4,
     "title": "Beispiel: Firmen-Event planen",
     "description": "Firmen-Event für rund 80 Mitarbeitende: Bausteine von Ort über Programm bis Verpflegung zu Event-Varianten kombinieren. Kosten = Gesamtkosten in Euro, Nutzwert = erwartete Zufriedenheit von 0 bis 5.",
     "settings": { "costs": true, "utility": true, "currency": "EUR", "utilityMax": 5, "moscow": false },
