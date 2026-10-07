@@ -52,7 +52,7 @@ const Store = (() => {
   /** @param {string} id */
   const removeDoc = id => remove('localStorage', DOC_PREFIX + id);
 
-  /** Matrix-ID zu einem Speicherschlüssel (z. B. aus einem `storage`-Ereignis), sonst `null`. */
+  /** Matrix-ID zu einem Speicherschlüssel (z. B. aus einem `storage`-Ereignis), sonst `null`. @param {string | null} key */
   const docIdFromKey = key => (key && key.startsWith(DOC_PREFIX) ? key.slice(DOC_PREFIX.length) : null);
 
   /** Alle gespeicherten Matrizen, zuletzt bearbeitete zuerst. @returns {StoredDoc[]} */

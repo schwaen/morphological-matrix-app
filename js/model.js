@@ -35,8 +35,8 @@ const Model = (() => {
     // alle Stände vor der Versionierung (ohne Bewertung/Kategorien – diese Felder sind optional).
     1: data => ({
       ...data,
-      parameters: data.parameters.map(p => (p && Array.isArray(p.options)
-        ? { ...p, options: p.options.map(o => (typeof o === 'string' ? { text: o } : o)) }
+      parameters: data.parameters.map(/** @param {any} p */ p => (p && Array.isArray(p.options)
+        ? { ...p, options: p.options.map(/** @param {any} o */ o => (typeof o === 'string' ? { text: o } : o)) }
         : p)),
     }),
     // 2 → 3: optionale Priorität (MoSCoW) je Ausprägung und Schalter `settings.moscow`.
@@ -135,28 +135,32 @@ const Model = (() => {
       throw new Error(Texts.errors.invalidFormat);
     }
     data = migrate(data);
+    // Rohdaten (any) werden hier geprüft und in typisierte Objekte überführt
     const seen = new Set();
+    /** @param {unknown} v */
     const id = v => {
       let s = str(v);
       if (!s || seen.has(s)) s = uid();
       seen.add(s);
       return s;
     };
-    const parameters = data.parameters.map(p => {
+    /** @type {MatrixParameter[]} */
+    const parameters = data.parameters.map(/** @param {any} p */ p => {
       const weight = num(p && p.weight);
       return {
         id: id(p && p.id),
         name: str(p && p.name),
         weight: weight != null && weight >= 0 ? weight : null,
         categoryId: str(p && p.categoryId) || null,
-        options: (Array.isArray(p && p.options) ? p.options : []).map(o =>
+        options: (Array.isArray(p && p.options) ? p.options : []).map(/** @param {any} o */ o =>
           ({
             id: id(o && o.id), text: str(o && o.text), cost: num(o && o.cost), score: num(o && o.score),
             priority: PRIORITIES.includes(o && o.priority) ? o.priority : null,
           })),
       };
     });
-    const categories = (Array.isArray(data.categories) ? data.categories : []).map((k, i) => ({
+    /** @type {MatrixCategory[]} */
+    const categories = (Array.isArray(data.categories) ? data.categories : []).map(/** @param {any} k @param {number} i */ (k, i) => ({
       id: id(k && k.id),
       name: str(k && k.name),
       color: isColor(k && k.color) ? k.color : CATEGORY_COLORS[i % CATEGORY_COLORS.length],
@@ -172,7 +176,9 @@ const Model = (() => {
       utilityMax: SCALES.includes(src.utilityMax) ? src.utilityMax : 10,
       moscow: src.moscow === true,
     };
-    const concepts = (Array.isArray(data.concepts) ? data.concepts : []).map((c, i) => {
+    /** @type {MatrixConcept[]} */
+    const concepts = (Array.isArray(data.concepts) ? data.concepts : []).map(/** @param {any} c @param {number} i */ (c, i) => {
+      /** @type {Record<string, string>} */
       const selections = {};
       const sel = (c && c.selections) || {};
       for (const p of parameters) {
@@ -211,7 +217,8 @@ const Model = (() => {
    */
   function sortedByCategory(categories, parameters) {
     const rank = new Map(categories.map((k, i) => [k.id, i]));
-    const r = p => (rank.has(p.categoryId) ? rank.get(p.categoryId) : categories.length);
+    /** @param {MatrixParameter} p */
+    const r = p => rank.get(p.categoryId ?? '') ?? categories.length;
     return parameters.map((p, i) => ({ p, i }))
       .sort((a, b) => r(a.p) - r(b.p) || a.i - b.i)
       .map(x => x.p);
@@ -233,17 +240,20 @@ const Model = (() => {
    * @returns {Array<{ cat: MatrixCategory | null, items: Array<{ p: MatrixParameter, pi: number }> }>}
    */
   function categoryGroups(m) {
+    /** @typedef {{ cat: MatrixCategory | null, items: Array<{ p: MatrixParameter, pi: number }> }} Group */
+    /** @type {Group[]} */
     const groups = m.categories.map(cat => ({ cat, items: [] }));
+    /** @type {Group} */
     const none = { cat: null, items: [] };
     m.parameters.forEach((p, pi) => {
-      const g = groups.find(x => x.cat.id === p.categoryId) || none;
+      const g = groups.find(x => x.cat && x.cat.id === p.categoryId) || none;
       g.items.push({ p, pi });
     });
     if (none.items.length || !groups.length) groups.push(none);
     return groups;
   }
 
-  /** Nur innerhalb der eigenen Kategorie verschiebbar. @param {Matrix} m */
+  /** Nur innerhalb der eigenen Kategorie verschiebbar. @param {Matrix} m @param {number} index @param {number} delta */
   function canMoveParameter(m, index, delta) {
     const p = m.parameters[index];
     const q = m.parameters[index + delta];

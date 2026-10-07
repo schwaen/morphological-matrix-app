@@ -83,7 +83,7 @@ const Util = (() => {
     }
   }
 
-  /** Dateiname aus einem Titel („Beispiel: Größe“ → „beispiel-groesse“ bzw. ASCII-Näherung). */
+  /** Dateiname aus einem Titel („Beispiel: Größe“ → „beispiel-groesse“ bzw. ASCII-Näherung). @param {string} text */
   function slugify(text) {
     return (text || 'matrix')
       .normalize('NFKD').replace(/[̀-ͯ]/g, '')
@@ -115,7 +115,11 @@ const Util = (() => {
     return new TextDecoder().decode(Uint8Array.from(bin, ch => ch.charCodeAt(0)));
   }
 
+  /** Text einer abgefangenen Ausnahme (beliebiger Typ). @param {unknown} e */
+  const errorMessage = e => (e instanceof Error ? e.message : String(e));
+
   return {
+    errorMessage,
     uid, str, num, isColor, parseNumber, numberToInput, formatNumber, scaleBigInt, formatMoney, currencySymbol,
     slugify, lexLess, toBase64Url, fromBase64Url,
   };

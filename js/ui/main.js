@@ -19,7 +19,7 @@ function bindEvents() {
   $('#randomBtn').addEventListener('click', randomizeActive);
   $('#clearSelBtn').addEventListener('click', clearActive);
   $$('[data-generate]').forEach(btn => {
-    btn.addEventListener('click', () => generateConcept(btn.dataset.generate));
+    btn.addEventListener('click', () => generateConcept(btn.dataset.generate || ''));
   });
   $('#compareToggle').addEventListener('click', () => {
     setPref('compareOpen', prefs.compareOpen === false);

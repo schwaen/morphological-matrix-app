@@ -22,7 +22,7 @@ function stashActiveTab() {
 /** Stand eines Tab-Eintrags als aktiven Stand laden. @param {AppTab} t */
 function loadTab(t) {
   docId = t.docId;
-  state = t.state;
+  state = /** @type {Matrix} */ (t.state); // Tab-Einträge halten ihre Matrix immer bereit
   undoStack = t.undo || [];
   redoStack = t.redo || [];
   // `null` heißt „noch nie gespeichert“ (neuer Tab) – nicht mit „unbekannt“ verwechseln
@@ -55,7 +55,8 @@ function openInTab(id, data, message) {
     activateTab(id);
   } else {
     stashActiveTab();
-    const at = tabs.indexOf(activeTab()) + 1;
+    const current = activeTab();
+    const at = current ? tabs.indexOf(current) + 1 : tabs.length;
     /** @type {AppTab} */
     const t = { docId: id, view: { mode: prefs.mode, compareOpen: prefs.compareOpen }, state: data, lastSaved: null };
     tabs.splice(at, 0, t);
@@ -134,7 +135,7 @@ function onExternalDocChange(id) {
 // ---------- Darstellung ----------
 
 /** Titel eines Tabs (aktiver Tab: aktueller Stand). @param {AppTab} t */
-const tabTitle = t => ((t.docId === docId ? state : t.state).title || Texts.fallback.unnamedMatrix);
+const tabTitle = t => ((t.docId === docId ? state : t.state)?.title || Texts.fallback.unnamedMatrix);
 
 function renderTabs() {
   const nav = $('#appTabs');
@@ -244,8 +245,7 @@ function renderTabMenu() {
   }, label);
   const recent = closedTabs
     .filter(id => !tabById(id))
-    .map(id => Store.readDoc(id))
-    .filter(Boolean)
+    .flatMap(id => { const doc = Store.readDoc(id); return doc ? [doc] : []; })
     .slice(0, 5);
   replaceWith($('#tabMenu'),
     item(Texts.tabs.newBlank, MENU_ACTIONS.new),

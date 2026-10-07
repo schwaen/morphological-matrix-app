@@ -85,6 +85,7 @@ npm test            # alles zusammen
 ```
 
 - **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). Die Skripte nutzen diese Typen über JSDoc-Kommentare; `tsc` prüft auch die Bezüge zwischen den Dateien.
+- **Typprüfung in zwei Stufen:** `jsconfig.json` prüft den gesamten Code im `strict`-Modus (u. a. `null`/`undefined`-Prüfungen). `tsconfig.logic.json` verlangt für die DOM-freien Logik-Dateien unter `js/` zusätzlich Typangaben für alle Parameter (`noImplicitAny`); ausgenommen ist `js/texts.js`, das nur Textbausteine enthält.
 - **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Backup, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, MoSCoW, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
 - **Unit-Tests:** `tests/unit/` lädt die DOM-freien Skripte in einen isolierten Node-Kontext (`tests/unit/load.js`) – so, wie der Browser sie ausführt. Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft.
 - **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung, Unit- und Browser-Tests bei jedem Pull Request aus.

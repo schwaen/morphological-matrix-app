@@ -12,7 +12,7 @@ const Ops = (() => {
   /** @param {Matrix} m @param {string} pid */
   const param = (m, pid) => m.parameters.find(p => p.id === pid) || null;
 
-  /** Element in einer Liste verschieben; `false`, wenn das Ziel außerhalb liegt. @param {any[]} list */
+  /** Element in einer Liste verschieben; `false`, wenn das Ziel außerhalb liegt. @param {any[]} list @param {number} index @param {number} delta */
   function move(list, index, delta) {
     const target = index + delta;
     if (index < 0 || index >= list.length || target < 0 || target >= list.length) return false;
@@ -29,7 +29,10 @@ const Ops = (() => {
     Model.resort(m);
   }
 
-  /** Innerhalb der Anzeige-Reihenfolge verschieben (die Oberfläche bietet das nur innerhalb einer Gruppe an). */
+  /**
+   * Innerhalb der Anzeige-Reihenfolge verschieben (die Oberfläche bietet das nur innerhalb einer Gruppe an).
+   * @param {Matrix} m @param {number} index @param {number} delta
+   */
   const moveParameter = (m, index, delta) => move(m.parameters, index, delta);
 
   /** Parameter löschen; Auswahlen der Konzepte für ihn entfallen. @param {Matrix} m @param {string} pid */
@@ -54,13 +57,19 @@ const Ops = (() => {
     return true;
   }
 
-  /** Ausprägung innerhalb ihres Parameters verschieben (−1 links, +1 rechts). */
+  /**
+   * Ausprägung innerhalb ihres Parameters verschieben (−1 links, +1 rechts).
+   * @param {Matrix} m @param {string} pid @param {number} index @param {number} delta
+   */
   function moveOption(m, pid, index, delta) {
     const p = param(m, pid);
     return !!p && move(p.options, index, delta);
   }
 
-  /** Ausprägung löschen; Konzepte, die sie gewählt hatten, verlieren diese Auswahl. */
+  /**
+   * Ausprägung löschen; Konzepte, die sie gewählt hatten, verlieren diese Auswahl.
+   * @param {Matrix} m @param {string} pid @param {string} oid
+   */
   function deleteOption(m, pid, oid) {
     const p = param(m, pid);
     if (!p) return false;
@@ -88,7 +97,7 @@ const Ops = (() => {
     m.categories.push(k);
   }
 
-  /** Kategorie verschieben; ihre Parameter wandern mit. */
+  /** Kategorie verschieben; ihre Parameter wandern mit. @param {Matrix} m @param {number} index @param {number} delta */
   function moveCategory(m, index, delta) {
     if (!move(m.categories, index, delta)) return false;
     Model.resort(m);
@@ -126,7 +135,10 @@ const Ops = (() => {
     return c;
   }
 
-  /** Ausprägung für das aktive Konzept wählen bzw. die Auswahl wieder aufheben. */
+  /**
+   * Ausprägung für das aktive Konzept wählen bzw. die Auswahl wieder aufheben.
+   * @param {Matrix} m @param {string} pid @param {string} oid
+   */
   function toggleSelection(m, pid, oid) {
     const c = ensureActiveConcept(m);
     if (c.selections[pid] === oid) delete c.selections[pid];
@@ -139,7 +151,10 @@ const Ops = (() => {
     m.activeConceptId = c.id;
   }
 
-  /** Kopie direkt hinter dem Original einfügen und aktiv setzen. @returns {MatrixConcept | null} */
+  /**
+   * Kopie direkt hinter dem Original einfügen und aktiv setzen.
+   * @param {Matrix} m @param {string} cid @returns {MatrixConcept | null}
+   */
   function duplicateConcept(m, cid) {
     const idx = m.concepts.findIndex(x => x.id === cid);
     if (idx < 0) return null;
@@ -150,7 +165,10 @@ const Ops = (() => {
     return copy;
   }
 
-  /** Konzept löschen; war es aktiv, wird der Nachfolger (sonst Vorgänger) aktiv. */
+  /**
+   * Konzept löschen; war es aktiv, wird der Nachfolger (sonst Vorgänger) aktiv.
+   * @param {Matrix} m @param {string} cid
+   */
   function deleteConcept(m, cid) {
     const idx = m.concepts.findIndex(x => x.id === cid);
     if (idx < 0) return false;

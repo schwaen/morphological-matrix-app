@@ -75,7 +75,7 @@ function startExample() {
   try {
     return (first && Examples.load(first.id)) || Model.blankState();
   } catch (e) {
-    console.warn(`Beispiel „${first.id}“ ist ungültig:`, e.message);
+    console.warn(`Beispiel „${first.id}“ ist ungültig:`, Util.errorMessage(e));
     return Model.blankState();
   }
 }
@@ -87,11 +87,12 @@ const tabs = initial.list;
 // eslint-disable-next-line prefer-const -- wird in tabs.js und dialogs.js neu gesetzt
 let closedTabs = initial.closed;
 
-const initialTab = tabs.find(t => t.docId === initial.active);
+// loadInitialTabs liefert immer mindestens einen Tab, jeweils mit geladener Matrix
+const initialTab = tabs.find(t => t.docId === initial.active) || tabs[0];
 // eslint-disable-next-line prefer-const -- wird beim Tab-Wechsel (tabs.js) neu gesetzt
 let docId = initialTab.docId;
 /** @type {Matrix} */
-let state = initialTab.state;
+let state = /** @type {Matrix} */ (initialTab.state);
 /** @type {TabPrefs} */
 const prefs = { ...Store.loadPrefs(DEFAULT_PREFS), ...initialTab.view };
 /** `data-fid` des Felds, das nach dem nächsten Neuzeichnen den Fokus bekommt. */
@@ -186,17 +187,19 @@ function mutate(fn) {
 }
 
 function undo() {
-  if (!undoStack.length) return;
+  const snap = undoStack.pop();
+  if (snap == null) return;
   redoStack.push(snapshot());
-  state = JSON.parse(undoStack.pop());
+  state = JSON.parse(snap);
   save();
   render();
 }
 
 function redo() {
-  if (!redoStack.length) return;
+  const snap = redoStack.pop();
+  if (snap == null) return;
   undoStack.push(snapshot());
-  state = JSON.parse(redoStack.pop());
+  state = JSON.parse(snap);
   save();
   render();
 }

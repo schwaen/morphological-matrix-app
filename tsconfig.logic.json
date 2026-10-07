@@ -1,0 +1,9 @@
+{
+  // Strengere Prüfung für die DOM-freien Logik-Dateien: zusätzlich keine impliziten any-Typen
+  // (jeder Parameter braucht eine Typangabe). texts.js ist ausgenommen – dort stehen nur
+  // Textbausteine; die Verwendung von `Texts` prüft jsconfig.json.
+  "extends": "./jsconfig.json",
+  "compilerOptions": { "noImplicitAny": true },
+  "include": ["js/*.js", "types.d.ts", "types-logic.d.ts"],
+  "exclude": ["js/texts.js"]
+}

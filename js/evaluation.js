@@ -111,25 +111,45 @@ const Evaluation = (() => {
       priceValue: costs && utility ? { ...priceValue(m, c), best: false } : null,
       priority: moscow ? priorityProfile(m, c) : null,
     }));
-    /** Bestwert markieren, falls mindestens zwei Konzepte vergleichbar sind (Gleichstand: alle). */
-    const markBest = (figures, value, better) => {
-      const comparable = figures.filter(f => f && value(f) != null);
-      if (comparable.length < 2) return;
-      const bestValue = comparable.map(value).reduce((a, b) => (better(b, a) ? b : a));
-      comparable.forEach(f => { f.best = value(f) === bestValue; });
-    };
     markBest(rows.map(r => r.cost), f => (f.missing ? null : f.total), (a, b) => a < b);
     markBest(rows.map(r => r.utility), f => f.value, (a, b) => a > b);
     markBest(rows.map(r => r.priceValue), f => f.value, (a, b) => a < b);
     return rows;
   }
 
+  /**
+   * Bestwert markieren, falls mindestens zwei Konzepte vergleichbar sind (Gleichstand: alle).
+   * @template {{ best: boolean }} F
+   * @param {Array<F | null>} figures
+   * @param {(f: F) => number | null} value Vergleichswert, `null` = nicht vergleichbar
+   * @param {(a: number, b: number) => boolean} better `true`, wenn `a` besser als `b` ist
+   */
+  function markBest(figures, value, better) {
+    /** @type {Array<{ f: F, v: number }>} */
+    const comparable = [];
+    for (const f of figures) {
+      const v = f && value(f);
+      if (f && v != null) comparable.push({ f, v });
+    }
+    if (comparable.length < 2) return;
+    const bestValue = comparable.map(x => x.v).reduce((a, b) => (better(b, a) ? b : a));
+    comparable.forEach(({ f, v }) => { f.best = v === bestValue; });
+  }
+
   // ---------- Automatische Konzepte ----------
 
-  /** Wählt die Ausprägung mit dem lexikografisch kleinsten Schlüssel; Kandidaten per Filter. */
+  /**
+   * Wählt die Ausprägung mit dem lexikografisch kleinsten Schlüssel; Kandidaten per Filter.
+   * @param {MatrixParameter} p
+   * @param {(o: MatrixOption) => boolean} filter
+   * @param {(o: MatrixOption) => number[]} key
+   * @returns {MatrixOption | null}
+   */
   function pickBy(p, filter, key) {
+    /** @type {MatrixOption | null} */
     let best = null;
-    let bestKey = null;
+    /** @type {number[]} */
+    let bestKey = [];
     for (const o of p.options) {
       if (!filter(o)) continue;
       const k = key(o);
@@ -143,8 +163,10 @@ const Evaluation = (() => {
   /** @param {MatrixOption} o */
   const hasCost = o => o.cost != null;
   // Nebenkriterien bei Gleichstand (nur wenn die jeweilige Bewertung aktiv ist)
-  const tieCost = (m, o) => (m.settings.costs && hasCost(o) ? o.cost : Infinity);
-  const tieScore = (m, o) => (m.settings.utility && hasScore(o) ? -clampScore(m, o.score) : Infinity);
+  /** @param {Matrix} m @param {MatrixOption} o */
+  const tieCost = (m, o) => (m.settings.costs && o.cost != null ? o.cost : Infinity);
+  /** @param {Matrix} m @param {MatrixOption} o */
+  const tieScore = (m, o) => (m.settings.utility && o.score != null ? -clampScore(m, o.score) : Infinity);
 
   /**
    * @typedef {{ selections?: Record<string, string>, skipped?: number, error?: string }} BuildResult
@@ -184,12 +206,16 @@ const Evaluation = (() => {
       return { error: Texts.evaluation.needsAllValues };
     }
     if (W <= 0) return { error: Texts.evaluation.zeroWeights };
-    const util = (p, o) => (weightOf(p) * clampScore(m, o.score)) / W;
+    // Kandidaten haben Kosten und Nutzwert (`?? 0` nur für die Typprüfung)
+    /** @param {MatrixParameter} p @param {MatrixOption} o */
+    const util = (p, o) => (weightOf(p) * clampScore(m, o.score ?? 0)) / W;
+    /** @param {(p: MatrixParameter, o: MatrixOption) => number} objective */
     const solve = objective => m.parameters.map((p, i) => cands[i].reduce((best, o) => {
       const d = objective(p, o) - objective(p, best);
       return d < -1e-12 || (Math.abs(d) <= 1e-12 && util(p, o) > util(p, best)) ? o : best;
     }));
-    const totals = xs => xs.reduce((t, o, i) => ({ C: t.C + o.cost, U: t.U + util(m.parameters[i], o) }), { C: 0, U: 0 });
+    /** @param {MatrixOption[]} xs */
+    const totals = xs => xs.reduce((t, o, i) => ({ C: t.C + (o.cost ?? 0), U: t.U + util(m.parameters[i], o) }), { C: 0, U: 0 });
 
     // Start: höchster Nutzwert
     let x = solve((p, o) => -util(p, o));
@@ -197,7 +223,7 @@ const Evaluation = (() => {
     if (U <= 0) return { error: Texts.evaluation.allScoresZero };
     let lambda = C / U;
     for (let iter = 0; iter < 100; iter++) {
-      const next = solve((p, o) => o.cost - lambda * util(p, o));
+      const next = solve((p, o) => (o.cost ?? 0) - lambda * util(p, o));
       const t = totals(next);
       if (t.U <= 0 || t.C - lambda * t.U >= -1e-9) break;
       x = next;
@@ -211,25 +237,26 @@ const Evaluation = (() => {
    * @type {Record<string, { label: string, missing: string, available: (m: Matrix) => boolean, build: (m: Matrix) => BuildResult }>}
    */
   const GENERATORS = {
+    // Die Filter (hasScore/hasCost) stellen sicher, dass der Wert vorhanden ist (`?? 0` nur für die Typprüfung).
     'max-utility': {
       ...Texts.evaluation.generators['max-utility'],
       available: m => m.settings.utility,
-      build: separable(hasScore, (m, o) => [-clampScore(m, o.score), tieCost(m, o)]),
+      build: separable(hasScore, (m, o) => [-clampScore(m, o.score ?? 0), tieCost(m, o)]),
     },
     'min-utility': {
       ...Texts.evaluation.generators['min-utility'],
       available: m => m.settings.utility,
-      build: separable(hasScore, (m, o) => [clampScore(m, o.score), tieCost(m, o)]),
+      build: separable(hasScore, (m, o) => [clampScore(m, o.score ?? 0), tieCost(m, o)]),
     },
     'min-cost': {
       ...Texts.evaluation.generators['min-cost'],
       available: m => m.settings.costs,
-      build: separable(hasCost, (m, o) => [o.cost, tieScore(m, o)]),
+      build: separable(hasCost, (m, o) => [o.cost ?? 0, tieScore(m, o)]),
     },
     'max-cost': {
       ...Texts.evaluation.generators['max-cost'],
       available: m => m.settings.costs,
-      build: separable(hasCost, (m, o) => [-o.cost, tieScore(m, o)]),
+      build: separable(hasCost, (m, o) => [-(o.cost ?? 0), tieScore(m, o)]),
     },
     'best-value': {
       ...Texts.evaluation.generators['best-value'],
