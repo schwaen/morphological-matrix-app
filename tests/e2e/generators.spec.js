@@ -1,11 +1,14 @@
 import { test, expect, setEvaluation, compareFooter, storedMatrix } from './fixtures.js';
 
-/** Prüft alle Kombinationen der gespeicherten Matrix durch (Referenz für die Optimierung). */
+/** Prüft alle verträglichen Kombinationen der gespeicherten Matrix durch (Referenz für die Optimierung). */
 function bruteForce(m) {
   const W = m.parameters.reduce((s, p) => s + (p.weight ?? 1), 0);
   const r = { minC: Infinity, maxC: -Infinity, minU: Infinity, maxU: -Infinity, bestRatio: Infinity };
+  const excluded = (m.constraints || []).filter(c => c.type === 'excluded');
+  const chosen = [];
   const rec = (i, C, U) => {
     if (i === m.parameters.length) {
+      if (excluded.some(c => chosen.includes(c.a) && chosen.includes(c.b))) return;
       const u = U / W;
       r.minC = Math.min(r.minC, C); r.maxC = Math.max(r.maxC, C);
       r.minU = Math.min(r.minU, u); r.maxU = Math.max(r.maxU, u);
@@ -13,7 +16,11 @@ function bruteForce(m) {
       return;
     }
     const p = m.parameters[i];
-    for (const o of p.options) rec(i + 1, C + o.cost, U + (p.weight ?? 1) * o.score);
+    for (const o of p.options) {
+      chosen.push(o.id);
+      rec(i + 1, C + o.cost, U + (p.weight ?? 1) * o.score);
+      chosen.pop();
+    }
   };
   rec(0, 0, 0);
   return r;
@@ -33,7 +40,7 @@ test('Knöpfe erscheinen nur bei passender Bewertung', async ({ page }) => {
   expect(await visible()).toEqual(['max-utility', 'min-utility', 'min-cost', 'max-cost', 'best-value']);
 });
 
-test('Automatische Konzepte entsprechen der vollständigen Durchrechnung', async ({ page }) => {
+test('Automatische Konzepte entsprechen der vollständigen Durchrechnung (nur verträgliche Kombinationen)', async ({ page }) => {
   await setEvaluation(page, { costs: true, utility: true });
   for (const key of ['max-utility', 'min-utility', 'min-cost', 'max-cost', 'best-value']) {
     await page.click(`[data-generate="${key}"]`);

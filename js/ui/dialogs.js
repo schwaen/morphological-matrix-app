@@ -241,6 +241,7 @@ const MENU_ACTIONS = {
   example: openExamples,
   open: openLibrary,
   settings: openSettings,
+  constraints: openConsDialog,
   'export-json': exportJson,
   'import-json': () => $('#importFile').click(),
   'export-csv': exportCsv,

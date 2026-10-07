@@ -16,6 +16,7 @@ function render() {
   $$('[data-lines]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lines === prefs.lines)));
   $('#addParamBtn').hidden = prefs.mode !== 'edit';
   $('#addCategoryBtn').hidden = prefs.mode !== 'edit';
+  $('#consOpenBtn').hidden = prefs.mode !== 'edit';
 
   renderMatrix();
   renderConcepts();
@@ -25,6 +26,7 @@ function render() {
   updateHistoryButtons();
   autosizeAll();
   applyPendingFocus();
+  refreshConstraintEditors();
 }
 
 /** Leichte Aktualisierung ohne Eingabefelder neu zu erzeugen (z. B. beim Tippen). */
@@ -84,10 +86,17 @@ function renderStats() {
   /** @param {string} value @param {string} label @param {string | null} [title] */
   const stat = (value, label, title = null) => h('span', { class: 'stat', title }, h('strong', null, value), ` ${label}`);
   const count = formatCount(combos);
+  const combiStat = stat(count.text, Texts.stats.combinations(combos === 1n), count.title);
+  // Mit Unverträglichkeiten: Anteil der widerspruchsfreien Kombinationen (unter der Zahl)
+  if (state.constraints.some(x => x.type === 'excluded')) {
+    const ok = Consistency.countConsistent(state);
+    const okText = ok == null ? Texts.cons.notCountable : formatCount(ok).text;
+    combiStat.prepend(h('span', { class: 'stat-sub', title: ok == null ? null : formatCount(ok).title }, Texts.cons.consistentCount(okText)));
+  }
   $('#stats').replaceChildren(
     stat(Util.formatInteger(P), Texts.stats.parameters),
     stat(Util.formatInteger(O), Texts.stats.options(O)),
-    stat(count.text, Texts.stats.combinations(combos === 1n), count.title),
+    combiStat,
     stat(Util.formatInteger(C), Texts.stats.concepts(C)),
   );
 }
@@ -136,7 +145,7 @@ function renderConcepts() {
     li.append(
       color,
       name,
-      h('span', { class: 'concept-progress', dataset: { progress: c.id } }),
+      h('span', { class: 'concept-meta' }, conflictPill(c), h('span', { class: 'concept-progress', dataset: { progress: c.id } })),
       h('span', { class: 'concept-tools' },
         iconBtn('copy', Texts.concept.duplicate, () => duplicateConcept(c.id)),
         iconBtn('trash', Texts.concept.delete, () => deleteConcept(c.id), { danger: true })),
@@ -217,7 +226,10 @@ function renderSummary() {
   // Das Begründungsfeld bleibt beim Aktualisieren erhalten (sonst ginge beim Tippen der Fokus verloren)
   const note = conceptNoteField(c);
   [...box.children].forEach(el => { if (el !== note) el.remove(); });
-  box.prepend(h('h3', { style: { '--c': shownColor(c.color) } }, c.name || Texts.fallback.unnamedConcept));
+  const head = h('h3', { style: { '--c': shownColor(c.color) } }, c.name || Texts.fallback.unnamedConcept);
+  box.prepend(head);
+  const cons = conflictBox(c);
+  if (cons) head.after(cons);
   if (!note.isConnected) box.append(note);
   note.after(...[
     metrics.length ? h('div', { class: 'metrics' }, metrics) : null,
@@ -293,7 +305,9 @@ function renderCompare() {
 function compareContent() {
   const m = state;
   const report = Evaluation.conceptReport(m);
-  const ranked = Evaluation.rankConcepts(m, report, prefs.compareSort || 'order');
+  const hide = prefs.compareHideConflicts && m.constraints.some(x => x.type === 'excluded');
+  const ranked = Evaluation.rankConcepts(m, report, prefs.compareSort || 'order')
+    .filter(({ figures: { concept: c } }) => !hide || !Consistency.conflicts(m, c).excluded.length);
   const diff = prefs.compareDiff && m.concepts.length > 1 ? Model.differingParameters(m) : null;
   const groups = Model.categoryGroups(m).map(g => ({ ...g, items: diff ? g.items.filter(({ p }) => diff.has(p.id)) : g.items }));
   return { ranked, groups, filtered: !!diff };
@@ -315,6 +329,14 @@ function renderCompareTools() {
       }),
       Texts.compare.onlyDiff,
       h('span', { class: 'compare-diff-count' }, Texts.compare.diffCount(differing, m.parameters.length))),
+    m.constraints.length
+      ? h('label', { class: 'check compare-hide' },
+        h('input', {
+          type: 'checkbox', id: 'compareHideConflicts', checked: !!prefs.compareHideConflicts,
+          onchange: e => { setPref('compareHideConflicts', e.target.checked); renderCompare(); },
+        }),
+        Texts.cons.hideConflicts)
+      : null,
     keys.length
       ? h('label', { class: 'compare-sort' },
         h('span', null, Texts.compare.sortBy),
@@ -342,7 +364,7 @@ function buildCompareTable(view) {
   const rows = groups.flatMap(g => [
     showCats && g.items.length
       ? h('tr', { class: 'cat-row', style: { '--k': categoryColor(g.cat) } },
-        h('th', { scope: 'colgroup', colspan: String(m.concepts.length + 1) }, Model.categoryLabel(g.cat)))
+        h('th', { scope: 'colgroup', colspan: String(ranked.length + 1) }, Model.categoryLabel(g.cat)))
       : null,
     ...g.items.map(({ p, pi }) => h('tr', null,
       h('th', { scope: 'row' }, Model.parameterLabel(p, pi)),
@@ -359,8 +381,22 @@ function buildCompareTable(view) {
       h('th', { scope: 'row' }, Texts.compare.conceptNote),
       ranked.map(({ figures: { concept: c } }) => h('td', c.note.trim() ? null : { class: 'none' }, c.note.trim() || '–')))
     : null;
-  const body = h('tbody', null, noteRow, rows.length ? rows
-    : h('tr', null, h('td', { class: 'none', colspan: String(m.concepts.length + 1) }, Texts.compare.noDifferences)));
+  // Verträglichkeit je Konzept, sobald die Matrix Paare enthält
+  const consRow = m.constraints.length
+    ? h('tr', { class: 'cons-row' },
+      h('th', { scope: 'row' }, Texts.cons.compareRow),
+      ranked.map(({ figures: { concept: c } }) => {
+        const { excluded, conditional } = Consistency.conflicts(m, c);
+        return h('td', null,
+          excluded.length
+            ? h('span', { class: 'cons-pill excluded' }, `⚠ ${Texts.cons.conflictCount(excluded.length)}`)
+            : h('span', { class: 'cons-pill ok' }, `✓ ${Texts.cons.consistent}`),
+          conditional.length ? h('span', { class: 'cons-pill conditional' }, `! ${Texts.cons.conditionalCount(conditional.length)}`) : null,
+          [...excluded, ...conditional].map(x => h('small', { class: 'cons-pair', title: x.note || null }, pairLabel(x))));
+      }))
+    : null;
+  const body = h('tbody', null, consRow, noteRow, rows.length ? rows
+    : h('tr', null, h('td', { class: 'none', colspan: String(ranked.length + 1) }, Texts.compare.noDifferences)));
 
   const report = ranked.map(x => x.figures);
   /**

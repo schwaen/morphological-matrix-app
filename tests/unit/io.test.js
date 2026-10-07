@@ -26,11 +26,12 @@ test('CSV: BOM, Semikolon, Kategorien, Konzepte', () => {
   assert.ok(!csv.includes('Gesamtkosten'), 'ohne Bewertung keine Kennzahlen');
 });
 
-/** Beispiel ohne Notizen (für die Spaltenprüfung der Bewertung). */
+/** Beispiel ohne Notizen und Verträglichkeiten (für die Spaltenprüfung der Bewertung). */
 function withoutNotes() {
   const m = kaffeemaschine();
   m.parameters.forEach(p => { p.note = ''; p.options.forEach(o => { o.note = ''; }); });
   m.concepts.forEach(c => { c.note = ''; });
+  m.constraints = [];
   return m;
 }
 
@@ -60,6 +61,16 @@ test('CSV mit Notizen: Beschreibung, Notiz je Ausprägung und Begründung je Kon
   assert.match(csv, /"Kompakt-Espresso";.*;"Günstigster Einstieg[^"]*\nOffen: Lautstärke/);
   assert.match(csv, /"Smart Home";.*;""(\r\n|$)/);
   assert.doesNotMatch(IO.toCsv(withoutNotes()), /Notiz|Begründung/);
+});
+
+test('CSV mit Verträglichkeiten: Liste der Paare und Unverträglichkeiten je Konzept', () => {
+  const csv = IO.toCsv(kaffeemaschine());
+  assert.match(csv, /"Parameter";"Ausprägung";"Parameter";"Ausprägung";"Verträglichkeit";"Begründung der Verträglichkeit"\r\n/);
+  assert.match(csv, /"Wassererwärmung";"Induktion";"Energieversorgung";"Muskelkraft";"Unverträglich";"Induktion braucht elektrische Leistung"/);
+  assert.match(csv, /"Kaffeezufuhr";"Bohnen mit Mahlwerk";"Energieversorgung";"Muskelkraft";"Bedingt verträglich";"Nur mit Handmühle"/);
+  assert.match(csv, /;"Unverträglichkeiten";"Begründung"\r\n/);
+  assert.match(csv, /"Outdoor";.*;"Induktion ✕ Muskelkraft";"Für Camping/);
+  assert.match(csv, /"Smart Home";.*;"";""(\r\n|$)/);
 });
 
 test('CSV maskiert Anführungszeichen', () => {

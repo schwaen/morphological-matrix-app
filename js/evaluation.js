@@ -199,6 +199,9 @@ const Evaluation = (() => {
    * @typedef {{ selections?: Record<string, string>, skipped?: number, error?: string }} BuildResult
    */
 
+  /** Ob die Matrix unverträgliche Paare enthält. @param {Matrix} m */
+  const hasExclusions = m => m.constraints.some(c => c.type === 'excluded');
+
   /**
    * Je Parameter unabhängig wählen – exakt für Summenkriterien (Kosten, gewichteter Nutzwert).
    * @param {(o: MatrixOption) => boolean} filter
@@ -207,6 +210,11 @@ const Evaluation = (() => {
    */
   function separable(filter, key) {
     return m => {
+      if (hasExclusions(m)) {
+        // Mit Unverträglichkeiten ist die Wahl nicht mehr je Parameter unabhängig
+        const r = Consistency.optimize(m, p => p.options.filter(filter), (p, o) => key(m, o));
+        return { selections: r.selections, skipped: r.empty };
+      }
       /** @type {Record<string, string>} */
       const selections = {};
       let skipped = 0;
@@ -236,13 +244,26 @@ const Evaluation = (() => {
     // Kandidaten haben Kosten und Nutzwert (`?? 0` nur für die Typprüfung)
     /** @param {MatrixParameter} p @param {MatrixOption} o */
     const util = (p, o) => (weightOf(p) * clampScore(m, o.score ?? 0)) / W;
-    /** @param {(p: MatrixParameter, o: MatrixOption) => number} objective */
-    const solve = objective => m.parameters.map((p, i) => cands[i].reduce((best, o) => {
-      const d = objective(p, o) - objective(p, best);
-      return d < -1e-12 || (Math.abs(d) <= 1e-12 && util(p, o) > util(p, best)) ? o : best;
-    }));
-    /** @param {MatrixOption[]} xs */
-    const totals = xs => xs.reduce((t, o, i) => ({ C: t.C + (o.cost ?? 0), U: t.U + util(m.parameters[i], o) }), { C: 0, U: 0 });
+    /**
+     * Teilproblem min Σ objective; bei Gleichstand höherer Nutzwert. Mit Unverträglichkeiten
+     * exakt per Verzweigen und Begrenzen (Parameter ohne verträgliche Wahl bleiben leer).
+     * @param {(p: MatrixParameter, o: MatrixOption) => number} objective
+     * @returns {(MatrixOption | null)[]}
+     */
+    const solve = objective => {
+      if (hasExclusions(m)) {
+        const index = new Map(m.parameters.map((p, i) => [p.id, i]));
+        const { selections } = Consistency.optimize(m, p => cands[/** @type {number} */ (index.get(p.id))],
+          (p, o) => [objective(p, o), -util(p, o)]);
+        return m.parameters.map((p, i) => cands[i].find(o => o.id === selections[p.id]) || null);
+      }
+      return m.parameters.map((p, i) => cands[i].reduce((best, o) => {
+        const d = objective(p, o) - objective(p, best);
+        return d < -1e-12 || (Math.abs(d) <= 1e-12 && util(p, o) > util(p, best)) ? o : best;
+      }));
+    };
+    /** @param {(MatrixOption | null)[]} xs */
+    const totals = xs => xs.reduce((t, o, i) => (o ? { C: t.C + (o.cost ?? 0), U: t.U + util(m.parameters[i], o) } : t), { C: 0, U: 0 });
 
     // Start: höchster Nutzwert
     let x = solve((p, o) => -util(p, o));
@@ -256,7 +277,10 @@ const Evaluation = (() => {
       x = next;
       lambda = t.C / t.U;
     }
-    return { selections: Object.fromEntries(m.parameters.map((p, i) => [p.id, x[i].id])), skipped: 0 };
+    /** @type {Record<string, string>} */
+    const selections = {};
+    m.parameters.forEach((p, i) => { const o = x[i]; if (o) selections[p.id] = o.id; });
+    return { selections, skipped: m.parameters.length - Object.keys(selections).length };
   }
 
   /**

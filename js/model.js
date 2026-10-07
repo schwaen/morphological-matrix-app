@@ -25,13 +25,15 @@ const Model = (() => {
   const PRIORITIES = ['must', 'should', 'could', 'wont'];
   /** Schlüssel der Gruppe „Ohne Kategorie“ (z. B. für den Einklappzustand). */
   const NO_CATEGORY = '__none';
+  /** @type {MatrixConstraintType[]} */
+  const CONSTRAINT_TYPES = ['excluded', 'conditional'];
 
   /**
    * Aktuelle Version des Datenformats (gespeicherte Matrizen, JSON-Export, Teilen-Links).
    * Beschreibung: docs/DATENFORMAT.md. Bei inkompatiblen Änderungen erhöhen und in
    * MIGRATIONS eine Umwandlung von der Vorgängerversion ergänzen.
    */
-  const SCHEMA_VERSION = 4;
+  const SCHEMA_VERSION = 5;
 
   /**
    * Umwandlungen von Version n auf n + 1. Sie erhalten die Rohdaten und liefern Rohdaten;
@@ -54,6 +56,9 @@ const Model = (() => {
     // 3 → 4: optionale Notizen (`note`) je Ausprägung, Parameter und Konzept. Keine Umwandlung
     // nötig – die neue Version verhindert, dass ältere App-Versionen die Notizen verwerfen.
     3: data => data,
+    // 4 → 5: Verträglichkeiten zwischen Ausprägungen (`constraints`). Keine Umwandlung nötig –
+    // die neue Version verhindert, dass ältere App-Versionen sie verwerfen.
+    4: data => data,
   };
 
   /**
@@ -132,6 +137,7 @@ const Model = (() => {
       categories: [],
       parameters,
       concepts: [concept],
+      constraints: [],
       activeConceptId: concept.id,
     };
   }
@@ -207,6 +213,21 @@ const Model = (() => {
         selections,
       };
     });
+    // Verträglichkeiten: nur Paare aus vorhandenen Ausprägungen verschiedener Parameter, je Paar einmal
+    const owner = new Map(parameters.flatMap(p => p.options.map(o => [o.id, p.id])));
+    const pairs = new Set();
+    /** @type {MatrixConstraint[]} */
+    const constraints = [];
+    for (const x of Array.isArray(data.constraints) ? data.constraints : []) {
+      const a = str(x && x.a);
+      const b = str(x && x.b);
+      if (!owner.has(a) || !owner.has(b) || owner.get(a) === owner.get(b)) continue;
+      if (!CONSTRAINT_TYPES.includes(x.type)) continue;
+      const k = a < b ? `${a}|${b}` : `${b}|${a}`;
+      if (pairs.has(k)) continue;
+      pairs.add(k);
+      constraints.push({ a: a < b ? a : b, b: a < b ? b : a, type: x.type, note: str(x.note) });
+    }
     const activeConceptId = concepts.some(c => c.id === data.activeConceptId)
       ? data.activeConceptId
       : (concepts[0] ? concepts[0].id : null);
@@ -218,6 +239,7 @@ const Model = (() => {
       categories,
       parameters: sortedByCategory(categories, parameters),
       concepts,
+      constraints,
       activeConceptId,
     };
   }

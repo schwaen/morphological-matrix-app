@@ -15,6 +15,7 @@ const ICONS = {
   plus: 'M12 5v14M5 12h14',
   copy: 'M9 9h10v10H9zM5 15V5h10',
   note: 'M5 4h14v11l-5 5H5zM14 20v-5h5M8.5 9h7M8.5 12.5h4',
+  ban: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M5.6 5.6l12.8 12.8',
 };
 
 /**

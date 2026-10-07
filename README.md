@@ -21,6 +21,13 @@ python3 -m http.server 8000
   - **Linien:** *Aktives* (Standard) zeigt nur das aktive Konzept deutlich, die übrigen dezent; *Alle* zeigt alle gleich deutlich; *Aus* blendet die Linien aus. Beim Darüberfahren über ein Konzept wird dessen Linie hervorgehoben.
   - Die Konzeptfarben stammen aus einer auf Farbsehschwächen geprüften Farbreihe; im dunklen Farbschema werden sie in einer passenden dunklen Stufe angezeigt (gespeichert bleibt die helle Farbe). Bestehende Matrizen behalten ihre Farben.
 - Konzepte anlegen, duplizieren, umbenennen, umfärben, zufällig befüllen.
+- **Verträglichkeiten zwischen Ausprägungen** (Konsistenzprüfung nach Zwicky/Ritchey): Paare von Ausprägungen verschiedener Parameter lassen sich als *unverträglich* oder *bedingt verträglich* (mit Begründung) kennzeichnen; alle übrigen gelten als verträglich.
+  - **Pflege direkt an der Ausprägung** (Bearbeiten-Modus): Knopf ⊘ in der Werkzeugleiste der Zelle bzw. der Zähler „⊘ n / ! n“ öffnet eine Liste aller Ausprägungen der anderen Parameter mit den Schaltern ✓ / ! / ✕ und einem Feld für die Begründung. Ein Paar gilt in beide Richtungen.
+  - **Verträglichkeitsmatrix** (**Datei → Verträglichkeiten …** oder Knopf unter der Matrix): alle Paare als Dreiecksmatrix; ein Klick wechselt verträglich → bedingt → unverträglich, rechts stehen Begründung und betroffene Konzepte.
+  - **Im Kombinieren-Modus:** Gewählte Ausprägungen, die sich widersprechen, sind rot als „Konflikt“ markiert. Ausprägungen, die nicht zur Auswahl des aktiven Konzepts passen, erscheinen schraffiert und durchgestrichen (✕), bedingt verträgliche mit „!“ – wählbar bleiben sie trotzdem (z. B. für Negativ-Konzepte). Beim Überfahren nennt ein Hinweis Partner und Begründung.
+  - Die Kennzahl zeigt zusätzlich, wie viele Kombinationen **widerspruchsfrei** sind; Konzepte mit Konflikt tragen in der Liste „⚠ n“; die Zusammenfassung listet Konflikte und bedingte Paare mit Begründung.
+  - **Konzeptvergleich:** Zeile „Verträglichkeit“ (widerspruchsfrei bzw. Konflikte) und Schalter „Konzepte mit Konflikt ausblenden“.
+  - **Automatische Konzepte** und **Zufällig** erzeugen nur widerspruchsfreie Kombinationen (die Optimierung bleibt exakt); der CSV-Export enthält die Liste der Paare und die Unverträglichkeiten je Konzept.
 - **Notizen und Begründungen:**
   - Im Bearbeiten-Modus lässt sich je Ausprägung eine **Notiz** und je Parameter eine **Beschreibung** erfassen (Notiz-Knopf in der Werkzeugleiste der Zelle; ein leeres Notizfeld verschwindet beim Verlassen wieder).
   - Im Kombinieren-Modus zeigt ein Symbol, dass es eine Notiz gibt; beim Überfahren erscheint sie in einem kleinen Fenster (für Screenreader als Beschreibung der Zelle).
@@ -43,7 +50,7 @@ python3 -m http.server 8000
 - Rückgängig / Wiederholen (`Strg+Z`, `Strg+Umschalt+Z`).
 - Automatisches Speichern im Browser (localStorage; beim Tippen nach einer kurzen Pause gebündelt, beim Verlassen eines Felds, Tab-Wechsel oder Schließen sofort), beliebig viele Matrizen unter **Datei → Meine Matrizen**.
 - **Backup und Wiederherstellung** in „Meine Matrizen“: *Backup herunterladen* speichert alle Matrizen als ZIP-Archiv mit je einer JSON-Datei (jede einzeln wie mit „Als JSON speichern“ nutzbar). *Backup wiederherstellen* liest ein solches Archiv oder einzelne JSON-Dateien ein – ohne Datenverlust: neue Matrizen werden hinzugefügt, identische übersprungen, bei abweichendem Stand wird das Backup als Kopie „(aus Backup)“ angelegt.
-- **Beispiele:** Mitgelieferte Beispiele lassen sich über **Datei → Beispiele …** oder **+ → Beispiel öffnen …** auswählen und öffnen sich als eigene Matrix in einem neuen Tab – derzeit *Kaffeemaschine* (Produktentwicklung mit Kosten und Nutzwerten), *Skill-Matrix Frontend-Team* (Kompetenzen von Mitarbeitenden: Skills als Parameter, Stufen 0–3 als Ausprägungen, Personen als Konzepte), *Firmen-Event planen* (Event-Varianten nach Gesamtkosten und Zufriedenheit 0–5) und *Elektro-Lastenrad* (umfangreich: 30 Parameter, 115 Ausprägungen, 7 Konzepte – gut zum Testen großer Matrizen). Jedes Beispiel steht in einer eigenen Datei unter `examples/` – siehe [`examples/README.md`](examples/README.md).
+- **Beispiele:** Mitgelieferte Beispiele lassen sich über **Datei → Beispiele …** oder **+ → Beispiel öffnen …** auswählen und öffnen sich als eigene Matrix in einem neuen Tab – derzeit *Kaffeemaschine* (Produktentwicklung mit Kosten, Nutzwerten, Notizen und Verträglichkeiten), *Skill-Matrix Frontend-Team* (Kompetenzen von Mitarbeitenden: Skills als Parameter, Stufen 0–3 als Ausprägungen, Personen als Konzepte), *Firmen-Event planen* (Event-Varianten nach Gesamtkosten und Zufriedenheit 0–5) und *Elektro-Lastenrad* (umfangreich: 30 Parameter, 115 Ausprägungen, 7 Konzepte – gut zum Testen großer Matrizen). Jedes Beispiel steht in einer eigenen Datei unter `examples/` – siehe [`examples/README.md`](examples/README.md).
 - **Tabs in der App:** Mehrere Matrizen sind gleichzeitig in Tabs in der Kopfzeile geöffnet. Jeder Tab behält Ansicht (Modus, Konzeptvergleich mit Darstellung, „Nur Unterschiede“ und Sortierung, eingeklappte Kategorien), Rückgängig-Verlauf und Scroll-Position. Über **+** lassen sich eine neue leere Matrix, ein Beispiel, ein JSON-Import, eine Matrix aus „Meine Matrizen“ oder ein zuletzt geschlossener Tab öffnen. Doppelklick auf den aktiven Tab benennt die Matrix um; Tabs lassen sich per Ziehen umsortieren und mit × oder der mittleren Maustaste schließen (die Matrix bleibt gespeichert). Geöffnete Tabs werden nach dem Neuladen wiederhergestellt; eine bereits geöffnete Matrix wird nicht doppelt geöffnet.
 - **Mehrere Browser-Tabs:** Weiterhin möglich – jeder Browser-Tab hat seine eigenen App-Tabs. Ändert ein anderer Browser-Tab eine hier geöffnete Matrix, wird sie übernommen; inaktive Tabs werden dabei mit einem Punkt markiert.
 - Export als JSON (`Strg+S`) und CSV (Excel-kompatibel), Import von JSON.
@@ -62,6 +69,7 @@ python3 -m http.server 8000
 | `js/texts.js` | `Texts` (Texte der aktiven Sprache) und `Languages` (Sprachwahl) |
 | `js/util.js` | `Util` – Zahlen, Texte, Kodierung (ohne DOM) |
 | `js/model.js` | `Model` – Datenmodell, Normalisierung, Abfragen (ohne DOM) |
+| `js/consistency.js` | `Consistency` – Verträglichkeiten: Konflikte, widerspruchsfreie Kombinationen zählen, Optimierung und Zufall unter Beachtung unverträglicher Paare (ohne DOM) |
 | `js/evaluation.js` | `Evaluation` – Kosten, Nutzwert, Preis-Leistung, Prioritätsprofil, Kennzahlenbericht, automatische Konzepte (ohne DOM) |
 | `js/ops.js` | `Ops` – strukturelle Änderungen an einer Matrix: Parameter, Ausprägungen, Kategorien, Konzepte (ohne DOM) |
 | `js/io.js` | `IO` – JSON, CSV, Teilen-Links, Backup (ohne DOM) |
@@ -69,7 +77,7 @@ python3 -m http.server 8000
 | `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, geöffnete Tabs, Einstellungen pro Browser-Tab) |
 | `js/examples.js` | `Examples` – Verzeichnis der mitgelieferten Beispiele |
 | `examples/` | Mitgelieferte Beispiele, je Beispiel eine Datei (Anleitung in `examples/README.md`) |
-| `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `tabs` (App-Tabs), `actions`, `render-matrix`, `render-panels`, `render-chart` (Verlauf), `search` (Suche), `notes` (Notizen), `lines`, `dialogs`, `main` (Start) |
+| `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `tabs` (App-Tabs), `actions`, `render-matrix`, `render-panels`, `render-chart` (Verlauf), `search` (Suche), `notes` (Notizen), `constraints` (Verträglichkeiten), `lines`, `dialogs`, `main` (Start) |
 | `types.d.ts` | Typen des Datenmodells (nur Entwicklung) |
 | `docs/DATENFORMAT.md` | Datenformat (JSON, Speicherung, Teilen-Links), Versionen und Migrationen |
 | `tests/unit/` | Unit-Tests der Logik (`node:test`) |

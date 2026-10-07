@@ -4,11 +4,12 @@ import { loadApp, plain } from './load.js';
 
 const { Model, Evaluation, example: kaffeemaschine } = loadApp();
 
-/** Beispielmatrix mit aktivierter Bewertung. */
+/** Beispielmatrix mit aktivierter Bewertung, ohne Verträglichkeiten. */
 function example() {
   const m = kaffeemaschine();
   m.settings.costs = true;
   m.settings.utility = true;
+  m.constraints = []; // Verträglichkeiten prüft tests/unit/consistency.test.js
   return m;
 }
 

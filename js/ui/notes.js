@@ -1,6 +1,7 @@
 /*
  * Notizen: Eingabefelder für Notizen an Ausprägungen und Beschreibungen an Parametern
- * (Bearbeiten-Modus) und das Popover, das sie im Modus „Kombinieren“ beim Überfahren zeigt.
+ * (Bearbeiten-Modus) und das Popover, das sie im Modus „Kombinieren“ beim Überfahren zeigt –
+ * zusammen mit Hinweisen zur Verträglichkeit.
  * Die Begründung je Konzept steht in der Zusammenfassung (render-panels.js).
  */
 'use strict';
@@ -64,10 +65,17 @@ const noteMark = () => h('span', { class: 'note-ico', 'aria-hidden': 'true' }, i
 
 // ---------- Popover beim Überfahren ----------
 
-/** Zeigt die Notiz von `el` (Attribute `data-note` und `data-note-label`) unter dem Element. @param {HTMLElement} el */
+/**
+ * Zeigt unter dem Element den Hinweis zur Verträglichkeit (`data-cons`, `data-cons-label`,
+ * `data-cons-type`) und die Notiz (`data-note`, `data-note-label`).
+ * @param {HTMLElement} el
+ */
 function showNotePop(el) {
   const pop = $('#notePop');
-  replaceWith(pop, h('strong', null, el.dataset.noteLabel), el.dataset.note);
+  const d = el.dataset;
+  replaceWith(pop,
+    d.cons ? h('div', { class: `pop-cons ${d.consType}` }, h('strong', null, d.consLabel), d.cons) : null,
+    d.note ? h('div', null, h('strong', null, d.noteLabel), d.note) : null);
   pop.hidden = false;
   const r = el.getBoundingClientRect();
   const below = r.bottom + 6 + pop.offsetHeight <= window.innerHeight;
@@ -82,7 +90,7 @@ function hideNotePop() {
 function initNotePop() {
   const matrix = $('#matrix');
   /** @param {Event} e */
-  const target = e => /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest('[data-note]'));
+  const target = e => /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest('[data-note], [data-cons]'));
   const show = e => { const el = target(e); if (el && prefs.mode === 'select') showNotePop(el); };
   const hide = e => { const el = target(e); if (el && !el.contains(/** @type {Node | null} */ (e.relatedTarget))) hideNotePop(); };
   matrix.addEventListener('mouseover', show);

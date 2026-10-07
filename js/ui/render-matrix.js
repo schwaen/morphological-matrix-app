@@ -23,7 +23,13 @@ function renderMatrix() {
 
   const found = searchResult();
   matrix.classList.toggle('is-searching', !!found);
-  const ctx = { editing, cols, active: activeConcept(), showBands: state.categories.length > 0, found };
+  const active = activeConcept();
+  const ctx = {
+    editing, cols, active, showBands: state.categories.length > 0, found,
+    // Verträglichkeiten zur Auswahl des aktiven Konzepts (nur im Modus „Kombinieren“)
+    status: editing ? new Map() : Consistency.statusFor(state, active),
+    clash: editing || !active ? [] : Consistency.conflicts(state, active).excluded,
+  };
   for (const group of Model.categoryGroups(state)) {
     const cid = group.cat ? group.cat.id : null;
     if (ctx.showBands) cells.push(renderBand(group, editing, ctx.active, found));
@@ -38,7 +44,8 @@ function renderMatrix() {
 /**
  * Alle Gitterzellen einer Parameterzeile (Kopf, Ausprägungen, Plus-Knopf, Füllzellen).
  * @param {MatrixParameter} p @param {number} pi
- * @param {{ editing: boolean, cols: number, active: MatrixConcept | null, showBands: boolean, found: ReturnType<typeof Model.search> | null }} ctx
+ * @param {{ editing: boolean, cols: number, active: MatrixConcept | null, showBands: boolean, found: ReturnType<typeof Model.search> | null,
+ *           status: ReturnType<typeof Consistency.statusFor>, clash: MatrixConstraint[] }} ctx
  */
 function renderParameterRow(p, pi, ctx) {
   const head = ctx.editing ? renderParameterEdit(p, pi, ctx.showBands) : renderParameterView(p, pi);
@@ -46,7 +53,7 @@ function renderParameterRow(p, pi, ctx) {
   head.className += searchClass(ctx.found, p.id, null);
   const cells = [head];
   p.options.forEach((o, oi) => {
-    const cell = ctx.editing ? renderOptionEdit(p, pi, o, oi) : renderOptionPick(p, o, oi, ctx.active);
+    const cell = ctx.editing ? renderOptionEdit(p, pi, o, oi) : renderOptionPick(p, o, oi, ctx);
     cell.dataset.oid = o.id;
     cell.className += searchClass(ctx.found, p.id, o.id);
     cells.push(cell);
@@ -149,12 +156,13 @@ function renderOptionEdit(p, pi, o, oi) {
   const optLabel = o.text.trim() || Texts.fallback.option(oi + 1);
   const { costs, utility, currency, utilityMax, moscow } = state.settings;
   return h('div', { class: 'opt-cell edit' },
-    h('div', { class: 'opt-main' }, ta),
+    h('div', { class: 'opt-main' }, ta, constraintCount(o)),
     showNote(o, o.id)
       ? noteField(o, o.id, { cls: 'opt-note', placeholder: Texts.notes.placeholder, label: Texts.notes.label(optLabel) })
       : null,
     h('div', { class: 'opt-tools' },
       noteButton(o, o.id, [Texts.notes.add, Texts.notes.edit]),
+      constraintButton(o),
       iconBtn('left', Texts.matrix.moveLeft, () => moveOption(p.id, oi, -1), { disabled: oi === 0 }),
       iconBtn('right', Texts.matrix.moveRight, () => moveOption(p.id, oi, 1), { disabled: oi === p.options.length - 1 }),
       iconBtn('x', Texts.matrix.deleteOption, () => deleteOption(p.id, o.id), { danger: true })),
@@ -201,26 +209,41 @@ function priorityBadge(o) {
   return h('span', { class: `prio prio-${o.priority}`, title: o.priority === 'wont' ? Texts.moscow.wontHint : label }, short);
 }
 
-function renderOptionPick(p, o, oi, active) {
+/**
+ * @param {MatrixParameter} p @param {MatrixOption} o @param {number} oi
+ * @param {{ active: MatrixConcept | null, status: ReturnType<typeof Consistency.statusFor>, clash: MatrixConstraint[] }} ctx
+ */
+function renderOptionPick(p, o, oi, { active, status, clash }) {
   const selectedBy = state.concepts.filter(c => c.selections[p.id] === o.id);
   const isActive = !!active && active.selections[p.id] === o.id;
+  // Verträglichkeit: Konflikt der gewählten Ausprägung bzw. Hinweis für nicht gewählte
+  const conflict = isActive ? clash.filter(c => c.a === o.id || c.b === o.id) : [];
+  const st = isActive ? null : status.get(o.id) || null;
+  const cons = conflict.length ? conflictText(o.id, conflict) : (st ? statusText(st) : null);
   const metrics = optionMetricsText(o);
   const badge = priorityBadge(o);
   const text = o.text.trim() || Texts.fallback.emptyOption(oi + 1);
   return h('button', {
     type: 'button',
-    class: `opt-cell pick${isActive ? ' is-active' : ''}${o.text.trim() ? '' : ' is-empty'}${state.settings.moscow && o.priority === 'wont' ? ' is-wont' : ''}`,
+    class: `opt-cell pick${isActive ? ' is-active' : ''}${o.text.trim() ? '' : ' is-empty'}${state.settings.moscow && o.priority === 'wont' ? ' is-wont' : ''}`
+      + `${conflict.length ? ' is-conflict' : ''}${st ? (st.type === 'excluded' ? ' is-blocked' : ' is-conditional') : ''}`,
     'aria-pressed': String(isActive),
     title: selectedBy.length ? Texts.matrix.selectedIn(selectedBy.map(Model.nameOrUnnamed).join(', ')) : null,
     style: isActive ? { '--c': shownColor(active.color) } : null,
-    dataset: { cell: `${p.id}:${o.id}`, ...(o.note ? { note: o.note, noteLabel: Texts.notes.title(text) } : {}) },
-    'aria-description': o.note || null,
+    dataset: {
+      cell: `${p.id}:${o.id}`,
+      ...(o.note ? { note: o.note, noteLabel: Texts.notes.title(text) } : {}),
+      ...(cons ? { cons: cons.text, consLabel: cons.label, consType: cons.type } : {}),
+    },
+    'aria-description': [cons && `${cons.label}: ${cons.text}`, o.note].filter(Boolean).join(' – ') || null,
     onclick: () => toggleSelection(p.id, o.id),
   },
   h('span', { class: 'opt-label' },
     h('span', null, text),
     metrics || badge ? h('span', { class: 'opt-metrics-view' }, badge, metrics) : null),
   o.note ? noteMark() : null,
+  conflict.length ? h('span', { class: 'cons-badge', 'aria-hidden': 'true' }, Texts.cons.conflictBadge) : null,
+  st ? h('span', { class: `cons-ico ${st.type}`, 'aria-hidden': 'true' }, st.type === 'excluded' ? '✕' : '!') : null,
   selectedBy.length
     ? h('span', { class: 'markers', 'aria-hidden': 'true' },
       selectedBy.map(c => h('span', { class: 'marker', style: { '--c': shownColor(c.color) } })))

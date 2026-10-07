@@ -132,7 +132,7 @@ test('Priorität (MoSCoW): gültige Werte bleiben, ungültige werden verworfen',
 test('Datenformat: Version 2 wird ohne Verlust auf die aktuelle Version gebracht', () => {
   const v2 = { version: 2, settings: { costs: true }, parameters: [{ id: 'p', options: [{ id: 'o', text: 'x', cost: 5 }] }] };
   const m = Model.normalize(v2);
-  assert.equal(m.version, 4);
+  assert.equal(m.version, Model.SCHEMA_VERSION);
   assert.equal(m.settings.costs, true);
   assert.equal(m.settings.moscow, false);
   assert.equal(m.parameters[0].options[0].cost, 5);
@@ -143,7 +143,7 @@ test('Datenformat: Version 2 wird ohne Verlust auf die aktuelle Version gebracht
 test('Notizen: Version 3 ohne Notizen wird übernommen, Notizen bleiben beim Normalisieren erhalten', () => {
   const v3 = { version: 3, parameters: [{ id: 'p', options: [{ id: 'o', text: 'x' }] }], concepts: [{ id: 'c', selections: {} }] };
   const m = Model.normalize(v3);
-  assert.equal(m.version, 4);
+  assert.equal(m.version, Model.SCHEMA_VERSION);
   assert.deepEqual([m.parameters[0].note, m.parameters[0].options[0].note, m.concepts[0].note], ['', '', '']);
   m.parameters[0].note = 'Beschreibung';
   m.parameters[0].options[0].note = 'Notiz';
