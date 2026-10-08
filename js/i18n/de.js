@@ -97,7 +97,7 @@ const TextsDe = (() => {
       constraintsButton: 'Verträglichkeiten …',
       constraintsTitle: 'Festlegen, welche Ausprägungen nicht zusammenpassen',
       constraintsHeading: 'Verträglichkeiten',
-      constraintsHint: 'Welche Ausprägungen passen nicht zusammen? Jedes Feld ist ein Paar aus zwei Parametern. Klick wechselt: verträglich → bedingt → unverträglich.',
+      constraintsHint: 'Welche Ausprägungen passen nicht zusammen? Jedes Feld ist ein Paar aus zwei Parametern. Ein Klick wählt ein Feld; Verträglichkeit und Begründung legen Sie rechts fest. Doppelklick oder Enter schaltet direkt weiter: verträglich → bedingt → unverträglich.',
       constraintsLegendOk: 'verträglich (Standard)',
       constraintsLegendConditional: 'bedingt verträglich',
       constraintsLegendExcluded: 'unverträglich',

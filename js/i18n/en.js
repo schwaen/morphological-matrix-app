@@ -92,7 +92,7 @@ const TextsEn = (() => {
       constraintsButton: 'Compatibility …',
       constraintsTitle: 'Define which options do not go together',
       constraintsHeading: 'Compatibility',
-      constraintsHint: 'Which options do not go together? Each cell is a pair from two parameters. Clicking cycles: compatible → conditional → incompatible.',
+      constraintsHint: 'Which options do not go together? Each cell is a pair from two parameters. Click a cell to select it and set its compatibility and reason on the right. Double-click or Enter cycles directly: compatible → conditional → incompatible.',
       constraintsLegendOk: 'compatible (default)',
       constraintsLegendConditional: 'conditionally compatible',
       constraintsLegendExcluded: 'incompatible',

@@ -69,18 +69,24 @@ test('Pflege an der Ausprägung: Popover, Begründung, Zähler, Rückgängig', a
   await expect(cell.locator('.cons-count')).toHaveText('⊘ 2');
 });
 
-test('Verträglichkeitsmatrix: Klick wechselt, Detailbereich, Löschen räumt auf', async ({ page }) => {
+test('Verträglichkeitsmatrix: Klick wählt, Doppelklick wechselt, Detailbereich, Löschen räumt auf', async ({ page }) => {
   await menu(page, 'constraints');
   const dlg = page.locator('#consDialog');
   await expect(dlg).toBeVisible();
   await expect(page.locator('#consSummary')).toHaveText('12 Paare festgelegt · 3.072 Kombinationen, davon widerspruchsfrei: 1.888');
   const pair = dlg.locator('[data-pair="p1o4|p5o4"]');
   await expect(pair).toHaveText('✕');
-  await pair.click(); // unverträglich → verträglich
+  await pair.click(); // nur auswählen
+  await expect(pair).toHaveText('✕');
+  await expect(pair).toHaveClass(/sel/);
+  await expect(dlg.locator('.cons-detail h3')).toHaveText('Muskelkraft ✕ Induktion');
+  await expect(dlg.locator('.cons-detail .cons-note')).toHaveValue('Induktion braucht elektrische Leistung');
+  await pair.dblclick(); // unverträglich → verträglich
   await expect(pair).toHaveText('');
   await expect(dlg.locator('.cons-detail')).toContainText('Betrifft: Outdoor');
-  await pair.click(); // → bedingt
+  await pair.dblclick(); // → bedingt; die Begründung kommt zurück
   await expect(pair).toHaveText('!');
+  await expect(dlg.locator('.cons-detail .cons-note')).toHaveValue('Induktion braucht elektrische Leistung');
   await dlg.locator('.cons-detail .cons-note').fill('Mit Generator möglich');
   await dlg.locator('.cons-detail .cons-note').press('Enter');
   await expect(page.locator('#consSummary')).toContainText('davon widerspruchsfrei: 1.932');
@@ -121,4 +127,33 @@ test('Verträglichkeitsmatrix: ein Tab-Stopp, Pfeiltasten, Enter schaltet, Tabel
   await page.keyboard.press(' ');
   await expect(grid.locator('td[data-pair="p1o2|p2o2"]')).toHaveText('✕');
   await expect(page.locator('#consDialog .cons-grid')).toHaveAttribute('data-marker', 'alt'); // nicht neu aufgebaut
+});
+
+test('Verträglichkeitsmatrix: Begründung eines bedingten Paars korrigieren, ohne es zu ändern', async ({ page }) => {
+  await menu(page, 'constraints');
+  const dlg = page.locator('#consDialog');
+  const pair = dlg.locator('[data-pair="p2o2|p5o3"]'); // Vibrationspumpe + Gaskartusche: bedingt
+  await expect(pair).toHaveText('!');
+  await pair.click();
+  await expect(pair).toHaveText('!');
+  const note = dlg.locator('.cons-detail .cons-note');
+  await expect(note).toHaveValue('Pumpe braucht zusätzlich einen kleinen Akku');
+  await note.click();
+  await note.press('End');
+  await page.keyboard.type(' (ca. 20 Wh)');
+  await note.press('Enter');
+  await expect(pair).toHaveText('!');
+  expect(await page.evaluate(() => Consistency.get(state, 'p2o2', 'p5o3'))).toEqual({
+    a: 'p2o2', b: 'p5o3', type: 'conditional', note: 'Pumpe braucht zusätzlich einen kleinen Akku (ca. 20 Wh)',
+  });
+
+  // Art über den Detailbereich ändern – die Begründung bleibt
+  await dlg.locator('.cons-detail').getByRole('button', { name: /^Unverträglich:/ }).click();
+  await expect(pair).toHaveText('✕');
+  await expect(note).toHaveValue('Pumpe braucht zusätzlich einen kleinen Akku (ca. 20 Wh)');
+  // Über „verträglich“ und zurück: Begründung bleibt erhalten
+  await dlg.locator('.cons-detail').getByRole('button', { name: /^Verträglich:/ }).click();
+  await expect(pair).toHaveText('');
+  await dlg.locator('.cons-detail').getByRole('button', { name: /^Bedingt verträglich:/ }).click();
+  await expect(note).toHaveValue('Pumpe braucht zusätzlich einen kleinen Akku (ca. 20 Wh)');
 });
