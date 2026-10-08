@@ -89,6 +89,13 @@ const TextsEn = (() => {
       compareChart: 'Profile',
       compareChartTitle: 'Concepts as a line across all parameters (parallel coordinates)',
       close: 'Close',
+      startTitle: 'Start & help',
+      appName: 'Morphological matrix',
+      appTagline: 'Structure solution spaces, build and compare concepts',
+      helpTabs: 'Help',
+      helpTabStart: 'Getting started',
+      helpTabKeys: 'Keyboard shortcuts',
+      helpTabAbout: 'About',
       constraintsButton: 'Compatibility …',
       constraintsTitle: 'Define which options do not go together',
       constraintsHeading: 'Compatibility',
@@ -326,6 +333,54 @@ const TextsEn = (() => {
       affectsNone: 'Affects no concept.',
       tooFew: 'Compatibility needs at least two parameters with options.',
       cellLabel: (a, b, state) => `“${a}” and “${b}”: ${state}`,
+    },
+
+    start: {
+      localHint: 'All data stays in this browser',
+      library: 'My matrices …',
+      recent: 'Recently edited',
+      help: 'Help & shortcuts',
+      about: 'About this app',
+    },
+
+    help: {
+      /** @type {Array<[string, string]>} */
+      steps: [
+        ['Edit', 'Add parameters (rows) and their options (cells); group large matrices into categories. Notes, evaluation and compatibility are optional.'],
+        ['Combine', 'Click one option per parameter to build a solution concept. Use “+ Concept” to add more concepts.'],
+        ['Compare', 'Compare concepts as a table or profile, sort them and export as JSON or CSV.'],
+      ],
+      more: 'The project README describes every feature.',
+      or: 'or',
+      /** @type {Array<[string, Array<[string, string[]]>]>} */
+      keyGroups: [
+        ['General', [
+          ['Save matrix as JSON', ['Ctrl+S']],
+          ['Undo', ['Ctrl+Z']],
+          ['Redo', ['Ctrl+Shift+Z', 'Ctrl+Y']],
+          ['Search the matrix', ['Ctrl+F']],
+          ['Close menu, search or popover', ['Esc']],
+        ]],
+        ['Search', [
+          ['Next / previous match', ['Enter', 'Shift+Enter']],
+          ['Browser search (second time in the search field)', ['Ctrl+F']],
+        ]],
+        ['Editing', [
+          ['Next option or add a new one', ['Enter']],
+          ['Line break in a field', ['Shift+Enter']],
+          ['Move option', ['Alt+←', 'Alt+→']],
+          ['Delete empty option', ['Backspace']],
+        ]],
+        ['Compatibility matrix', [
+          ['Move between cells', ['Arrow keys']],
+          ['Cycle compatibility', ['Enter', 'Space']],
+        ]],
+      ],
+      about: [
+        'A morphological matrix (Zwicky box) breaks a task down into parameters and their possible options. Choosing one option per parameter yields solution concepts that can be evaluated and compared.',
+        'The app runs entirely in the browser, without a server or sign-in. All matrices are stored only in this browser – “My matrices” offers a ZIP backup.',
+      ],
+      meta: version => `Data format ${version} · data stored only in this browser`,
     },
 
     notes: {

@@ -94,6 +94,13 @@ const TextsDe = (() => {
       compareChart: 'Verlauf',
       compareChartTitle: 'Konzepte als Linienzug über alle Parameter (Parallelkoordinaten)',
       close: 'Schließen',
+      startTitle: 'Start & Hilfe',
+      appName: 'Morphologische Matrix',
+      appTagline: 'Lösungsräume strukturieren, Konzepte bilden und vergleichen',
+      helpTabs: 'Hilfe',
+      helpTabStart: 'Erste Schritte',
+      helpTabKeys: 'Tastenkürzel',
+      helpTabAbout: 'Über',
       constraintsButton: 'Verträglichkeiten …',
       constraintsTitle: 'Festlegen, welche Ausprägungen nicht zusammenpassen',
       constraintsHeading: 'Verträglichkeiten',
@@ -339,6 +346,54 @@ const TextsDe = (() => {
       affectsNone: 'Betrifft kein Konzept.',
       tooFew: 'Für Verträglichkeiten braucht die Matrix mindestens zwei Parameter mit Ausprägungen.',
       cellLabel: (a, b, state) => `„${a}“ und „${b}“: ${state}`,
+    },
+
+    start: {
+      localHint: 'Alle Daten bleiben in diesem Browser',
+      library: 'Meine Matrizen …',
+      recent: 'Zuletzt bearbeitet',
+      help: 'Hilfe & Tastenkürzel',
+      about: 'Über die App',
+    },
+
+    help: {
+      /** @type {Array<[string, string]>} */
+      steps: [
+        ['Bearbeiten', 'Parameter (Zeilen) und ihre Ausprägungen (Zellen) anlegen, bei großen Matrizen in Kategorien gliedern. Notizen, Bewertung und Verträglichkeiten sind optional.'],
+        ['Kombinieren', 'Je Parameter eine Ausprägung anklicken – so entsteht ein Lösungskonzept. Mit „+ Konzept“ weitere Konzepte anlegen.'],
+        ['Vergleichen', 'Konzepte im Konzeptvergleich als Tabelle oder Verlauf gegenüberstellen, sortieren und als JSON oder CSV exportieren.'],
+      ],
+      more: 'Alle Funktionen beschreibt die README des Projekts.',
+      or: 'oder',
+      /** @type {Array<[string, Array<[string, string[]]>]>} */
+      keyGroups: [
+        ['Allgemein', [
+          ['Matrix als JSON speichern', ['Strg+S']],
+          ['Rückgängig', ['Strg+Z']],
+          ['Wiederholen', ['Strg+Umschalt+Z', 'Strg+Y']],
+          ['In der Matrix suchen', ['Strg+F']],
+          ['Menü, Suche oder Popover schließen', ['Esc']],
+        ]],
+        ['Suche', [
+          ['Nächster / vorheriger Treffer', ['Enter', 'Umschalt+Enter']],
+          ['Suche des Browsers (zweites Mal im Suchfeld)', ['Strg+F']],
+        ]],
+        ['Bearbeiten', [
+          ['Zur nächsten Ausprägung bzw. neue anlegen', ['Enter']],
+          ['Zeilenumbruch in einem Feld', ['Umschalt+Enter']],
+          ['Ausprägung verschieben', ['Alt+←', 'Alt+→']],
+          ['Leere Ausprägung löschen', ['Rücktaste']],
+        ]],
+        ['Verträglichkeitsmatrix', [
+          ['Feld wechseln', ['Pfeiltasten']],
+          ['Verträglichkeit weiterschalten', ['Enter', 'Leertaste']],
+        ]],
+      ],
+      about: [
+        'Die Morphologische Matrix (Zwicky-Box) zerlegt eine Aufgabe in Parameter und deren mögliche Ausprägungen. Aus je einer Ausprägung pro Parameter entstehen Lösungskonzepte, die sich bewerten und vergleichen lassen.',
+        'Die App läuft vollständig im Browser, ohne Server und ohne Anmeldung. Alle Matrizen werden nur lokal in diesem Browser gespeichert – für Sicherungen gibt es unter „Meine Matrizen“ ein Backup als ZIP-Archiv.',
+      ],
+      meta: version => `Datenformat ${version} · Daten nur lokal in diesem Browser`,
     },
 
     notes: {
