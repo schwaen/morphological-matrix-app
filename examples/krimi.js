@@ -1,0 +1,228 @@
+/*
+ * Beispiel „Krimi plotten“.
+ * `data` hat dasselbe Format wie eine mit „Als JSON speichern“ exportierte Datei
+ * (siehe docs/DATENFORMAT.md). Anleitung für weitere Beispiele: examples/README.md
+ */
+Examples.register({
+  "id": "krimi",
+  "name": "Krimi plotten",
+  "description": "Kreatives Schreiben: Schauplatz, Figuren, Tat und Dramaturgie zu Krimi-Plots kombinieren. Ganz ohne Zahlen – Verträglichkeiten sichern die Logik der Geschichte (keine KI im Mittelalter), Notizen sammeln Ideen, „Zufällig“ wird zum Plot-Generator.",
+  "data": {
+    "version": 5,
+    "title": "Beispiel: Krimi plotten",
+    "description": "Baukasten für einen Kriminalroman. Unverträgliche Paare verhindern Logikfehler, bedingte Paare geben Hinweise fürs Schreiben. Tipp: Im Modus „Kombinieren“ eine zufällige Kombination erzeugen und daraus einen Plot entwickeln.",
+    "settings": { "costs":  false, "utility":  false, "currency":  "EUR", "utilityMax":  10, "moscow":  false },
+    "categories": [
+      { "id":  "k1", "name":  "Welt", "color":  "#4f46e5" },
+      { "id":  "k2", "name":  "Figuren", "color":  "#0891b2" },
+      { "id":  "k3", "name":  "Verbrechen", "color":  "#d97706" },
+      { "id":  "k4", "name":  "Dramaturgie", "color":  "#059669" }
+    ],
+    "parameters": [
+      {
+        "id": "p1",
+        "name": "Schauplatz",
+        "weight": 1,
+        "categoryId": "k1",
+        "options": [
+          { "id":  "p1o1", "text":  "Nordseeinsel im Herbststurm", "cost":  null, "score":  null, "priority":  null, "note":  "Abgeschnitten vom Festland – klassischer geschlossener Kreis von Verdächtigen." },
+          { "id":  "p1o2", "text":  "Wiener Kaffeehaus", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p1o3", "text":  "Kloster in den Alpen", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p1o4", "text":  "Raumstation im Orbit", "cost":  null, "score":  null, "priority":  null, "note":  "Niemand kann gehen, niemand kann kommen – wie die Insel, nur kälter." },
+          { "id":  "p1o5", "text":  "Techno-Club in Berlin", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p1o6", "text":  "Weingut an der Mosel", "cost":  null, "score":  null, "priority":  null }
+        ]
+      },
+      {
+        "id": "p2",
+        "name": "Epoche",
+        "weight": 1,
+        "categoryId": "k1",
+        "options": [
+          { "id":  "p2o1", "text":  "Spätmittelalter (um 1350)", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p2o2", "text":  "Goldene Zwanziger", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p2o3", "text":  "Nachkriegszeit (1950er)", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p2o4", "text":  "Gegenwart", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p2o5", "text":  "Nahe Zukunft (2080)", "cost":  null, "score":  null, "priority":  null }
+        ]
+      },
+      {
+        "id": "p3",
+        "name": "Ermittler/in",
+        "note": "Braucht eine persönliche Schwäche, die im Fall eine Rolle spielt.",
+        "weight": 1,
+        "categoryId": "k2",
+        "options": [
+          { "id":  "p3o1", "text":  "Kommissarin kurz vor der Pension", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p3o2", "text":  "Pathologe mit Hang zur Philosophie", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p3o3", "text":  "Vorsitzende des Strickclubs", "cost":  null, "score":  null, "priority":  null, "note":  "Hobbydetektivin im Stil von Miss Marple – unterschätzt und neugierig." },
+          { "id":  "p3o4", "text":  "Mönch mit kriminalistischem Gespür", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p3o5", "text":  "KI-Assistenzsystem", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p3o6", "text":  "Journalistin im Ruhestand", "cost":  null, "score":  null, "priority":  null }
+        ]
+      },
+      {
+        "id": "p4",
+        "name": "Opfer",
+        "weight": 1,
+        "categoryId": "k2",
+        "options": [
+          { "id":  "p4o1", "text":  "Erbe einer Brauerei-Dynastie", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p4o2", "text":  "Influencerin", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p4o3", "text":  "Bürgermeister", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p4o4", "text":  "Abt", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p4o5", "text":  "Sternekoch", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p4o6", "text":  "Star-DJ", "cost":  null, "score":  null, "priority":  null }
+        ]
+      },
+      {
+        "id": "p5",
+        "name": "Täter/in",
+        "note": "Fair-Play-Regel: Die Täterfigur muss früh auftreten.",
+        "weight": 1,
+        "categoryId": "k2",
+        "options": [
+          { "id":  "p5o1", "text":  "Die treue Haushälterin", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p5o2", "text":  "Der Zwillingsbruder", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p5o3", "text":  "Die Geschäftspartnerin", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p5o4", "text":  "Das scheinbar zweite Opfer", "cost":  null, "score":  null, "priority":  null, "note":  "Täuscht den eigenen Tod oder einen Anschlag auf sich vor." },
+          { "id":  "p5o5", "text":  "Der Erzähler selbst", "cost":  null, "score":  null, "priority":  null }
+        ]
+      },
+      {
+        "id": "p6",
+        "name": "Motiv",
+        "weight": 1,
+        "categoryId": "k3",
+        "options": [
+          { "id":  "p6o1", "text":  "Erbschaft", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p6o2", "text":  "Rache für altes Unrecht", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p6o3", "text":  "Eifersucht", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p6o4", "text":  "Vertuschung eines Betrugs", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p6o5", "text":  "Schutz eines Geheimnisses", "cost":  null, "score":  null, "priority":  null }
+        ]
+      },
+      {
+        "id": "p7",
+        "name": "Tatwaffe",
+        "weight": 1,
+        "categoryId": "k3",
+        "options": [
+          { "id":  "p7o1", "text":  "Gift", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p7o2", "text":  "Kerzenleuchter", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p7o3", "text":  "Manipulierte Technik", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p7o4", "text":  "Eiszapfen", "cost":  null, "score":  null, "priority":  null, "note":  "Die Waffe schmilzt – und mit ihr der wichtigste Beweis." },
+          { "id":  "p7o5", "text":  "Armbrust", "cost":  null, "score":  null, "priority":  null }
+        ]
+      },
+      {
+        "id": "p8",
+        "name": "Falsche Fährte",
+        "weight": 1,
+        "categoryId": "k3",
+        "options": [
+          { "id":  "p8o1", "text":  "Gefälschtes Alibi", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p8o2", "text":  "Verschlossener Raum", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p8o3", "text":  "Vertauschte Identität", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p8o4", "text":  "Falscher Todeszeitpunkt", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p8o5", "text":  "Abschiedsbrief", "cost":  null, "score":  null, "priority":  null }
+        ]
+      },
+      {
+        "id": "p9",
+        "name": "Erzählperspektive",
+        "weight": 1,
+        "categoryId": "k4",
+        "options": [
+          { "id":  "p9o1", "text":  "Ich-Erzähler", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p9o2", "text":  "Einschübe aus Tätersicht", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p9o3", "text":  "Wechselnde Perspektiven", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p9o4", "text":  "Briefe & Tagebücher", "cost":  null, "score":  null, "priority":  null }
+        ]
+      },
+      {
+        "id": "p10",
+        "name": "Auflösung",
+        "weight": 1,
+        "categoryId": "k4",
+        "options": [
+          { "id":  "p10o1", "text":  "Große Versammlung im Salon", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p10o2", "text":  "Geständnis unter Druck", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p10o3", "text":  "Forensischer Beweis", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p10o4", "text":  "Offenes Ende", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p10o5", "text":  "Der Täter entkommt", "cost":  null, "score":  null, "priority":  null }
+        ]
+      },
+      {
+        "id": "p11",
+        "name": "Tonfall",
+        "weight": 1,
+        "categoryId": "k4",
+        "options": [
+          { "id":  "p11o1", "text":  "Cosy Crime", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p11o2", "text":  "Düster-psychologisch", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p11o3", "text":  "Humorvoll-skurril", "cost":  null, "score":  null, "priority":  null },
+          { "id":  "p11o4", "text":  "Hard-boiled", "cost":  null, "score":  null, "priority":  null }
+        ]
+      }
+    ],
+    "concepts": [
+      {
+        "id": "c1",
+        "name": "Inselkrimi klassisch",
+        "note": "Sturmflut schneidet die Insel ab; zwölf Verdächtige im Gasthof.\nWendepunkt: Der Todeszeitpunkt stimmt nicht, weil die Heizung manipuliert war.",
+        "color": "#2a78d6",
+        "selections": { "p1":  "p1o1", "p2":  "p2o4", "p3":  "p3o1", "p4":  "p4o1", "p5":  "p5o1", "p6":  "p6o1", "p7":  "p7o1", "p8":  "p8o4", "p9":  "p9o3", "p10":  "p10o1", "p11":  "p11o1" }
+      },
+      {
+        "id": "c2",
+        "name": "Schweigen im Kloster",
+        "note": "Hommage an „Der Name der Rose“: Ein verbotenes Buch, ein toter Abt und ein Mönch, der zu viele Fragen stellt.",
+        "color": "#eb6834",
+        "selections": { "p1":  "p1o3", "p2":  "p2o1", "p3":  "p3o4", "p4":  "p4o4", "p5":  "p5o4", "p6":  "p6o5", "p7":  "p7o1", "p8":  "p8o2", "p9":  "p9o4", "p10":  "p10o2", "p11":  "p11o2" }
+      },
+      {
+        "id": "c3",
+        "name": "Orbit-Noir",
+        "note": "Die Bord-KI erzählt – und verschweigt dabei das Wichtigste.",
+        "color": "#1baf7a",
+        "selections": { "p1":  "p1o4", "p2":  "p2o5", "p3":  "p3o5", "p4":  "p4o5", "p5":  "p5o5", "p6":  "p6o4", "p7":  "p7o3", "p8":  "p8o3", "p9":  "p9o1", "p10":  "p10o5", "p11":  "p11o4" }
+      },
+      {
+        "id": "c4",
+        "name": "Wiener Melange",
+        "note": "Mord zwischen Melange und Sachertorte; der Pathologe philosophiert, die Polizei verzweifelt.",
+        "color": "#eda100",
+        "selections": { "p1":  "p1o2", "p2":  "p2o2", "p3":  "p3o2", "p4":  "p4o3", "p5":  "p5o3", "p6":  "p6o3", "p7":  "p7o2", "p8":  "p8o1", "p9":  "p9o2", "p10":  "p10o3", "p11":  "p11o3" }
+      }
+    ],
+    "constraints": [
+      { "a":  "p1o4", "b":  "p2o1", "type":  "excluded", "note":  "Raumstationen gibt es erst seit 1971." },
+      { "a":  "p1o4", "b":  "p2o2", "type":  "excluded", "note":  "Raumstationen gibt es erst seit 1971." },
+      { "a":  "p1o4", "b":  "p2o3", "type":  "excluded", "note":  "Raumstationen gibt es erst seit 1971." },
+      { "a":  "p1o4", "b":  "p2o4", "type":  "conditional", "note":  "Nur als Szenario mit sehr wenigen Figuren an Bord." },
+      { "a":  "p1o5", "b":  "p2o1", "type":  "excluded", "note":  "Techno entsteht erst in den 1980ern." },
+      { "a":  "p1o5", "b":  "p2o2", "type":  "conditional", "note":  "Als Jazz-Club oder Varieté umdeuten." },
+      { "a":  "p1o5", "b":  "p2o3", "type":  "excluded", "note":  "Techno entsteht erst in den 1980ern." },
+      { "a":  "p2o1", "b":  "p3o5", "type":  "excluded", "note":  "Anachronismus." },
+      { "a":  "p2o2", "b":  "p3o5", "type":  "excluded", "note":  "Anachronismus." },
+      { "a":  "p2o3", "b":  "p3o5", "type":  "excluded", "note":  "Anachronismus." },
+      { "a":  "p2o4", "b":  "p3o5", "type":  "conditional", "note":  "Heutige KI ist eher Werkzeug als Ermittlerin – braucht eine menschliche Partnerfigur." },
+      { "a":  "p1o5", "b":  "p3o4", "type":  "conditional", "note":  "Reizvoller Fremdkörper – braucht einen guten Grund, warum er dort ist." },
+      { "a":  "p2o1", "b":  "p4o2", "type":  "excluded", "note":  "Influencer gibt es erst mit sozialen Medien." },
+      { "a":  "p2o2", "b":  "p4o2", "type":  "excluded", "note":  "Influencer gibt es erst mit sozialen Medien." },
+      { "a":  "p2o3", "b":  "p4o2", "type":  "excluded", "note":  "Influencer gibt es erst mit sozialen Medien." },
+      { "a":  "p2o1", "b":  "p4o6", "type":  "excluded", "note":  "Anachronismus." },
+      { "a":  "p2o1", "b":  "p7o3", "type":  "excluded", "note":  "Allenfalls Mechanik – dann besser „Armbrust“." },
+      { "a":  "p2o1", "b":  "p7o1", "type":  "conditional", "note":  "Nur pflanzliche Gifte wie Eisenhut oder Tollkirsche." },
+      { "a":  "p10o3", "b":  "p2o1", "type":  "excluded", "note":  "Spurensicherung gibt es erst seit etwa 1900." },
+      { "a":  "p10o3", "b":  "p2o2", "type":  "conditional", "note":  "Fingerabdrücke ja, DNA nein." },
+      { "a":  "p5o5", "b":  "p9o1", "type":  "conditional", "note":  "Der Klassiker (Agatha Christie, 1926) – fair bleiben: keine Lügen, nur Auslassungen." },
+      { "a":  "p5o5", "b":  "p9o3", "type":  "excluded", "note":  "Ohne festen Erzähler gibt es keinen Erzähler-Täter." },
+      { "a":  "p5o5", "b":  "p9o2", "type":  "excluded", "note":  "Verrät den Täter sofort." },
+      { "a":  "p10o5", "b":  "p11o1", "type":  "excluded", "note":  "Cosy Crime lebt davon, dass die Ordnung wiederhergestellt wird." },
+      { "a":  "p11o4", "b":  "p3o3", "type":  "conditional", "note":  "Reizvoller Bruch – oder unfreiwillig komisch." }
+    ],
+    "activeConceptId": "c1"
+  }
+});
