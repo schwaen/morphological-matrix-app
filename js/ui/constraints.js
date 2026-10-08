@@ -65,6 +65,31 @@ function conflictBox(c) {
       h('strong', null, `! ${Texts.cons.types.conditional}`), h('ul', null, conditional.map(line))) : null);
 }
 
+/**
+ * Begründungen von Paaren, die auf „verträglich“ gesetzt wurden – damit sie nicht verloren gehen,
+ * wenn das Paar (z. B. beim Durchschalten) wieder bedingt oder unverträglich wird.
+ * @type {Map<string, string>}
+ */
+const keptNotes = new Map();
+
+/**
+ * Verträglichkeit eines Paars setzen (mit Verlauf); merkt bzw. übernimmt die Begründung.
+ * @param {string} a @param {string} b @param {MatrixConstraintType | null} type
+ */
+function setPair(a, b, type) {
+  const k = Consistency.key(a, b);
+  mutate(m => {
+    const before = Consistency.get(m, a, b);
+    if (!type && before && before.note) keptNotes.set(k, before.note);
+    Ops.setConstraint(m, a, b, type);
+    const after = type ? Consistency.get(m, a, b) : null;
+    if (after && !after.note && keptNotes.has(k)) {
+      after.note = /** @type {string} */ (keptNotes.get(k));
+      keptNotes.delete(k);
+    }
+  });
+}
+
 // ---------- Pflege an der Ausprägung (Popover im Bearbeiten-Modus) ----------
 
 /** Ausprägung, deren Verträglichkeiten das Popover gerade zeigt, sonst `null`. @type {string | null} */
@@ -155,7 +180,7 @@ function renderConsPop() {
     return;
   }
   const others = state.parameters.map((p, pi) => ({ p, pi })).filter(({ p }) => p.id !== ref.p.id && p.options.length);
-  const set = (/** @type {string} */ other) => (/** @type {MatrixConstraintType | null} */ type) => mutate(m => Ops.setConstraint(m, oid, other, type));
+  const set = (/** @type {string} */ other) => (/** @type {MatrixConstraintType | null} */ type) => setPair(oid, other, type);
   rebuild(pop,
     h('div', { class: 'cons-pop-head' },
       h('div', null,
@@ -283,15 +308,24 @@ function updateConsGrid(table) {
   if (target) target.setAttribute('tabindex', '0');
 }
 
-/** Feld umschalten: verträglich → bedingt → unverträglich → verträglich. @param {HTMLElement} td */
+/** Feld umschalten (Doppelklick, Enter, Leertaste): verträglich → bedingt → unverträglich → verträglich. @param {HTMLElement} td */
 function cycleConsCell(td) {
   const { a, b } = /** @type {{ a: string, b: string }} */ (td.dataset);
   const c = Consistency.get(state, a, b);
   const next = !c ? 'conditional' : c.type === 'conditional' ? 'excluded' : null;
   consSelected = { a, b };
-  mutate(m => Ops.setConstraint(m, a, b, next));
+  setPair(a, b, next);
   const again = $(`#consBody td[data-pair="${CSS.escape(Consistency.key(a, b))}"]`);
   if (again) again.focus();
+}
+
+/** Feld auswählen (ohne es zu ändern): Details rechts zeigen. @param {HTMLElement} td */
+function selectConsCell(td) {
+  const { a, b } = /** @type {{ a: string, b: string }} */ (td.dataset);
+  consSelected = { a, b };
+  updateConsGrid(/** @type {HTMLElement} */ (td.closest('table')));
+  rebuild($('#consDetail'), consDetail());
+  td.focus();
 }
 
 /** Pfeiltasten: zum nächsten Feld in der Richtung (leere Bereiche werden übersprungen). @param {HTMLElement} td @param {string} dir */
@@ -311,9 +345,7 @@ function moveConsFocus(td, dir) {
     }
   }
   if (!target) return;
-  td.setAttribute('tabindex', '-1');
-  target.setAttribute('tabindex', '0');
-  target.focus();
+  selectConsCell(target);
 }
 
 /** Detailbereich zum gewählten Paar: Verträglichkeit, Begründung, betroffene Konzepte. */
@@ -328,7 +360,7 @@ function consDetail() {
   return h('div', { class: 'cons-detail' },
     h('h3', null, `${ra.text} ${c && c.type === 'excluded' ? '✕' : c ? '!' : '·'} ${rb.text}`),
     h('p', { class: 'cons-detail-params' }, `${ra.param} · ${rb.param}`),
-    constraintSwitch(a, b, type => mutate(m => Ops.setConstraint(m, a, b, type))),
+    constraintSwitch(a, b, type => setPair(a, b, type)),
     c ? h('label', { class: 'cons-detail-note' }, Texts.cons.noteHeading, constraintNote(c)) : null,
     h('p', { class: 'cons-detail-affects' },
       affected.length ? Texts.cons.affects(affected.map(x => Model.nameOrUnnamed(x)).join(', ')) : Texts.cons.affectsNone));
@@ -342,7 +374,12 @@ function refreshConstraintEditors() {
 
 function initConstraints() {
   const body = $('#consBody');
+  // Klick wählt aus (Änderung rechts im Detailbereich), Doppelklick schaltet direkt weiter
   body.addEventListener('click', e => {
+    const td = /** @type {HTMLElement} */ (e.target).closest('td[data-pair]');
+    if (td) selectConsCell(/** @type {HTMLElement} */ (td));
+  });
+  body.addEventListener('dblclick', e => {
     const td = /** @type {HTMLElement} */ (e.target).closest('td[data-pair]');
     if (td) cycleConsCell(/** @type {HTMLElement} */ (td));
   });
