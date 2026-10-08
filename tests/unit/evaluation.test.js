@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadApp, plain } from './load.js';
 
-const { Model, Evaluation, example: kaffeemaschine } = loadApp();
+const { Model, Evaluation, Ops, Texts, example: kaffeemaschine } = loadApp();
 
 /** Beispielmatrix mit aktivierter Bewertung, ohne Verträglichkeiten. */
 function example() {
@@ -275,4 +275,40 @@ test('rankConcepts: Unvollständige zuletzt, Gleichstand teilt den Rang, inaktiv
   assert.deepEqual(plain(ranked), [['c2', 1], ['c3', 1], ['c1', null]]);
   m.settings.costs = false;
   assert.ok(Evaluation.rankConcepts(m, Evaluation.conceptReport(m), 'cost').every(x => x.rank == null));
+});
+
+test('Beste Preis-Leistung: Fehlerfälle', () => {
+  const build = m => Evaluation.GENERATORS['best-value'].build(m);
+  const E = Texts.evaluation;
+  // Ohne Parameter
+  const empty = example();
+  empty.parameters = [];
+  assert.equal(build(empty).error, E.needsAllValues);
+  // Alle Gewichte 0
+  const noWeight = example();
+  for (const p of noWeight.parameters) p.weight = 0;
+  assert.equal(build(noWeight).error, E.zeroWeights);
+  // Alle Nutzwerte 0
+  const noScore = example();
+  for (const p of noScore.parameters) for (const o of p.options) o.score = 0;
+  assert.equal(build(noScore).error, E.allScoresZero);
+});
+
+test('Preis-Leistung eines Konzepts mit Nutzwert 0 ist nicht berechenbar', () => {
+  const m = example();
+  const c = m.concepts[0];
+  for (const p of m.parameters) for (const o of p.options) o.score = 0;
+  assert.deepEqual(plain(Evaluation.priceValue(m, c)), { value: null, reason: Texts.evaluation.zeroUtility });
+});
+
+test('Beste Preis-Leistung: Parameter ohne verträgliche Ausprägung bleibt leer', () => {
+  const m = example();
+  // Die einzige verbleibende Ausprägung des ersten Parameters schließt jede des zweiten aus
+  const [p1, p2] = m.parameters;
+  p1.options = p1.options.slice(0, 1);
+  for (const o of p2.options) Ops.setConstraint(m, p1.options[0].id, o.id, 'excluded');
+  const res = Evaluation.GENERATORS['best-value'].build(m);
+  assert.equal(res.skipped, 1);
+  assert.equal(Object.keys(res.selections).length, m.parameters.length - 1);
+  assert.equal(res.selections[p1.id] && res.selections[p2.id], undefined);
 });

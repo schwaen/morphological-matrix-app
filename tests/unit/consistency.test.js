@@ -172,3 +172,64 @@ test('countConsistent: Zwischenspeicher rechnet nach Änderungen neu', () => {
   Ops.deleteOption(m, 'p1', 'p1o2');
   assert.equal(Consistency.countConsistent(m), BigInt([...combinations(m)].filter(os => consistent(m, os)).length));
 });
+
+/** Matrix aus Parametern p0…p(n-1) mit je `k` Ausprägungen p{i}o{j}, ohne Paare. */
+const grid = (n, k) => Model.normalize({
+  version: Model.SCHEMA_VERSION,
+  parameters: Array.from({ length: n }, (_, i) => ({ id: `p${i}`, options: Array.from({ length: k }, (_, j) => ({ id: `p${i}o${j}` })) })),
+});
+
+test('partners: Paare je Ausprägung in beide Richtungen', () => {
+  const m = withPairs();
+  const map = Consistency.partners(m);
+  assert.deepEqual(plain(map.get('p1o4').map(x => x.other).sort()), ['p5o3', 'p5o4']);
+  assert.equal(map.get('p5o4').length, 7);
+  assert.equal(map.get('p1o3')[0].c.type, 'conditional');
+  assert.equal(map.has('p1o2'), false);
+});
+
+test('statusFor: ohne Konzept leer; „unverträglich“ hat Vorrang vor „bedingt“', () => {
+  const m = grid(3, 2);
+  assert.equal(Consistency.statusFor(m, null).size, 0);
+  const concept = { selections: { p0: 'p0o0', p1: 'p1o0' } };
+  // p2o0 ist mit der einen Wahl bedingt, mit der anderen nicht verträglich – in beiden Reihenfolgen
+  for (const order of [['conditional', 'excluded'], ['excluded', 'conditional']]) {
+    m.constraints = [];
+    Ops.setConstraint(m, 'p0o0', 'p2o0', order[0]);
+    Ops.setConstraint(m, 'p1o0', 'p2o0', order[1]);
+    const s = Consistency.statusFor(m, concept).get('p2o0');
+    assert.equal(s.type, 'excluded');
+    assert.equal(s.with, order[0] === 'excluded' ? 'p0o0' : 'p1o0');
+  }
+});
+
+test('optimize: auch mit kleinem Budget eine verträgliche Lösung', () => {
+  const m = withPairs();
+  const all = [...combinations(m)].filter(os => consistent(m, os));
+  const keyOf = (p, o) => [-o.cost];
+  const full = Consistency.optimize(m, p => p.options, keyOf);
+  const quick = Consistency.optimize(m, p => p.options, keyOf, 0);
+  const cost = s => m.parameters.reduce((t, p) => t + p.options.find(o => o.id === s[p.id]).cost, 0);
+  const asList = s => m.parameters.map(p => p.options.find(o => o.id === s[p.id]));
+  assert.equal(cost(full.selections), Math.max(...all.map(os => os.reduce((t, o) => t + o.cost, 0))));
+  assert.equal(quick.empty, 0);
+  assert.ok(consistent(m, asList(quick.selections)));
+  assert.ok(cost(quick.selections) <= cost(full.selections));
+});
+
+test('randomCombination: ohne verträgliche Lösung bleiben Parameter leer', () => {
+  const m = grid(2, 1);
+  Ops.setConstraint(m, 'p0o0', 'p1o0', 'excluded');
+  assert.deepEqual(plain(Consistency.randomCombination(m, Math.random)), { p0: 'p0o0' });
+});
+
+test('randomCombination: bricht eine aussichtslose Suche ab und wählt der Reihe nach', () => {
+  // Jede Ausprägung des letzten Parameters schließt jede des ersten aus: Die Suche müsste
+  // 3¹⁰ Teillösungen prüfen und endet nach der Schrittgrenze im Rückfall.
+  const m = grid(12, 3);
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) Ops.setConstraint(m, `p0o${i}`, `p11o${j}`, 'excluded');
+  const sel = Consistency.randomCombination(m, () => 0.5);
+  assert.equal(Object.keys(sel).length, 11);
+  assert.equal(sel.p11, undefined);
+  assert.equal(Consistency.conflicts(m, { selections: sel }).excluded.length, 0);
+});

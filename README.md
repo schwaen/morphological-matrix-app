@@ -101,6 +101,7 @@ npx playwright install chromium  # Browser für die Tests (einmalig)
 npm run lint        # ESLint
 npm run typecheck   # Typprüfung des JavaScript per JSDoc (tsc, ohne Build)
 npm run test:unit   # Unit-Tests der Logik (node:test, ohne Browser)
+npm run coverage    # Unit-Tests mit Abdeckungsbericht je Datei
 npm run test:e2e    # Browser-Tests (Playwright) gegen index.html per file://
 npm test            # alles zusammen
 ```
@@ -108,5 +109,5 @@ npm test            # alles zusammen
 - **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). Die Skripte nutzen diese Typen über JSDoc-Kommentare; `tsc` prüft auch die Bezüge zwischen den Dateien.
 - **Typprüfung in zwei Stufen:** `jsconfig.json` prüft den gesamten Code im `strict`-Modus (u. a. `null`/`undefined`-Prüfungen). `tsconfig.logic.json` verlangt für die DOM-freien Logik-Dateien unter `js/` zusätzlich Typangaben für alle Parameter (`noImplicitAny`); ausgenommen sind `js/texts.js` und die Sprachdateien unter `js/i18n/`, die nur Textbausteine enthalten.
 - **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Backup, Sprachen, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, MoSCoW, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
-- **Unit-Tests:** `tests/unit/` lädt die DOM-freien Skripte in einen isolierten Node-Kontext (`tests/unit/load.js`) – so, wie der Browser sie ausführt. Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft.
+- **Unit-Tests:** `tests/unit/` lädt die DOM-freien Skripte in einen isolierten Node-Kontext (`tests/unit/load.js`) – so, wie der Browser sie ausführt. Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft. `npm run coverage` zeigt die Abdeckung je Datei (Zeilen, Zweige, Funktionen).
 - **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung, Unit- und Browser-Tests bei jedem Pull Request aus.
