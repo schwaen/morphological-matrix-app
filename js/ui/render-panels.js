@@ -316,12 +316,11 @@ function compareContent() {
 /** Schalter „Nur Unterschiede“ und Sortierung über Tabelle bzw. Verlauf. */
 function renderCompareTools() {
   const m = state;
-  const focused = document.activeElement && document.activeElement.closest('#compareTools') ? document.activeElement.id : null;
   const differing = Model.differingParameters(m).size;
   const keys = /** @type {Array<keyof typeof Evaluation.RANKINGS>} */ (Object.keys(Evaluation.RANKINGS))
     .filter(k => Evaluation.RANKINGS[k].enabled(m.settings));
   const current = keys.includes(/** @type {any} */ (prefs.compareSort)) ? prefs.compareSort : 'order';
-  replaceWith($('#compareTools'),
+  rebuild($('#compareTools'),
     h('label', { class: 'check compare-diff' },
       h('input', {
         type: 'checkbox', id: 'compareDiff', checked: !!prefs.compareDiff, disabled: m.concepts.length < 2,
@@ -345,7 +344,6 @@ function renderCompareTools() {
           onchange: e => { setPref('compareSort', e.target.value); renderCompare(); },
         }, ['order', ...keys].map(k => h('option', { value: k, selected: k === current }, Texts.compare.sort[k]))))
       : null);
-  if (focused) $(`#${focused}`)?.focus();
 }
 
 /** Klassen einer Kennzahl-Zelle: unvollständig und/oder bester Wert. */

@@ -214,14 +214,15 @@ const Model = (() => {
       };
     });
     // Verträglichkeiten: nur Paare aus vorhandenen Ausprägungen verschiedener Parameter, je Paar einmal
-    const owner = new Map(parameters.flatMap(p => p.options.map(o => [o.id, p.id])));
+    const index = optionIndex({ parameters });
+    const owner = (/** @type {string} */ oid) => { const r = index.get(oid); return r ? r.p.id : null; };
     const pairs = new Set();
     /** @type {MatrixConstraint[]} */
     const constraints = [];
     for (const x of Array.isArray(data.constraints) ? data.constraints : []) {
       const a = str(x && x.a);
       const b = str(x && x.b);
-      if (!owner.has(a) || !owner.has(b) || owner.get(a) === owner.get(b)) continue;
+      if (!owner(a) || !owner(b) || owner(a) === owner(b)) continue;
       if (!CONSTRAINT_TYPES.includes(x.type)) continue;
       const k = a < b ? `${a}|${b}` : `${b}|${a}`;
       if (pairs.has(k)) continue;
@@ -303,6 +304,29 @@ const Model = (() => {
     return oid ? p.options.find(o => o.id === oid) || null : null;
   }
 
+  /**
+   * Verzeichnis Ausprägungs-ID → Ausprägung samt Parameter (für viele Zugriffe).
+   * @param {{ parameters: MatrixParameter[] }} m @returns {Map<string, OptionRef>}
+   */
+  function optionIndex(m) {
+    /** @type {Map<string, OptionRef>} */
+    const map = new Map();
+    m.parameters.forEach((p, pi) => p.options.forEach((o, oi) => map.set(o.id, { p, pi, o, oi })));
+    return map;
+  }
+
+  /**
+   * Eine Ausprägung samt Parameter, `null`, wenn es sie nicht gibt (für einzelne Zugriffe).
+   * @param {{ parameters: MatrixParameter[] }} m @param {string} oid @returns {OptionRef | null}
+   */
+  function findOption(m, oid) {
+    for (const [pi, p] of m.parameters.entries()) {
+      const oi = p.options.findIndex(o => o.id === oid);
+      if (oi >= 0) return { p, pi, o: p.options[oi], oi };
+    }
+    return null;
+  }
+
   /** Anzeigetext einer Ausprägung (mit Ersatztext für leere). @param {MatrixParameter} p @param {string} oid */
   function optionText(p, oid) {
     const idx = p.options.findIndex(o => o.id === oid);
@@ -369,7 +393,7 @@ const Model = (() => {
     defaultSettings, newOption, newParameter, newConcept, nextConceptColor, nextCategoryColor, uniqueName,
     blankState, normalize, sortedByCategory, resort,
     categoryById, categoryGroups, canMoveParameter, selectedOption, optionText, sameSelections,
-    differingParameters, search,
+    differingParameters, search, optionIndex, findOption,
     parameterLabel, categoryLabel, nameOrUnnamed,
   };
 })();

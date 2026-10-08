@@ -100,6 +100,74 @@ function closeDialog(dialog) {
   if (dialog.close) dialog.close(); else dialog.removeAttribute('open');
 }
 
+/**
+ * Merkmal, um ein Bedienelement nach einem Neuaufbau wiederzufinden: `id`, `data-fid`,
+ * `data-pair`, Klasse mit `data-cid` oder `aria-label` (in dieser Reihenfolge).
+ * @param {Element} el @returns {string | null}
+ */
+function focusKey(el) {
+  const { fid, pair, cid } = /** @type {HTMLElement} */ (el).dataset;
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  if (fid) return `[data-fid="${CSS.escape(fid)}"]`;
+  if (pair) return `[data-pair="${CSS.escape(pair)}"]`;
+  if (cid && el.classList.length) return `.${CSS.escape(el.classList[0])}[data-cid="${CSS.escape(cid)}"]`;
+  const label = el.getAttribute('aria-label');
+  return label ? `[aria-label="${CSS.escape(label)}"]` : null;
+}
+
+/**
+ * Inhalt eines Behälters ersetzen und dabei erhalten, was der Neuaufbau sonst verlöre: den Fokus
+ * (samt Textauswahl in Eingabefeldern) und die Bildlaufpositionen der Elemente mit `data-scroll`.
+ * @param {HTMLElement} container @param {...any} children wie bei `replaceWith`
+ */
+function rebuild(container, ...children) {
+  const active = /** @type {any} */ (document.activeElement);
+  const inside = active && active !== container && container.contains(active) ? active : null;
+  const key = inside ? focusKey(inside) : null;
+  const selection = inside && typeof inside.selectionStart === 'number' ? [inside.selectionStart, inside.selectionEnd] : null;
+  const scrolls = $$('[data-scroll]', container).map(el => [el.dataset.scroll, el.scrollTop, el.scrollLeft]);
+  replaceWith(container, ...children);
+  for (const [name, top, left] of scrolls) {
+    const el = $(`[data-scroll="${CSS.escape(String(name))}"]`, container);
+    if (el) { el.scrollTop = top; el.scrollLeft = left; }
+  }
+  const target = key ? $(key, container) : null;
+  if (target) {
+    target.focus({ preventScroll: true });
+    if (selection && typeof target.setSelectionRange === 'function') {
+      try { target.setSelectionRange(selection[0], selection[1]); } catch (e) { /* nicht unterstützt */ }
+    }
+  }
+}
+
+/**
+ * Schwebendes Element neben seinem Auslöser platzieren, vollständig im sichtbaren Bereich.
+ * `below`: unter dem Auslöser (passt es nicht, darüber), waagerecht um `shift` versetzt;
+ * `right`: rechts daneben (passt es nicht, links), senkrecht um `shift` versetzt.
+ * Für `position: fixed` gelten Fensterkoordinaten, mit `page: true` (für `position: absolute`
+ * im Dokument) kommt die Bildlaufposition hinzu. Das Element muss sichtbar sein (Größe messbar).
+ * @param {HTMLElement} el @param {DOMRect} r Rechteck des Auslösers
+ * @param {{ side?: 'below' | 'right', gap?: number, shift?: number, margin?: number, page?: boolean }} [opts]
+ */
+function placeNear(el, r, { side = 'below', gap = 6, shift = 0, margin = 8, page = false } = {}) {
+  const w = el.offsetWidth;
+  const ht = el.offsetHeight;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const clamp = (/** @type {number} */ v, /** @type {number} */ size, /** @type {number} */ max) => Math.max(margin, Math.min(v, max - size - margin));
+  let left;
+  let top;
+  if (side === 'below') {
+    left = clamp(r.left + shift, w, vw);
+    top = r.bottom + gap + ht <= vh - margin ? r.bottom + gap : Math.max(margin, r.top - ht - gap);
+  } else {
+    left = r.right + gap + w <= vw - margin ? r.right + gap : Math.max(margin, r.left - w - gap);
+    top = clamp(r.top + shift, ht, vh);
+  }
+  el.style.left = `${left + (page ? window.scrollX : 0)}px`;
+  el.style.top = `${top + (page ? window.scrollY : 0)}px`;
+}
+
 let toastTimer = 0;
 /** Kurzer Hinweis unten; optional mit „Rückgängig“. */
 function toast(message, withUndo = false) {

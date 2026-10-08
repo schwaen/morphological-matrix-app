@@ -5,16 +5,10 @@
  */
 'use strict';
 
-/** Ausprägung samt Parameter zu einer ID. @param {string} oid */
+/** Ausprägung samt Parameter und Anzeigetexten zu einer ID. @param {string} oid */
 function optionRef(oid) {
-  for (const [pi, p] of state.parameters.entries()) {
-    const oi = p.options.findIndex(o => o.id === oid);
-    if (oi >= 0) {
-      const o = p.options[oi];
-      return { p, o, text: o.text.trim() || Texts.fallback.emptyOption(oi + 1), param: Model.parameterLabel(p, pi) };
-    }
-  }
-  return null;
+  const r = Model.findOption(state, oid);
+  return r && { ...r, text: optText(r.o, r.oi), param: Model.parameterLabel(r.p, r.pi) };
 }
 
 /** „Induktion (Wassererwärmung)“ @param {string} oid */
@@ -103,14 +97,9 @@ function openConsPop(oid, anchor) {
   const pop = $('#consPop');
   renderConsPop();
   pop.hidden = false;
-  // Rechts neben der Zelle, sonst links; vertikal im sichtbaren Bereich
+  // Rechts neben der Zelle (sonst links), etwas nach oben versetzt; scrollt mit der Seite
   const cell = anchor.closest('.opt-cell') || anchor;
-  const r = cell.getBoundingClientRect();
-  const w = pop.offsetWidth;
-  const left = r.right + 8 + w <= window.innerWidth ? r.right + 8 : Math.max(8, r.left - w - 8);
-  pop.style.left = `${left + window.scrollX}px`;
-  const top = Math.min(r.top - 40, window.innerHeight - pop.offsetHeight - 8);
-  pop.style.top = `${Math.max(8, top) + window.scrollY}px`;
+  placeNear(pop, cell.getBoundingClientRect(), { side: 'right', gap: 8, shift: -40, page: true });
   $('.cons-pop-close', pop).focus();
 }
 
@@ -156,7 +145,7 @@ function constraintNote(c) {
   return input;
 }
 
-/** Popover neu aufbauen (nach jeder Änderung; Bildlaufposition bleibt erhalten). */
+/** Popover neu aufbauen (nach jeder Änderung; Fokus und Bildlaufposition bleiben erhalten). */
 function renderConsPop() {
   const pop = $('#consPop');
   const oid = consPopFor;
@@ -165,19 +154,16 @@ function renderConsPop() {
     if (consPopFor != null) { consPopFor = null; pop.hidden = true; }
     return;
   }
-  const list = $('.cons-pop-list', pop);
-  const scroll = list ? list.scrollTop : 0;
-  const focusKey = document.activeElement && pop.contains(document.activeElement) ? focusKeyOf(document.activeElement) : null;
   const others = state.parameters.map((p, pi) => ({ p, pi })).filter(({ p }) => p.id !== ref.p.id && p.options.length);
   const set = (/** @type {string} */ other) => (/** @type {MatrixConstraintType | null} */ type) => mutate(m => Ops.setConstraint(m, oid, other, type));
-  replaceWith(pop,
+  rebuild(pop,
     h('div', { class: 'cons-pop-head' },
       h('div', null,
         h('h3', { id: 'consPopTitle' }, Texts.cons.popTitle(ref.text)),
         h('p', null, Texts.cons.popHint(ref.param))),
       iconBtn('x', Texts.ui.close, closeConsPop, { small: true }),
     ),
-    h('div', { class: 'cons-pop-list' },
+    h('div', { class: 'cons-pop-list', dataset: { scroll: 'list' } },
       others.length ? others.map(({ p, pi }) => h('section', null,
         h('h4', null, Model.parameterLabel(p, pi)),
         p.options.map((o, oi) => {
@@ -190,25 +176,6 @@ function renderConsPop() {
     h('div', { class: 'cons-pop-foot' },
       h('button', { type: 'button', class: 'btn btn-small', onclick: () => { closeConsPop(); openConsDialog(); } }, Texts.ui.constraintsButton)));
   $('.icon-btn', $('.cons-pop-head', pop)).classList.add('cons-pop-close');
-  const newList = $('.cons-pop-list', pop);
-  if (newList) newList.scrollTop = scroll;
-  restoreFocus(pop, focusKey);
-}
-
-/** Merkmal, um ein Bedienelement nach dem Neuaufbau wiederzufinden. @param {Element} el */
-function focusKeyOf(el) {
-  const { fid, pair } = /** @type {HTMLElement} */ (el).dataset;
-  if (fid) return `[data-fid="${CSS.escape(fid)}"]`;
-  if (pair) return `[data-pair="${CSS.escape(pair)}"]`;
-  const label = el.getAttribute('aria-label');
-  return label ? `[aria-label="${CSS.escape(label)}"]` : null;
-}
-
-/** @param {HTMLElement} root @param {string | null} sel */
-function restoreFocus(root, sel) {
-  if (!sel) return;
-  const el = $(sel, root);
-  if (el) el.focus();
 }
 
 // ---------- Verträglichkeitsmatrix (Dialog) ----------
@@ -248,10 +215,7 @@ function renderConsDialog() {
   const sig = consGridSignature();
   if (table && table.dataset.sig === sig) updateConsGrid(table);
   else buildConsGrid(body, P, sig);
-  const detail = $('#consDetail');
-  const focusKey = document.activeElement && detail.contains(document.activeElement) ? focusKeyOf(document.activeElement) : null;
-  replaceWith(detail, consDetail());
-  restoreFocus(detail, focusKey);
+  rebuild($('#consDetail'), consDetail());
 
   const total = state.parameters.reduce((n, p) => n * BigInt(p.options.length), 1n);
   const ok = Consistency.countConsistent(state);

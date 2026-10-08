@@ -153,3 +153,13 @@ interface CompareContent {
   /** `true`, wenn nur Parameter mit Unterschieden gezeigt werden */
   filtered: boolean;
 }
+
+/** Ausprägung samt Parameter und Positionen (`Model.findOption`, `Model.optionIndex`) */
+interface OptionRef {
+  p: MatrixParameter;
+  /** Position des Parameters in `parameters` */
+  pi: number;
+  o: MatrixOption;
+  /** Position der Ausprägung im Parameter */
+  oi: number;
+}

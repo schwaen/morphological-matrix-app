@@ -69,13 +69,11 @@ const IO = (() => {
       }
     }
     // Verträglichkeiten: je Paar eine Zeile
+    const index = Model.optionIndex(m);
     /** @param {string} oid */
     const ref = oid => {
-      for (const p of m.parameters) {
-        const o = p.options.find(x => x.id === oid);
-        if (o) return { param: p.name, text: o.text };
-      }
-      return { param: '', text: '' };
+      const r = index.get(oid);
+      return r ? { param: r.p.name, text: r.o.text } : { param: '', text: '' };
     };
     if (m.constraints.length) {
       lines.push([], [cell(L.parameter), cell(L.optionSingle), cell(L.parameter), cell(L.optionSingle), cell(L.constraintType), cell(L.constraintNote)]);

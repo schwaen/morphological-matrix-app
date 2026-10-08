@@ -106,8 +106,9 @@ const Ops = (() => {
    * @param {Matrix} m @param {string} a @param {string} b @param {MatrixConstraintType | null} type
    */
   function setConstraint(m, a, b, type) {
-    const owner = Consistency.paramOf(m);
-    if (a === b || !owner.has(a) || !owner.has(b) || owner.get(a) === owner.get(b)) return false;
+    const ra = Model.findOption(m, a);
+    const rb = Model.findOption(m, b);
+    if (!ra || !rb || ra.p === rb.p) return false;
     const existing = Consistency.get(m, a, b);
     if (!type) {
       if (!existing) return false;

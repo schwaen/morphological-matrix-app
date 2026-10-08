@@ -77,10 +77,7 @@ function showNotePop(el) {
     d.cons ? h('div', { class: `pop-cons ${d.consType}` }, h('strong', null, d.consLabel), d.cons) : null,
     d.note ? h('div', null, h('strong', null, d.noteLabel), d.note) : null);
   pop.hidden = false;
-  const r = el.getBoundingClientRect();
-  const below = r.bottom + 6 + pop.offsetHeight <= window.innerHeight;
-  pop.style.top = `${below ? r.bottom + 6 : Math.max(4, r.top - pop.offsetHeight - 6)}px`;
-  pop.style.left = `${Math.max(4, Math.min(r.left + 12, window.innerWidth - pop.offsetWidth - 4))}px`;
+  placeNear(pop, el.getBoundingClientRect(), { shift: 12, margin: 4 });
 }
 
 function hideNotePop() {
