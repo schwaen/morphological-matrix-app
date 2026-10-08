@@ -101,3 +101,24 @@ test('Zufällig erzeugt nur verträgliche Kombinationen', async ({ page }) => {
     expect(await page.evaluate(() => Consistency.conflicts(state, state.concepts.find(c => c.id === state.activeConceptId)).excluded.length)).toBe(0);
   }
 });
+
+test('Verträglichkeitsmatrix: ein Tab-Stopp, Pfeiltasten, Enter schaltet, Tabelle bleibt erhalten', async ({ page }) => {
+  await menu(page, 'constraints');
+  const grid = page.locator('#consDialog .cons-grid');
+  await expect(grid.locator('td[tabindex="0"]')).toHaveCount(1);
+  await page.evaluate(() => { document.querySelector('#consDialog .cons-grid').dataset.marker = 'alt'; });
+
+  const first = grid.locator('td[data-pair="p1o1|p2o1"]');
+  await first.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(grid.locator('td[data-pair="p1o2|p2o1"]')).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(grid.locator('td[data-pair="p1o2|p2o2"]')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(grid.locator('td[data-pair="p1o2|p2o2"]')).toHaveText('!');
+  await expect(grid.locator('td[data-pair="p1o2|p2o2"]')).toBeFocused();
+  await expect(grid.locator('td[tabindex="0"]')).toHaveCount(1);
+  await page.keyboard.press(' ');
+  await expect(grid.locator('td[data-pair="p1o2|p2o2"]')).toHaveText('✕');
+  await expect(page.locator('#consDialog .cons-grid')).toHaveAttribute('data-marker', 'alt'); // nicht neu aufgebaut
+});

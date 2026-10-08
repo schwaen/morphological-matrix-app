@@ -15,10 +15,27 @@ const Consistency = (() => {
   /** Schlüssel eines Paars (unabhängig von der Reihenfolge). @param {string} a @param {string} b */
   const key = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
+  /**
+   * Verzeichnis Paar → Eintrag je Liste. Einträge werden nur angehängt (`push`) oder die Liste
+   * wird ersetzt (Löschen, Rückgängig, Laden) – die Länge genügt daher als Merkmal für „veraltet“;
+   * Änderungen an einem Eintrag (Art, Begründung) sieht das Verzeichnis direkt.
+   * @type {WeakMap<MatrixConstraint[], { length: number, map: Map<string, MatrixConstraint> }>}
+   */
+  const indexes = new WeakMap();
+
+  /** @param {Matrix} m */
+  function indexOf(m) {
+    let idx = indexes.get(m.constraints);
+    if (!idx || idx.length !== m.constraints.length) {
+      idx = { length: m.constraints.length, map: new Map(m.constraints.map(c => [key(c.a, c.b), c])) };
+      indexes.set(m.constraints, idx);
+    }
+    return idx.map;
+  }
+
   /** Verträglichkeit eines Paars oder `null` (verträglich). @param {Matrix} m @param {string} a @param {string} b */
   function get(m, a, b) {
-    const k = key(a, b);
-    return m.constraints.find(x => key(x.a, x.b) === k) || null;
+    return indexOf(m).get(key(a, b)) || null;
   }
 
   /** Ausprägungs-ID → Parameter-ID. @param {Matrix} m */
@@ -79,51 +96,155 @@ const Consistency = (() => {
     return map;
   }
 
-  /**
-   * Anzahl der Kombinationen (je Parameter genau eine Ausprägung) ohne unverträgliches Paar.
-   * Zählt per dynamischer Programmierung über die Parameter: Zustand sind die gewählten
-   * Ausprägungen, die noch Paare mit späteren Parametern haben. `null`, wenn das zu aufwendig wird.
-   * @param {Matrix} m @param {number} [limit] höchste Zahl gleichzeitiger Zustände
-   * @returns {bigint | null}
-   */
-  function countConsistent(m, limit = 50000) {
-    const P = m.parameters;
-    if (!P.length) return 0n;
-    const owner = paramOf(m);
-    const index = new Map(P.map((p, i) => [p.id, i]));
-    /** Spätester Parameter-Index, mit dem eine Ausprägung ein unverträgliches Paar hat. */
-    const lastPartner = new Map();
+  /** Unverträgliche Partner je Ausprägung. @param {Matrix} m */
+  function exclusions(m) {
     /** @type {Map<string, Set<string>>} */
-    const excludedWith = new Map();
+    const map = new Map();
     for (const c of m.constraints) {
       if (c.type !== 'excluded') continue;
       for (const [x, y] of [[c.a, c.b], [c.b, c.a]]) {
-        const j = /** @type {number} */ (index.get(/** @type {string} */ (owner.get(y))));
-        lastPartner.set(x, Math.max(lastPartner.get(x) ?? -1, j));
-        if (!excludedWith.has(x)) excludedWith.set(x, new Set());
-        /** @type {Set<string>} */ (excludedWith.get(x)).add(y);
+        if (!map.has(x)) map.set(x, new Set());
+        /** @type {Set<string>} */ (map.get(x)).add(y);
       }
     }
-    /** @type {Map<string, bigint>} Zustand (sortierte IDs, mit „,“ verbunden) → Anzahl */
+    return map;
+  }
+
+  /** Zuletzt berechnete Anzahl samt Struktur-Signatur (Texte ändern die Anzahl nicht). */
+  let countCache = { sig: '', value: /** @type {bigint | null} */ (null) };
+
+  /**
+   * Anzahl der Kombinationen (je Parameter genau eine Ausprägung) ohne unverträgliches Paar;
+   * `null`, wenn die Zählung zu aufwendig wird (mehr als `limit` Zwischenstände).
+   *
+   * Vorgehen: Parameter ohne Unverträglichkeiten gehen nur als Faktor ein; die übrigen zerfallen
+   * in unabhängige Gruppen (verbunden über Paare), die einzeln gezählt und multipliziert werden.
+   * Je Gruppe zählt eine dynamische Programmierung über die Parameter; Zwischenstand sind die
+   * gewählten Ausprägungen, die noch Paare mit späteren Parametern haben. Die Reihenfolge wird
+   * so gewählt, dass möglichst wenige Parameter gleichzeitig „offen“ sind; Ausprägungen ohne
+   * Paare werden zu einem Faktor zusammengefasst.
+   * @param {Matrix} m @param {number} [limit]
+   * @returns {bigint | null}
+   */
+  function countConsistent(m, limit = 20000) {
+    const P = m.parameters;
+    const ex = exclusions(m);
+    const sig = `${limit}#${P.map(p => `${p.id}:${p.options.map(o => o.id).join(',')}`).join('|')}#${[...ex.keys()].sort().map(k => `${k}>${[.../** @type {Set<string>} */ (ex.get(k))].sort().join(',')}`).join(';')}`;
+    if (countCache.sig === sig) return countCache.value;
+    const value = countUncached(P, ex, limit);
+    countCache = { sig, value };
+    return value;
+  }
+
+  /**
+   * @param {MatrixParameter[]} P @param {Map<string, Set<string>>} ex @param {number} limit
+   * @returns {bigint | null}
+   */
+  function countUncached(P, ex, limit) {
+    if (!P.length || P.some(p => !p.options.length)) return 0n;
+    /** @type {Map<string, string>} */
+    const owner = new Map();
+    for (const p of P) for (const o of p.options) owner.set(o.id, p.id);
+    // Parameter-Graph: Kante, wenn es ein unverträgliches Paar zwischen zwei Parametern gibt
+    /** @type {Map<string, Set<string>>} */
+    const adj = new Map(P.map(p => [p.id, new Set()]));
+    for (const [x, ys] of ex) {
+      for (const y of ys) {
+        /** @type {Set<string>} */ (adj.get(/** @type {string} */ (owner.get(x)))).add(/** @type {string} */ (owner.get(y)));
+      }
+    }
+    const byId = new Map(P.map(p => [p.id, p]));
+    const seen = new Set();
+    let total = 1n;
+    for (const p of P) {
+      if (seen.has(p.id)) continue;
+      // Zusammenhängende Gruppe einsammeln
+      const comp = [];
+      const stack = [p.id];
+      seen.add(p.id);
+      while (stack.length) {
+        const id = /** @type {string} */ (stack.pop());
+        comp.push(id);
+        for (const n of /** @type {Set<string>} */ (adj.get(id))) if (!seen.has(n)) { seen.add(n); stack.push(n); }
+      }
+      if (comp.length === 1) {
+        total *= BigInt(p.options.length);
+        continue;
+      }
+      const order = orderParams(comp, adj).map(id => /** @type {MatrixParameter} */ (byId.get(id)));
+      const part = countGroup(order, ex, owner, limit);
+      if (part == null) return null;
+      total *= part;
+    }
+    return total;
+  }
+
+  /**
+   * Reihenfolge einer Gruppe: jeweils der Parameter, nach dem am wenigsten bearbeitete Parameter
+   * noch Kanten zu unbearbeiteten haben (bei Gleichstand: meiste Kanten zu bearbeiteten).
+   * @param {string[]} comp @param {Map<string, Set<string>>} adj
+   */
+  function orderParams(comp, adj) {
+    const nb = (/** @type {string} */ id) => /** @type {Set<string>} */ (adj.get(id));
+    const done = new Set();
+    const order = [];
+    let first = comp[0];
+    for (const id of comp) if (nb(id).size > nb(first).size) first = id;
+    order.push(first);
+    done.add(first);
+    while (order.length < comp.length) {
+      let best = null;
+      let bestScore = [Infinity, Infinity];
+      for (const id of comp) {
+        if (done.has(id)) continue;
+        done.add(id);
+        let open = 0;
+        for (const d of done) if ([...nb(d)].some(n => !done.has(n))) open++;
+        done.delete(id);
+        const score = [open, -[...nb(id)].filter(n => done.has(n)).length];
+        if (Util.lexLess(score, bestScore)) { best = id; bestScore = score; }
+      }
+      order.push(/** @type {string} */ (best));
+      done.add(/** @type {string} */ (best));
+    }
+    return order;
+  }
+
+  /**
+   * Zählt eine Gruppe in der gegebenen Reihenfolge; `null` bei mehr als `limit` Zwischenständen.
+   * @param {MatrixParameter[]} order @param {Map<string, Set<string>>} ex
+   * @param {Map<string, string>} owner @param {number} limit
+   * @returns {bigint | null}
+   */
+  function countGroup(order, ex, owner, limit) {
+    const pos = new Map(order.map((p, i) => [p.id, i]));
+    /** Spätester Parameter (Position), mit dem eine Ausprägung ein Paar hat. */
+    const last = (/** @type {string} */ oid) => {
+      let max = -1;
+      for (const y of ex.get(oid) || []) max = Math.max(max, pos.get(/** @type {string} */ (owner.get(y))) ?? -1);
+      return max;
+    };
+    /** @type {Map<string, bigint>} Zwischenstand (sortierte IDs, mit „,“ verbunden) → Anzahl */
     let states = new Map([['', 1n]]);
-    P.forEach((p, i) => {
+    for (const [i, p] of order.entries()) {
+      // Ausprägungen ohne Paare verhalten sich gleich: ein gemeinsamer Faktor
+      const free = BigInt(p.options.filter(o => !ex.has(o.id)).length);
+      const bound = p.options.filter(o => ex.has(o.id)).map(o => ({ id: o.id, last: last(o.id), ex: /** @type {Set<string>} */ (ex.get(o.id)) }));
       /** @type {Map<string, bigint>} */
       const next = new Map();
+      const add = (/** @type {string} */ k, /** @type {bigint} */ v) => next.set(k, (next.get(k) || 0n) + v);
       for (const [state, count] of states) {
         const held = state ? state.split(',') : [];
-        for (const o of p.options) {
-          const ex = excludedWith.get(o.id);
-          if (ex && held.some(h => ex.has(h))) continue;
-          const keep = held.filter(h => (lastPartner.get(h) ?? -1) > i);
-          if ((lastPartner.get(o.id) ?? -1) > i) keep.push(o.id);
-          const k = keep.sort().join(',');
-          next.set(k, (next.get(k) || 0n) + count);
+        const keep = held.filter(h => last(h) > i);
+        if (free) add(keep.join(','), count * free);
+        for (const o of bound) {
+          if (held.some(h => o.ex.has(h))) continue;
+          add((o.last > i ? [...keep, o.id].sort() : keep).join(','), count);
         }
       }
+      if (next.size > limit) return null;
       states = next;
-      if (states.size > limit) states = new Map([['\u0000', -1n]]);
-    });
-    if (states.has('\u0000')) return null;
+    }
     let total = 0n;
     for (const v of states.values()) total += v;
     return total;
@@ -142,15 +263,7 @@ const Consistency = (() => {
    */
   function optimize(m, candidates, keyOf, budget = 200000) {
     const P = m.parameters;
-    /** @type {Map<string, Set<string>>} */
-    const excludedWith = new Map();
-    for (const c of m.constraints) {
-      if (c.type !== 'excluded') continue;
-      for (const [x, y] of [[c.a, c.b], [c.b, c.a]]) {
-        if (!excludedWith.has(x)) excludedWith.set(x, new Set());
-        /** @type {Set<string>} */ (excludedWith.get(x)).add(y);
-      }
-    }
+    const excludedWith = exclusions(m);
     // Fehlende Werte (Infinity) und leere Parameter als große, aber vergleichbare Zahlen
     const BIG = 1e12;
     const finite = (/** @type {number[]} */ k) => k.map(v => (Number.isFinite(v) ? v : BIG / 1000));

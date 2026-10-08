@@ -128,3 +128,47 @@ test('Zufällige Konzepte sind verträglich', () => {
     assert.equal(Consistency.conflicts(m, c).excluded.length, 0);
   }
 });
+
+test('countConsistent: zu aufwendige Zählung ergibt null statt einer falschen Zahl', () => {
+  // Kette aus Parametern mit je drei Ausprägungen; jede Ausprägung ist mit allen übrigen
+  // Ausprägungen späterer Parameter verknüpft – bei kleiner Grenze nicht mehr zählbar.
+  const m = Model.normalize({
+    version: Model.SCHEMA_VERSION,
+    parameters: Array.from({ length: 8 }, (_, i) => ({ id: `p${i}`, options: [0, 1, 2].map(j => ({ id: `p${i}o${j}` })) })),
+  });
+  for (let i = 0; i < 8; i++) for (let k = i + 1; k < 8; k++) Ops.setConstraint(m, `p${i}o0`, `p${k}o1`, 'excluded');
+  assert.equal(Consistency.countConsistent(m, 3), null);
+  const exact = Consistency.countConsistent(m);
+  const brute = [...combinations(m)].filter(os => consistent(m, os)).length;
+  assert.equal(exact, BigInt(brute));
+});
+
+test('countConsistent: zufällige Matrizen stimmen mit dem Durchzählen überein', () => {
+  let seed = 42;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let run = 0; run < 150; run++) {
+    const nP = 2 + Math.floor(rnd() * 5);
+    const m = Model.normalize({
+      version: Model.SCHEMA_VERSION,
+      parameters: Array.from({ length: nP }, (_, i) => ({ id: `p${i}`, options: Array.from({ length: 1 + Math.floor(rnd() * 4) }, (_, j) => ({ id: `p${i}o${j}` })) })),
+    });
+    const all = m.parameters.flatMap(p => p.options.map(o => o.id));
+    const pairs = Math.floor(rnd() * 10);
+    for (let k = 0; k < pairs; k++) {
+      Ops.setConstraint(m, all[Math.floor(rnd() * all.length)], all[Math.floor(rnd() * all.length)], rnd() < 0.8 ? 'excluded' : 'conditional');
+    }
+    const brute = [...combinations(m)].filter(os => consistent(m, os)).length;
+    assert.equal(Consistency.countConsistent(m), BigInt(brute), `Lauf ${run}`);
+  }
+});
+
+test('countConsistent: Zwischenspeicher rechnet nach Änderungen neu', () => {
+  const m = withPairs();
+  assert.equal(Consistency.countConsistent(m), 1888n);
+  Ops.setConstraint(m, 'p1o4', 'p5o4', null);
+  assert.equal(Consistency.countConsistent(m), 1932n);
+  m.parameters[0].options[0].text = 'Anderer Text'; // Texte ändern die Anzahl nicht
+  assert.equal(Consistency.countConsistent(m), 1932n);
+  Ops.deleteOption(m, 'p1', 'p1o2');
+  assert.equal(Consistency.countConsistent(m), BigInt([...combinations(m)].filter(os => consistent(m, os)).length));
+});
