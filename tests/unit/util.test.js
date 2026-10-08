@@ -63,3 +63,103 @@ test('scaleBigInt zerlegt große Zahlen exakt in Tausenderstufen', () => {
   assert.deepEqual(plain(Util.scaleBigInt(118_881_339_310_080_000n)), { value: 118.881, power: 15 });
   assert.deepEqual(plain(Util.scaleBigInt(10n ** 40n)), { value: 10, power: 39 });
 });
+
+// Englische Oberfläche: dieselben Skripte mit englischer Browsersprache geladen
+const { Util: UtilEn, Languages } = loadApp({ navigator: { language: 'en-US' } });
+
+test('Sprachwahl: Browsersprache, ohne Browser Deutsch', () => {
+  assert.equal(Languages.detect(), 'en');
+  assert.equal(loadApp({ navigator: { language: 'de-AT' } }).Languages.detect(), 'de');
+  assert.equal(loadApp().Languages.detect(), 'de');
+});
+
+test('Sprachwahl: gespeicherte Sprache hat Vorrang vor der Browsersprache', () => {
+  const store = new Map();
+  const localStorage = { getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) };
+  const { Languages: L } = loadApp({ navigator: { language: 'de-DE' }, localStorage });
+  L.choose('en');
+  assert.equal(store.get(L.STORAGE_KEY), 'en');
+  assert.equal(L.detect(), 'en');
+  store.set(L.STORAGE_KEY, 'xx'); // unbekannte Sprache wird ignoriert
+  assert.equal(L.detect(), 'de');
+});
+
+test('str: Texte unverändert, null/undefined als Ersatz, sonst als Text', () => {
+  assert.equal(Util.str('abc'), 'abc');
+  assert.equal(Util.str(null), '');
+  assert.equal(Util.str(undefined, '–'), '–');
+  assert.equal(Util.str(42), '42');
+  assert.equal(Util.str(false), 'false');
+});
+
+test('num: nur endliche Zahlen', () => {
+  assert.equal(Util.num(3.5), 3.5);
+  assert.equal(Util.num(0), 0);
+  assert.equal(Util.num(NaN), null);
+  assert.equal(Util.num(Infinity), null);
+  assert.equal(Util.num('3'), null);
+  assert.equal(Util.num(null), null);
+});
+
+test('isColor: nur sechsstellige Hex-Farben', () => {
+  assert.equal(Util.isColor('#4f46e5'), true);
+  assert.equal(Util.isColor('#ABCDEF'), true);
+  assert.equal(Util.isColor('#abc'), false);
+  assert.equal(Util.isColor('4f46e5'), false);
+  assert.equal(Util.isColor('#4f46e5ff'), false);
+  assert.equal(Util.isColor(null), false);
+});
+
+test('parseNumber: englische Schreibweise mit Dezimalpunkt', () => {
+  assert.equal(Util.parseNumber('1,234.5', '.'), 1234.5);
+  assert.equal(Util.parseNumber('1,200', '.'), 1200);    // Tausenderkomma
+  assert.equal(Util.parseNumber('3,5', '.'), 3.5);       // Komma ohne Tausendergruppe
+  assert.equal(Util.parseNumber('$ 12.75', '.'), 12.75);
+  assert.equal(Util.parseNumber('-0.5', '.'), -0.5);
+  assert.equal(UtilEn.parseNumber('2,500'), 2500);       // Standard: Sprache der Oberfläche
+  assert.ok(Number.isNaN(Util.parseNumber('1.2.3', '.')));
+  assert.equal(Util.parseNumber(7), 7);                  // keine Zeichenkette
+});
+
+test('numberToInput: Dezimalpunkt im Englischen', () => {
+  assert.equal(Util.numberToInput(1234.5, '.'), '1234.5');
+  assert.equal(UtilEn.numberToInput(0.25), '0.25');
+});
+
+test('Zahlenformate je Sprache', () => {
+  const sp = s => s.replace(/\s/g, ' ');
+  assert.equal(Util.formatNumber(1234.567), '1.234,57');
+  assert.equal(UtilEn.formatNumber(1234.567), '1,234.57');
+  assert.equal(Util.formatInteger(1234567), '1.234.567');
+  assert.equal(Util.formatInteger(12345678901234567890n), '12.345.678.901.234.567.890');
+  assert.equal(UtilEn.formatInteger(1234567), '1,234,567');
+  assert.equal(sp(Util.formatPercent(0.255)), '25,5 %');
+  assert.equal(UtilEn.formatPercent(0.255), '25.5%');
+  assert.equal(sp(UtilEn.formatMoney(54, 'EUR')), '€54.00');
+});
+
+test('currencySymbol: Symbol der Währung, sonst der Code', () => {
+  assert.equal(Util.currencySymbol('EUR'), '€');
+  assert.equal(UtilEn.currencySymbol('USD'), '$');
+  assert.equal(Util.currencySymbol('CHF'), 'CHF');      // kein eigenes Symbol
+  assert.equal(Util.currencySymbol('XXX!'), 'XXX!');    // ungültiger Code
+});
+
+test('scaleBigInt: negative Zahlen', () => {
+  assert.deepEqual(plain(Util.scaleBigInt(-1_500_000n)), { value: -1.5, power: 6 });
+});
+
+test('searchKey: ohne Akzente und Großschreibung, ß als ss', () => {
+  assert.equal(Util.searchKey('  Größe Café  '), 'grosse cafe');
+  assert.equal(Util.searchKey('STRASSE'), Util.searchKey('Straße'));
+  assert.equal(Util.searchKey('Übermaß'), 'ubermass');
+});
+
+test('errorMessage: Text beliebiger Ausnahmen', () => {
+  // Fehler aus dem App-Kontext (Fehlerobjekte des Tests stammen aus einem anderen Realm)
+  let thrown;
+  try { Util.lexLess(null, []); } catch (e) { thrown = e; }
+  assert.match(Util.errorMessage(thrown), /^Cannot read properties of null/);
+  assert.equal(Util.errorMessage('nur Text'), 'nur Text');
+  assert.equal(Util.errorMessage(42), '42');
+});

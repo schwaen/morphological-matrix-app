@@ -163,3 +163,14 @@ test('Nutzwert-Skala: mit und ohne Umrechnung', () => {
   assert.equal(m.settings.utilityMax, 100);
   assert.deepEqual(plain(m.parameters[0].options.map(o => o.score)), [140, 66.6, null]);
 });
+
+test('addCategory und addConcept hängen an; neues Konzept wird aktiv', () => {
+  const m = kaffeemaschine();
+  const k = { id: 'k-neu', name: 'Neu', color: '#123456' };
+  Ops.addCategory(m, k);
+  assert.equal(m.categories.at(-1), k);
+  const c = { id: 'c-neu', name: 'Neu', color: '#654321', selections: {}, note: '' };
+  Ops.addConcept(m, c);
+  assert.equal(m.concepts.at(-1), c);
+  assert.equal(m.activeConceptId, 'c-neu');
+});

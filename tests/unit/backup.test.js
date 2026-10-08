@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadApp, plain } from './load.js';
 
-const { IO, Zip, Model, example: kaffeemaschine } = loadApp();
+const { IO, Zip, Model, Texts, example: kaffeemaschine } = loadApp();
 const dec = new TextDecoder();
 
 test('ZIP: CRC-32 nach Standard', () => {
@@ -25,6 +25,49 @@ test('ZIP: Rundreise mit Umlauten im Namen und Inhalt', async () => {
 test('ZIP: beschädigtes Archiv wird abgelehnt', async () => {
   await assert.rejects(Zip.read(new Uint8Array([1, 2, 3, 4, 5])), /beschädigt/);
   assert.equal(Zip.isZip(new TextEncoder().encode('{}')), false);
+});
+
+/** Position des zentralen Verzeichnisses (aus dem Verzeichnisende, das hier ohne Kommentar am Schluss steht). */
+const centralOffset = zip => new DataView(zip.buffer, zip.byteOffset).getUint32(zip.length - 22 + 16, true);
+const sample = [{ name: 'a.json', text: '{"a":1}' }, { name: 'b.txt', text: 'Bä'.repeat(50) }];
+
+test('ZIP: ohne Kompression (älterer Browser) gespeichert und überall lesbar', async () => {
+  const { Zip: Plain } = loadApp({ CompressionStream: undefined });
+  const zip = await Plain.create(sample);
+  assert.equal(new DataView(zip.buffer).getUint16(8, true), 0); // Verfahren „gespeichert“
+  for (const reader of [Plain, Zip]) {
+    const back = await reader.read(zip);
+    assert.deepEqual(plain(back.map(e => ({ name: e.name, text: dec.decode(e.data) }))), sample);
+  }
+});
+
+test('ZIP: Ordnereinträge werden übersprungen', async () => {
+  const zip = await Zip.create([{ name: 'ordner/', text: '' }, sample[0]]);
+  assert.deepEqual(plain((await Zip.read(zip)).map(e => e.name)), ['a.json']);
+});
+
+test('ZIP: beschädigtes Verzeichnis oder fehlender Dateikopf werden abgelehnt', async () => {
+  const zip = await Zip.create(sample);
+  const broken = zip.slice();
+  broken[centralOffset(zip)] = 0; // Signatur des Verzeichniseintrags
+  await assert.rejects(Zip.read(broken), new RegExp(Texts.errors.zipInvalid));
+  const noLocal = zip.slice();
+  noLocal[0] = 0; // Signatur des ersten Dateikopfs
+  await assert.rejects(Zip.read(noLocal), new RegExp(Texts.errors.zipInvalid));
+  // Abgeschnitten: Verzeichnis zeigt hinter das Dateiende
+  const cut = zip.slice();
+  new DataView(cut.buffer).setUint32(cut.length - 22 + 16, cut.length, true);
+  await assert.rejects(Zip.read(cut), new RegExp(Texts.errors.zipInvalid));
+});
+
+test('ZIP: unbekanntes Kompressionsverfahren wird abgelehnt', async () => {
+  const zip = await Zip.create(sample);
+  const odd = zip.slice();
+  new DataView(odd.buffer).setUint16(centralOffset(zip) + 10, 99, true);
+  await assert.rejects(Zip.read(odd), new RegExp(Texts.errors.zipMethod));
+  // Komprimiertes Archiv in einem Browser ohne DecompressionStream
+  const { Zip: NoInflate } = loadApp({ DecompressionStream: undefined });
+  await assert.rejects(NoInflate.read(zip), new RegExp(Texts.errors.zipMethod));
 });
 
 const doc = (id, title, savedAt = 1000) => {
