@@ -49,7 +49,7 @@ function h(tag, attrs, ...children) {
     else if (key.startsWith('on')) el.addEventListener(key.slice(2), val);
     else el.setAttribute(key, val === true ? '' : val);
   }
-  for (const child of children.flat()) {
+  for (const child of children.flat(Infinity)) {
     if (child == null || child === false) continue;
     el.append(child instanceof Node ? child : String(child));
   }
@@ -87,7 +87,7 @@ function iconBtn(name, label, onclick, { disabled = false, danger = false, small
 
 /** Kinder ersetzen; leere Einträge (null/false) werden ausgelassen, statt als „null“ zu erscheinen. */
 function replaceWith(el, ...children) {
-  el.replaceChildren(...children.flat().filter(c => c != null && c !== false));
+  el.replaceChildren(...children.flat(Infinity).filter(c => c != null && c !== false));
 }
 
 /** @param {any} dialog */
