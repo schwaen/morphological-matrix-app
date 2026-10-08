@@ -6,7 +6,7 @@
   <meta name="description" content="" data-i18n-attr="content:ui.metaDescription">
   <meta name="theme-color" content="#4f46e5">
   <title></title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234f46e5'/%3E%3Cg fill='%23fff'%3E%3Crect x='6' y='6' width='6' height='6' rx='1.5'/%3E%3Crect x='13' y='13' width='6' height='6' rx='1.5'/%3E%3Crect x='20' y='20' width='6' height='6' rx='1.5'/%3E%3C/g%3E%3Cg fill='%23fff' opacity='.45'%3E%3Crect x='13' y='6' width='6' height='6' rx='1.5'/%3E%3Crect x='20' y='6' width='6' height='6' rx='1.5'/%3E%3Crect x='6' y='13' width='6' height='6' rx='1.5'/%3E%3Crect x='20' y='13' width='6' height='6' rx='1.5'/%3E%3Crect x='6' y='20' width='6' height='6' rx='1.5'/%3E%3Crect x='13' y='20' width='6' height='6' rx='1.5'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%234f46e5'/%3E%3Cg%20fill='%23fff'%20opacity='.32'%3E%3Crect%20x='13.3'%20y='5.5'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='21.1'%20y='5.5'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='5.5'%20y='13.3'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='13.3'%20y='13.3'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='5.5'%20y='21.1'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='21.1'%20y='21.1'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3C/g%3E%3Cg%20fill='%23fff'%3E%3Crect%20x='5.5'%20y='5.5'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='21.1'%20y='13.3'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='13.3'%20y='21.1'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3C/g%3E%3Cpath%20d='M8.3%2011.1C8.3%2012.2%2023.9%2012.2%2023.9%2013.3M23.9%2018.9C23.9%2020%2016.1%2020%2016.1%2021.1'%20fill='none'%20stroke='%23fb923c'%20stroke-width='1.6'%20stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
   <!-- Klassische Skripte ohne Build; Reihenfolge ist wichtig: erst reine Logik, dann Oberfläche -->
   <script src="js/i18n/de.js" defer></script>
@@ -47,8 +47,9 @@
       <button type="button" class="logo-btn" id="logoBtn" aria-haspopup="true" aria-expanded="false" aria-controls="startMenu" data-i18n-attr="title:ui.startTitle;aria-label:ui.startTitle">
         <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
           <rect width="32" height="32" rx="7" fill="currentColor"/>
-          <g fill="#fff"><rect x="6" y="6" width="6" height="6" rx="1.5"/><rect x="13" y="13" width="6" height="6" rx="1.5"/><rect x="20" y="20" width="6" height="6" rx="1.5"/></g>
-          <g fill="#fff" opacity=".45"><rect x="13" y="6" width="6" height="6" rx="1.5"/><rect x="20" y="6" width="6" height="6" rx="1.5"/><rect x="6" y="13" width="6" height="6" rx="1.5"/><rect x="20" y="13" width="6" height="6" rx="1.5"/><rect x="6" y="20" width="6" height="6" rx="1.5"/><rect x="13" y="20" width="6" height="6" rx="1.5"/></g>
+          <g fill="#fff" opacity=".32"><rect x="13.3" y="5.5" width="5.6" height="5.6" rx="1.5"/><rect x="21.1" y="5.5" width="5.6" height="5.6" rx="1.5"/><rect x="5.5" y="13.3" width="5.6" height="5.6" rx="1.5"/><rect x="13.3" y="13.3" width="5.6" height="5.6" rx="1.5"/><rect x="5.5" y="21.1" width="5.6" height="5.6" rx="1.5"/><rect x="21.1" y="21.1" width="5.6" height="5.6" rx="1.5"/></g>
+          <g fill="#fff"><rect x="5.5" y="5.5" width="5.6" height="5.6" rx="1.5"/><rect x="21.1" y="13.3" width="5.6" height="5.6" rx="1.5"/><rect x="13.3" y="21.1" width="5.6" height="5.6" rx="1.5"/></g>
+          <path d="M8.3 11.1C8.3 12.2 23.9 12.2 23.9 13.3M23.9 18.9C23.9 20 16.1 20 16.1 21.1" fill="none" stroke="#fb923c" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
       </button>
       <nav class="app-tabs" id="appTabs" role="tablist" data-i18n-attr="aria-label:tabs.label"></nav>
