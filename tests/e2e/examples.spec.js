@@ -84,3 +84,17 @@ test('Beispiel „Firmen-Event“: Kosten und Nutzwert (Skala 0–5) im Konzeptv
   await expect(page.locator('#compareTable')).toContainText('Nutzwert (max. 5)');
   await expect(page.locator('#conceptList .concept-name')).toHaveCount(5);
 });
+
+test('Food-Truck und Krimi: Konflikte und Hinweise sind sichtbar', async ({ page }) => {
+  await menu(page, 'example');
+  await page.locator('#exampleList .doc', { hasText: 'Food-Truck gründen' }).getByRole('button', { name: 'Öffnen' }).click();
+  await expect(page.locator('#title')).toHaveValue('Beispiel: Food-Truck gründen');
+  await expect(page.locator('.concept[data-cid=c5] .cons-pill')).toHaveText('⚠ 4');
+  await expect(page.locator('.concept .cons-pill')).toHaveCount(1);
+
+  await menu(page, 'example');
+  await page.locator('#exampleList .doc', { hasText: 'Krimi plotten' }).getByRole('button', { name: 'Öffnen' }).click();
+  await expect(page.locator('#title')).toHaveValue('Beispiel: Krimi plotten');
+  await expect(page.locator('#stats')).toContainText('11 Parameter');
+  await expect(page.locator('.concept .cons-pill')).toHaveCount(0);
+});

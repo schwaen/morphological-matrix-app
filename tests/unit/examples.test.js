@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { loadApp, plain, EXAMPLE_FILES } from './load.js';
 
-const { Model, Examples } = loadApp();
+const { Model, Examples, Consistency, Evaluation } = loadApp();
 
 /** Notizen und Verträglichkeiten sind in Dateien optional (fehlend = leer); für den Vergleich mit `normalize` ergänzen. */
 function withEmptyNotes(data) {
@@ -57,4 +57,34 @@ test('Doppelte oder unvollständige Beispiele werden ignoriert', () => {
   }
   assert.equal(app.Examples.all().length, before);
   assert.equal(app.Examples.get('kaffeemaschine').name, 'Kaffeemaschine');
+});
+
+test('Food-Truck: automatische Konzepte und MoSCoW-Pfade sind verträglich, das Stammtisch-Konzept nicht', () => {
+  const m = Examples.load('food-truck');
+  assert.equal(m.settings.moscow, true);
+  for (const [id, gen] of Object.entries(Evaluation.GENERATORS)) {
+    const res = gen.build(m);
+    assert.ok(!res.error, `${id}: ${res.error}`);
+    assert.equal(Consistency.conflicts(m, { selections: res.selections }).excluded.length, 0, id);
+  }
+  const byName = name => m.concepts.find(c => c.name === name);
+  assert.equal(Consistency.conflicts(m, byName('Idee vom Stammtisch')).excluded.length, 4);
+  for (const c of m.concepts.filter(x => x.name !== 'Idee vom Stammtisch')) {
+    assert.equal(Consistency.conflicts(m, c).excluded.length, 0, c.name);
+  }
+  assert.equal(Consistency.countConsistent(m), 10_160_640n);
+});
+
+test('Krimi: alle Konzepte ohne Logikfehler, Zufall bleibt widerspruchsfrei', () => {
+  const m = Examples.load('krimi');
+  assert.equal(m.settings.costs || m.settings.utility || m.settings.moscow, false);
+  for (const c of m.concepts) assert.equal(Consistency.conflicts(m, c).excluded.length, 0, c.name);
+  let seed = 7;
+  const random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let i = 0; i < 200; i++) {
+    const selections = Consistency.randomCombination(m, random);
+    assert.equal(Object.keys(selections).length, m.parameters.length);
+    assert.equal(Consistency.conflicts(m, { selections }).excluded.length, 0);
+  }
+  assert.equal(Consistency.countConsistent(m), 30_246_750n);
 });
