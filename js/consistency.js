@@ -38,14 +38,6 @@ const Consistency = (() => {
     return indexOf(m).get(key(a, b)) || null;
   }
 
-  /** Ausprägungs-ID → Parameter-ID. @param {Matrix} m */
-  function paramOf(m) {
-    /** @type {Map<string, string>} */
-    const map = new Map();
-    for (const p of m.parameters) for (const o of p.options) map.set(o.id, p.id);
-    return map;
-  }
-
   /** Paare je Ausprägung. @param {Matrix} m @returns {Map<string, Array<{ c: MatrixConstraint, other: string }>>} */
   function partners(m) {
     const map = new Map();
@@ -142,9 +134,8 @@ const Consistency = (() => {
    */
   function countUncached(P, ex, limit) {
     if (!P.length || P.some(p => !p.options.length)) return 0n;
-    /** @type {Map<string, string>} */
-    const owner = new Map();
-    for (const p of P) for (const o of p.options) owner.set(o.id, p.id);
+    /** Ausprägungs-ID → Parameter-ID */
+    const owner = new Map([...Model.optionIndex({ parameters: P })].map(([id, r]) => [id, r.p.id]));
     // Parameter-Graph: Kante, wenn es ein unverträgliches Paar zwischen zwei Parametern gibt
     /** @type {Map<string, Set<string>>} */
     const adj = new Map(P.map(p => [p.id, new Set()]));
@@ -364,5 +355,5 @@ const Consistency = (() => {
     return selections;
   }
 
-  return { TYPES, key, get, paramOf, partners, countFor, conflicts, statusFor, countConsistent, optimize, randomCombination };
+  return { TYPES, key, get, partners, countFor, conflicts, statusFor, countConsistent, optimize, randomCombination };
 })();

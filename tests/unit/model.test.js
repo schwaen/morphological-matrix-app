@@ -186,3 +186,15 @@ test('search: Parameternamen und Ausprägungen, ohne Groß-/Kleinschreibung und 
   assert.deepEqual(plain(Model.search(m, 'zischt').hits), [{ pid: p.id, oid: p.options[1].id }]);
   assert.deepEqual(plain(Model.search(m, 'schaumkranz').hits), [{ pid: m.parameters[1].id, oid: null }]);
 });
+
+test('findOption und optionIndex: Ausprägung samt Parameter und Positionen', () => {
+  const m = kaffeemaschine();
+  const r = Model.findOption(m, 'p2o3');
+  assert.equal(r.p.name, 'Druckerzeugung');
+  assert.equal(r.o.text, 'Rotationspumpe');
+  assert.deepEqual([r.pi, r.oi], [1, 2]);
+  assert.equal(Model.findOption(m, 'gibtsnicht'), null);
+  const index = Model.optionIndex(m);
+  assert.equal(index.size, m.parameters.reduce((n, p) => n + p.options.length, 0));
+  assert.equal(index.get('p2o3').o, r.o);
+});

@@ -233,9 +233,8 @@ function toggleTabMenu(open) {
   const willOpen = open ?? menu.hidden;
   if (willOpen) {
     renderTabMenu();
-    const r = btn.getBoundingClientRect();
-    menu.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - 280))}px`;
-    menu.style.top = `${r.bottom + 6}px`;
+    menu.hidden = false;
+    placeNear(menu, btn.getBoundingClientRect());
   }
   menu.hidden = !willOpen;
   if (btn) btn.setAttribute('aria-expanded', String(willOpen));

@@ -132,12 +132,10 @@ function buildCompareChart(view) {
     rank != null ? h('span', { class: 'pc-rank', title: Texts.compare.rankTitle(rank) }, `${rank}.`) : null,
     Model.nameOrUnnamed(c)))));
 
-  // Fokus in der Legende über das Neuzeichnen hinweg erhalten
-  const focused = /** @type {HTMLElement | null} */ (root.querySelector('.pc-key:focus'));
-  root.replaceChildren(legend, params.length
+  // Fokus in der Legende bleibt beim Neuzeichnen erhalten
+  rebuild(root, legend, params.length
     ? h('div', { class: 'pc-plot' }, svg, tip)
     : h('p', { class: 'pc-empty' }, Texts.compare.noDifferences));
-  if (focused) $(`.pc-key[data-cid="${CSS.escape(focused.dataset.cid || '')}"]`, root)?.focus();
   emphasizeConcepts();
 }
 
