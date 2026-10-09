@@ -1,8 +1,26 @@
 /*
  * Start der App: Ereignisse verdrahten, geteilte Links übernehmen, erstes Zeichnen.
- * Wird als letztes Skript geladen.
+ * Einstieg der App (in index.html als Modul eingebunden).
  */
-'use strict';
+import { Store } from '../storage.js';
+import {
+  addCategory, addConcept, addParameter, changeScale, changeSetting, clearActive, generateConcept,
+  randomizeActive,
+} from './actions.js';
+import { initConstraints } from './constraints.js';
+import { bindField, flushSave, prefs, redo, save, saveWorkspace, setMode, setPref, setPrinting, state, undo } from './core.js';
+import {
+  MENU_ACTIONS, exportBackup, exportJson, importJson, loadFromHash, renderLibrary, restoreBackup,
+  switchLanguage, toggleMenu,
+} from './dialogs.js';
+import { $, $$, applyStaticTexts, autosize, closeDialog, darkScheme } from './dom.js';
+import { drawLines, scheduleLines } from './lines.js';
+import { initNotePop } from './notes.js';
+import { renderMatrix } from './render-matrix.js';
+import { buildCompareTable, compareContent, render, renderCompare } from './render-panels.js';
+import { initSearch } from './search.js';
+import { initStart } from './start.js';
+import { onExternalDocChange, tabById, toggleTabMenu } from './tabs.js';
 
 function bindEvents() {
   const desc = $('#description');
@@ -130,7 +148,7 @@ function bindEvents() {
 
   // Beim Drucken alle Kategorien und den Vergleich vollständig ausgeben
   window.addEventListener('beforeprint', () => {
-    printing = true;
+    setPrinting(true);
     renderMatrix();
     buildCompareTable(compareContent());
     $('#compareTable').hidden = false;
@@ -139,7 +157,7 @@ function bindEvents() {
     drawLines();
   });
   window.addEventListener('afterprint', () => {
-    printing = false;
+    setPrinting(false);
     renderMatrix();
     renderCompare();
     scheduleLines();

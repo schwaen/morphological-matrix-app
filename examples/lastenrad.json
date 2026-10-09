@@ -1,9 +1,4 @@
-/*
- * Beispiel „Elektro-Lastenrad (umfangreich)“.
- * `data` hat dasselbe Format wie eine mit „Als JSON speichern“ exportierte Datei
- * (siehe docs/DATENFORMAT.md). Anleitung für weitere Beispiele: examples/README.md
- */
-Examples.register({
+{
   "id": "lastenrad",
   "name": "Elektro-Lastenrad (umfangreich)",
   "description": "Große Matrix zum Erkunden: 30 Parameter in 6 Kategorien mit bis zu 8 Ausprägungen, 7 Konzepte, Kosten und Nutzwerte aktiv – inklusive offener Werte und eines unvollständigen Entwurfs.",
@@ -423,4 +418,4 @@ Examples.register({
     ],
     "activeConceptId": "c2"
   }
-});
+}

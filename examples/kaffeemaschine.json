@@ -1,9 +1,4 @@
-/*
- * Beispiel „Kaffeemaschine“.
- * `data` hat dasselbe Format wie eine mit „Als JSON speichern“ exportierte Datei
- * (siehe docs/DATENFORMAT.md). Anleitung für weitere Beispiele: examples/README.md
- */
-Examples.register({
+{
   "id": "kaffeemaschine",
   "name": "Kaffeemaschine",
   "description": "Produktentwicklung eines Haushaltsgeräts mit Konzepten für Espresso, Outdoor und Smart Home. Kosten, Nutzwerte, Prioritäten (MoSCoW), einige Notizen und Verträglichkeiten sind hinterlegt – zum Ausprobieren unter „Bewertung“ einschalten.",
@@ -128,4 +123,4 @@ Examples.register({
     ],
     "activeConceptId": "c1"
   }
-});
+}

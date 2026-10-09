@@ -2,9 +2,24 @@
  * Rendern der Matrix: Parameterzeilen, Ausprägungen (Bearbeiten/Kombinieren),
  * Kategorie-Bänder und die Kategorie-Navigation über der Matrix.
  */
-'use strict';
+import { Consistency } from '../consistency.js';
+import { Evaluation } from '../evaluation.js';
+import { Model } from '../model.js';
+import { Texts } from '../texts.js';
+import {
+  NEW_CATEGORY, addOption, addParameter, deleteCategory, deleteOption, deleteParameter, jumpToCategory,
+  moveCategory, moveOption, moveParameter, setAllCollapsed, setParameterCategory, setPriority, toggleCategory,
+  toggleSelection,
+} from './actions.js';
+import { conflictText, constraintButton, constraintCount, statusText } from './constraints.js';
+import { activeConcept, bindField, collapseKey, isCollapsed, money, prefs, setPendingFocus, state } from './core.js';
+import { $, focusField, h, icon, iconBtn, replaceWith, shownColor } from './dom.js';
+import { noteButton, noteField, noteMark, showNote } from './notes.js';
+import { refreshLight } from './render-panels.js';
+import { markCurrentMatch, searchClass, searchResult } from './search.js';
+import { Util } from '../util.js';
 
-function renderMatrix() {
+export function renderMatrix() {
   const matrix = $('#matrix');
   const editing = prefs.mode === 'edit';
   const maxOptions = Math.max(1, ...state.parameters.map(p => p.options.length));
@@ -147,7 +162,7 @@ function renderOptionEdit(p, pi, o, oi) {
       } else if (e.key === 'Backspace' && !ta.value && p.options.length > 1) {
         e.preventDefault();
         const prev = p.options[oi - 1] || p.options[oi + 1];
-        pendingFocus = `opt:${prev.id}`;
+        setPendingFocus(`opt:${prev.id}`);
         deleteOption(p.id, o.id);
       }
     },
@@ -259,7 +274,7 @@ function optionMetricsText(o) {
 }
 
 /** Gewichtsanteil eines Parameters als Text („25 %“). @param {MatrixParameter} p */
-function weightPercent(p) {
+export function weightPercent(p) {
   const share = Evaluation.weightShare(state, p);
   return share == null ? '–' : Util.formatPercent(share);
 }
@@ -301,7 +316,7 @@ function categoryStyle(p) {
 }
 
 /** @param {MatrixCategory | null} k */
-const categoryColor = k => (k ? k.color : 'var(--muted)');
+export const categoryColor = k => (k ? k.color : 'var(--muted)');
 
 /** @param {MatrixParameter} p */
 function categorySelect(p) {
@@ -385,7 +400,7 @@ function searchBadge(group, found) {
   return n ? h('span', { class: 'search-badge' }, Texts.search.hits(n)) : null;
 }
 
-function renderCategoryNav() {
+export function renderCategoryNav() {
   const nav = $('#catNav');
   if (!state.categories.length) {
     nav.hidden = true;

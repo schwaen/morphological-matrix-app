@@ -1,9 +1,4 @@
-/*
- * Beispiel „Firmen-Event planen“.
- * `data` hat dasselbe Format wie eine mit „Als JSON speichern“ exportierte Datei
- * (siehe docs/DATENFORMAT.md). Anleitung für weitere Beispiele: examples/README.md
- */
-Examples.register({
+{
   "id": "firmen-event",
   "name": "Firmen-Event planen",
   "description": "Event für rund 80 Mitarbeitende: Ort, Programm, Verpflegung und Kommunikation zu Varianten wie Sommerfest oder Strategie-Offsite kombinieren und nach Gesamtkosten und Zufriedenheit (0–5) vergleichen.",
@@ -268,4 +263,4 @@ Examples.register({
     ],
     "activeConceptId": "c1"
   }
-});
+}

@@ -2,7 +2,13 @@
  * Start-Menü am Logo (Einstiege, zuletzt geöffnete Matrizen, Hilfe) und der Dialog
  * „Hilfe & Über“ mit den Reitern Erste Schritte, Tastenkürzel und Über.
  */
-'use strict';
+import { Model } from '../model.js';
+import { Store } from '../storage.js';
+import { Texts } from '../texts.js';
+import { docId } from './core.js';
+import { MENU_ACTIONS } from './dialogs.js';
+import { $, $$, closeDialog, h, openDialog, placeNear, replaceWith } from './dom.js';
+import { reopenTab } from './tabs.js';
 
 const RECENT_COUNT = 5;
 
@@ -110,7 +116,7 @@ function renderHelp() {
   $('#helpMeta').textContent = H.meta(Model.SCHEMA_VERSION);
 }
 
-function initStart() {
+export function initStart() {
   const menu = $('#startMenu');
   $('#logoBtn').addEventListener('click', e => { e.stopPropagation(); toggleStartMenu(); });
   menu.addEventListener('keydown', e => {

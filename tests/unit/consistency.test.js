@@ -233,3 +233,15 @@ test('randomCombination: bricht eine aussichtslose Suche ab und wählt der Reihe
   assert.equal(sel.p11, undefined);
   assert.equal(Consistency.conflicts(m, { selections: sel }).excluded.length, 0);
 });
+
+test('countSignature: gleich bei gleicher Zählgrundlage, anders nach Änderungen daran', () => {
+  const m = withPairs();
+  const sig = Consistency.countSignature(m);
+  m.title = 'Anderer Titel';
+  m.concepts = [];
+  Ops.setConstraint(m, 'p1o2', 'p2o2', 'conditional'); // bedingte Paare zählen nicht
+  assert.equal(Consistency.countSignature(m), sig);
+  Ops.setConstraint(m, 'p1o2', 'p2o2', 'excluded');
+  assert.notEqual(Consistency.countSignature(m), sig);
+  assert.notEqual(Consistency.countSignature(withPairs(), 5), sig); // andere Grenze
+});

@@ -5,9 +5,8 @@
  * (geprüft durch Typprüfung und Unit-Test). Stellt `TextsDe` bereit; die aktive Sprache
  * wählt js/texts.js.
  */
-'use strict';
 
-const TextsDe = (() => {
+export const TextsDe = (() => {
   /** Einzahl/Mehrzahl: `plural(1, 'Konzept', 'Konzepte')` → „1 Konzept“. */
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
   /** Anführungszeichen wie in der Oberfläche üblich. */
@@ -483,6 +482,7 @@ const TextsDe = (() => {
         plural(concepts, 'Konzept', 'Konzepte'),
       ].filter(Boolean).join(' · '),
       open: 'Öffnen',
+      loading: 'Beispiele werden geladen …',
       empty: 'Es sind keine Beispiele eingebunden.',
     },
 

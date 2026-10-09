@@ -1,14 +1,21 @@
 # Morphologische Matrix
 
-Responsive Web-App zum Erstellen einer morphologischen Matrix (Zwicky-Box). Läuft direkt im Browser, ohne Build-Schritt, ohne Abhängigkeiten.
+Responsive Web-App zum Erstellen einer morphologischen Matrix (Zwicky-Box). Läuft im Browser, ohne Server-Backend und ohne Laufzeit-Abhängigkeiten; gebaut wird mit [Vite](https://vite.dev).
 
 ## Starten
 
-`index.html` im Browser öffnen (Doppelklick genügt). Alternativ über einen beliebigen statischen Webserver ausliefern, z. B.:
+Die App ist auf GitHub Pages veröffentlicht: <https://schwaen.github.io/morphological-matrix-app/>
+
+Lokal (Node.js ≥ 22):
 
 ```sh
-python3 -m http.server 8000
+npm install      # einmalig
+npm run dev      # Entwicklungsserver mit sofortiger Aktualisierung, http://localhost:5173/
+npm run build    # Build nach dist/
+npm run preview  # gebaute App ansehen, http://localhost:4173/
 ```
+
+`index.html` lässt sich nicht mehr per Doppelklick öffnen: Die App besteht aus ES-Modulen, die Browser nur über `http(s)://` laden.
 
 ## Funktionen
 
@@ -64,50 +71,56 @@ python3 -m http.server 8000
 
 | Datei / Ordner | Inhalt |
 |---|---|
-| `index.html` | Seitengerüst, lädt die Skripte in fester Reihenfolge |
+| `index.html` | Seitengerüst; bindet den Einstieg `js/ui/main.js` als Modul ein |
 | `styles.css` | Design in Kaskaden-Ebenen (`@layer`): Tokens, Grundstile, Bausteine, Bereiche, Druck |
 | `js/i18n/de.js`, `js/i18n/en.js` | Alle Texte der Oberfläche je Sprache – vom JavaScript erzeugte und unter `ui` die statischen Texte der Seite; `de.js` ist maßgeblich |
 | `js/texts.js` | `Texts` (Texte der aktiven Sprache) und `Languages` (Sprachwahl) |
 | `js/util.js` | `Util` – Zahlen, Texte, Kodierung (ohne DOM) |
 | `js/model.js` | `Model` – Datenmodell, Normalisierung, Abfragen (ohne DOM) |
 | `js/consistency.js` | `Consistency` – Verträglichkeiten: Konflikte, widerspruchsfreie Kombinationen zählen, Optimierung und Zufall unter Beachtung unverträglicher Paare (ohne DOM) |
+| `js/count-worker.js` | Web Worker: zählt die widerspruchsfreien Kombinationen, ohne die Oberfläche zu blockieren |
 | `js/evaluation.js` | `Evaluation` – Kosten, Nutzwert, Preis-Leistung, Prioritätsprofil, Kennzahlenbericht, automatische Konzepte (ohne DOM) |
 | `js/ops.js` | `Ops` – strukturelle Änderungen an einer Matrix: Parameter, Ausprägungen, Kategorien, Konzepte (ohne DOM) |
 | `js/io.js` | `IO` – JSON, CSV, Teilen-Links, Backup (ohne DOM) |
 | `js/zip.js` | `Zip` – ZIP-Archive schreiben und lesen, ohne Bibliothek (ohne DOM) |
 | `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, geöffnete Tabs, Einstellungen pro Browser-Tab) |
-| `js/examples.js` | `Examples` – Verzeichnis der mitgelieferten Beispiele |
-| `examples/` | Mitgelieferte Beispiele, je Beispiel eine Datei (Anleitung in `examples/README.md`) |
-| `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `tabs` (App-Tabs), `actions`, `render-matrix`, `render-panels`, `render-chart` (Verlauf), `search` (Suche), `notes` (Notizen), `constraints` (Verträglichkeiten), `start` (Start-Menü, Hilfe), `lines`, `dialogs`, `main` (Start) |
+| `js/examples.js` | `Examples` – Verzeichnis der mitgelieferten Beispiele (das erste fest eingebunden, die übrigen bei Bedarf nachgeladen) |
+| `examples/` | Mitgelieferte Beispiele, je Beispiel eine JSON-Datei (Anleitung in `examples/README.md`) |
+| `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `tabs` (App-Tabs), `actions`, `render-matrix`, `render-panels`, `render-chart` (Verlauf), `search` (Suche), `notes` (Notizen), `constraints` (Verträglichkeiten), `count` (Zählung im Worker), `start` (Start-Menü, Hilfe), `lines`, `dialogs`, `main` (Einstieg) |
 | `types.d.ts` | Typen des Datenmodells (nur Entwicklung) |
+| `vite.config.js` | Build-Einstellungen (relative Pfade für GitHub Pages) |
+| `scripts/` | Hilfsskripte der Entwicklung (strenge Typprüfung der Logik) |
 | `docs/DATENFORMAT.md` | Datenformat (JSON, Speicherung, Teilen-Links), Versionen und Migrationen |
 | `tests/unit/` | Unit-Tests der Logik (`node:test`) |
 | `tests/e2e/` | Browser-Tests (Playwright) |
 
-**Texte und Sprachen:** Alle Texte stehen je Sprache in `js/i18n/` – `index.html` enthält nur Schlüssel (`data-i18n` für Text, `data-i18n-html` für Text mit Formatierung, `data-i18n-attr="title:…;aria-label:…"` für Attribute), die beim Start gefüllt werden. Formulierungen ändern betrifft also nur die Sprachdateien. `en.js` muss dieselbe Struktur wie `de.js` haben; das prüfen die Typprüfung und ein Unit-Test (`tests/unit/i18n.test.js`, auch für alle Schlüssel aus `index.html`). Eine weitere Sprache: Datei `js/i18n/<code>.js` nach dem Muster von `en.js` anlegen, in `index.html` einbinden, in `Languages` (`js/texts.js`) und im Menü (`data-lang`) ergänzen. Inhalte der Beispiele sind Daten und stehen je Beispiel in einer eigenen Datei unter `examples/`.
+**Texte und Sprachen:** Alle Texte stehen je Sprache in `js/i18n/` – `index.html` enthält nur Schlüssel (`data-i18n` für Text, `data-i18n-html` für Text mit Formatierung, `data-i18n-attr="title:…;aria-label:…"` für Attribute), die beim Start gefüllt werden. Formulierungen ändern betrifft also nur die Sprachdateien. `en.js` muss dieselbe Struktur wie `de.js` haben; das prüfen die Typprüfung und ein Unit-Test (`tests/unit/i18n.test.js`, auch für alle Schlüssel aus `index.html`). Eine weitere Sprache: Datei `js/i18n/<code>.js` nach dem Muster von `en.js` anlegen, in `js/texts.js` importieren und in `Languages` eintragen sowie im Menü (`data-lang`) ergänzen. Inhalte der Beispiele sind Daten und stehen je Beispiel in einer eigenen JSON-Datei unter `examples/`.
 
 **Datenformat:** Gespeicherte Matrizen, JSON-Export und Teilen-Links tragen eine Formatversion; ältere Daten werden beim Öffnen automatisch umgewandelt, Daten aus einer neueren App-Version werden abgelehnt. Details in [`docs/DATENFORMAT.md`](docs/DATENFORMAT.md).
 
-**Aufbau ohne Build:** Alle Dateien sind klassische Skripte (keine ES-Module), damit die App weiterhin per Doppelklick über `file://` läuft. Die Logik-Dateien stellen je genau einen Namensraum bereit (`Util`, `Model`, `Evaluation`, `Ops`, `IO`, `Zip`, `Store`) und arbeiten auf einer übergebenen Matrix statt auf globalem Zustand – so sind sie ohne Browser unit-testbar. Die Dateien unter `js/ui/` teilen sich ihre Funktionen über den globalen Gültigkeitsbereich; Änderungen am Zustand laufen über `mutate()` (strukturell, mit Rückgängig; die eigentliche Änderung erledigt eine Funktion aus `Ops`), `bindField()` (Texteingaben) bzw. `setPref()` (Ansicht pro Tab) – siehe Kopfkommentar in `js/ui/core.js`.
+**Aufbau:** Alle Dateien sind ES-Module mit ausdrücklichen `import`/`export`; Vite bündelt sie für die Auslieferung. Die Logik-Dateien exportieren je einen Namensraum (`Util`, `Model`, `Consistency`, `Evaluation`, `Ops`, `IO`, `Zip`, `Store`) und arbeiten auf einer übergebenen Matrix statt auf globalem Zustand – so sind sie ohne Browser unit-testbar. Der Zustand des aktiven Tabs liegt in `js/ui/core.js`; andere Module lesen ihn über Importe und ändern ihn nur über die dortigen Funktionen. Änderungen an der Matrix laufen über `mutate()` (strukturell, mit Rückgängig; die eigentliche Änderung erledigt eine Funktion aus `Ops`), `bindField()` (Texteingaben) bzw. `setPref()` (Ansicht pro Tab) – siehe Kopfkommentar in `js/ui/core.js`.
 
 ## Entwicklung
 
-Die App selbst braucht weder Build noch Server. Für Qualitätssicherung gibt es Entwicklungswerkzeuge (Node.js ≥ 22):
+Entwicklungswerkzeuge (Node.js ≥ 22):
 
 ```sh
 npm install                      # Werkzeuge installieren (einmalig)
 npx playwright install chromium  # Browser für die Tests (einmalig)
 
+npm run dev         # Entwicklungsserver (Vite)
+npm run build       # Build nach dist/
 npm run lint        # ESLint
-npm run typecheck   # Typprüfung des JavaScript per JSDoc (tsc, ohne Build)
+npm run typecheck   # Typprüfung des JavaScript per JSDoc (tsc)
 npm run test:unit   # Unit-Tests der Logik (node:test, ohne Browser)
 npm run coverage    # Unit-Tests mit Abdeckungsbericht je Datei
-npm run test:e2e    # Browser-Tests (Playwright) gegen index.html per file://
-npm test            # alles zusammen
+npm run test:e2e    # Browser-Tests (Playwright) gegen den Build (vite preview); vorher npm run build
+npm test            # alles zusammen (inkl. Build)
 ```
 
 - **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). Die Skripte nutzen diese Typen über JSDoc-Kommentare; `tsc` prüft auch die Bezüge zwischen den Dateien.
-- **Typprüfung in zwei Stufen:** `jsconfig.json` prüft den gesamten Code im `strict`-Modus (u. a. `null`/`undefined`-Prüfungen). `tsconfig.logic.json` verlangt für die DOM-freien Logik-Dateien unter `js/` zusätzlich Typangaben für alle Parameter (`noImplicitAny`); ausgenommen sind `js/texts.js` und die Sprachdateien unter `js/i18n/`, die nur Textbausteine enthalten.
-- **Tests:** `tests/e2e/` – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Backup, Sprachen, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, MoSCoW, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
-- **Unit-Tests:** `tests/unit/` lädt die DOM-freien Skripte in einen isolierten Node-Kontext (`tests/unit/load.js`) – so, wie der Browser sie ausführt. Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft. `npm run coverage` zeigt die Abdeckung je Datei (Zeilen, Zweige, Funktionen).
-- **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung, Unit- und Browser-Tests bei jedem Pull Request aus.
+- **Typprüfung in zwei Stufen:** `jsconfig.json` prüft den gesamten Code im `strict`-Modus (u. a. `null`/`undefined`-Prüfungen). `tsconfig.logic.json` verlangt für die DOM-freien Logik-Dateien unter `js/` zusätzlich Typangaben für alle Parameter (`noImplicitAny`); ausgenommen sind `js/texts.js` und die Sprachdateien unter `js/i18n/`, die nur Textbausteine enthalten (`scripts/typecheck-logic.js` filtert deren Meldungen aus).
+- **Tests:** `tests/e2e/` prüft den Build, so wie er auf GitHub Pages läuft (Playwright startet dafür `vite preview`) – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Backup, Sprachen, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, MoSCoW, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
+- **Unit-Tests:** `tests/unit/` importiert die DOM-freien Module direkt (`tests/unit/load.js`). Die App wählt ihre Sprache beim Laden; Standard in den Tests ist Deutsch, `util-en.test.js` lädt sie auf Englisch (`env-en.js`). Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft. `npm run coverage` zeigt die Abdeckung je Datei (Zeilen, Zweige, Funktionen).
+- **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung, Unit-Tests, Build und Browser-Tests bei jedem Pull Request aus.
+- **Veröffentlichung:** `.github/workflows/pages.yml` baut die App bei jedem Push auf `main` und veröffentlicht `dist/` auf GitHub Pages (Einstellung des Repositorys: *Settings → Pages → Source: GitHub Actions*).

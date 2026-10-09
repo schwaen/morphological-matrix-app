@@ -1,8 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadApp, plain } from './load.js';
+import { withGlobals } from './env.js';
 
-const { Util } = loadApp();
+const { Util, Languages } = loadApp();
 
 test('parseNumber: deutsche und englische Schreibweise', () => {
   assert.equal(Util.parseNumber('1.234,5'), 1234.5);
@@ -64,24 +65,24 @@ test('scaleBigInt zerlegt große Zahlen exakt in Tausenderstufen', () => {
   assert.deepEqual(plain(Util.scaleBigInt(10n ** 40n)), { value: 10, power: 39 });
 });
 
-// Englische Oberfläche: dieselben Skripte mit englischer Browsersprache geladen
-const { Util: UtilEn, Languages } = loadApp({ navigator: { language: 'en-US' } });
+// Englische Formate prüft util-en.test.js (App dort mit englischer Oberfläche geladen)
 
-test('Sprachwahl: Browsersprache, ohne Browser Deutsch', () => {
-  assert.equal(Languages.detect(), 'en');
-  assert.equal(loadApp({ navigator: { language: 'de-AT' } }).Languages.detect(), 'de');
-  assert.equal(loadApp().Languages.detect(), 'de');
+test('Sprachwahl: Browsersprache, ohne Browser Deutsch', async () => {
+  await withGlobals({ navigator: { language: 'en-US' } }, () => assert.equal(Languages.detect(), 'en'));
+  await withGlobals({ navigator: { language: 'de-AT' } }, () => assert.equal(Languages.detect(), 'de'));
+  await withGlobals({ navigator: undefined }, () => assert.equal(Languages.detect(), 'de'));
 });
 
-test('Sprachwahl: gespeicherte Sprache hat Vorrang vor der Browsersprache', () => {
+test('Sprachwahl: gespeicherte Sprache hat Vorrang vor der Browsersprache', async () => {
   const store = new Map();
   const localStorage = { getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) };
-  const { Languages: L } = loadApp({ navigator: { language: 'de-DE' }, localStorage });
-  L.choose('en');
-  assert.equal(store.get(L.STORAGE_KEY), 'en');
-  assert.equal(L.detect(), 'en');
-  store.set(L.STORAGE_KEY, 'xx'); // unbekannte Sprache wird ignoriert
-  assert.equal(L.detect(), 'de');
+  await withGlobals({ navigator: { language: 'de-DE' }, localStorage }, () => {
+    Languages.choose('en');
+    assert.equal(store.get(Languages.STORAGE_KEY), 'en');
+    assert.equal(Languages.detect(), 'en');
+    store.set(Languages.STORAGE_KEY, 'xx'); // unbekannte Sprache wird ignoriert
+    assert.equal(Languages.detect(), 'de');
+  });
 });
 
 test('str: Texte unverändert, null/undefined als Ersatz, sonst als Text', () => {
@@ -116,31 +117,24 @@ test('parseNumber: englische Schreibweise mit Dezimalpunkt', () => {
   assert.equal(Util.parseNumber('3,5', '.'), 3.5);       // Komma ohne Tausendergruppe
   assert.equal(Util.parseNumber('$ 12.75', '.'), 12.75);
   assert.equal(Util.parseNumber('-0.5', '.'), -0.5);
-  assert.equal(UtilEn.parseNumber('2,500'), 2500);       // Standard: Sprache der Oberfläche
   assert.ok(Number.isNaN(Util.parseNumber('1.2.3', '.')));
   assert.equal(Util.parseNumber(7), 7);                  // keine Zeichenkette
 });
 
 test('numberToInput: Dezimalpunkt im Englischen', () => {
   assert.equal(Util.numberToInput(1234.5, '.'), '1234.5');
-  assert.equal(UtilEn.numberToInput(0.25), '0.25');
 });
 
 test('Zahlenformate je Sprache', () => {
   const sp = s => s.replace(/\s/g, ' ');
   assert.equal(Util.formatNumber(1234.567), '1.234,57');
-  assert.equal(UtilEn.formatNumber(1234.567), '1,234.57');
   assert.equal(Util.formatInteger(1234567), '1.234.567');
   assert.equal(Util.formatInteger(12345678901234567890n), '12.345.678.901.234.567.890');
-  assert.equal(UtilEn.formatInteger(1234567), '1,234,567');
   assert.equal(sp(Util.formatPercent(0.255)), '25,5 %');
-  assert.equal(UtilEn.formatPercent(0.255), '25.5%');
-  assert.equal(sp(UtilEn.formatMoney(54, 'EUR')), '€54.00');
 });
 
 test('currencySymbol: Symbol der Währung, sonst der Code', () => {
   assert.equal(Util.currencySymbol('EUR'), '€');
-  assert.equal(UtilEn.currencySymbol('USD'), '$');
   assert.equal(Util.currencySymbol('CHF'), 'CHF');      // kein eigenes Symbol
   assert.equal(Util.currencySymbol('XXX!'), 'XXX!');    // ungültiger Code
 });

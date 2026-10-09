@@ -2,31 +2,22 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 export default [
-  { ignores: ['node_modules/', 'test-results/', 'playwright-report/'] },
+  { ignores: ['node_modules/', 'test-results/', 'playwright-report/', 'dist/'] },
   js.configs.recommended,
   {
-    // App-Code: klassische Browser-Skripte ohne Build. Sie teilen sich den globalen
-    // Gültigkeitsbereich (Reihenfolge in index.html); Bezüge zwischen den Dateien
-    // prüft die Typprüfung (tsc), daher hier kein no-undef und nur lokale Unbenutzt-Prüfung.
+    // App-Code: ES-Module, gebündelt von Vite
     files: ['js/**/*.js'],
-    languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: globals.browser },
+    languageOptions: { ecmaVersion: 2025, sourceType: 'module', globals: globals.browser },
     rules: {
-      'no-undef': 'off',
-      'no-unused-vars': ['error', { vars: 'local', args: 'none', caughtErrors: 'none' }],
-      'no-redeclare': 'off',
+      'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }],
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'prefer-const': 'error',
       'no-var': 'error',
     },
   },
   {
-    // Beispiel-Dateien: nur Daten, angemeldet über den globalen Namensraum `Examples`
-    files: ['examples/**/*.js'],
-    languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: { Examples: 'readonly' } },
-  },
-  {
     // Werkzeuge und Tests laufen in Node
-    files: ['*.config.js', 'tests/**/*.js'],
+    files: ['*.config.js', 'tests/**/*.js', 'scripts/**/*.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: { ...globals.node, ...globals.browser } },
   },
 ];

@@ -82,7 +82,7 @@ interface Matrix {
   activeConceptId: string | null;
 }
 
-/** Mitgeliefertes Beispiel (eine Datei je Beispiel unter examples/) */
+/** Mitgeliefertes Beispiel (eine JSON-Datei je Beispiel unter examples/) */
 interface ExampleDef {
   /** Eindeutiger Kurzname, z. B. Dateiname ohne Endung */
   id: string;
@@ -162,4 +162,19 @@ interface OptionRef {
   o: MatrixOption;
   /** Position der Ausprägung im Parameter */
   oi: number;
+}
+
+/**
+ * Ein geöffneter App-Tab. Für inaktive Tabs liegen Matrix, Verlauf und Scroll-Position hier;
+ * für den aktiven Tab gelten die Variablen in js/ui/core.js.
+ */
+interface AppTab {
+  docId: string;
+  view: Partial<TabView>;
+  state?: Matrix;
+  undo?: string[];
+  redo?: string[];
+  lastSaved?: string | null;
+  scrollY?: number;
+  external?: boolean;
 }

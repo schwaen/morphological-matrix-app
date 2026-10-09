@@ -12,24 +12,24 @@
  *    Verlaufseintrag beim Verlassen).
  *  - Ansichtseinstellungen über `setPref()`; sie sind nicht Teil des Verlaufs.
  */
-'use strict';
+import { Examples } from '../examples.js';
+import { Model } from '../model.js';
+import { Store } from '../storage.js';
+import { Texts } from '../texts.js';
+import { toast } from './dom.js';
+import { refreshLight, render, updateHistoryButtons } from './render-panels.js';
+import { Util } from '../util.js';
 
 const HISTORY_LIMIT = 200;
 /** @type {TabPrefs} */
-const DEFAULT_PREFS = { mode: 'select', lines: 'active', compareOpen: true, compareView: 'table', compareDiff: false, compareSort: 'order', compareHideConflicts: false };
+export const DEFAULT_PREFS = { mode: 'select', lines: 'active', compareOpen: true, compareView: 'table', compareDiff: false, compareSort: 'order', compareHideConflicts: false };
 /** Ansichtseinstellungen, die jeder App-Tab für sich behält (`lines` gilt für alle). */
 const VIEW_KEYS = /** @type {const} */ (['mode', 'compareOpen', 'compareView', 'compareDiff', 'compareSort', 'compareHideConflicts', 'collapsed']);
-const CLOSED_LIMIT = 8;
+export const CLOSED_LIMIT = 8;
 
-/**
- * Ein geöffneter App-Tab. Für inaktive Tabs liegen Matrix, Verlauf und Scroll-Position hier;
- * für den aktiven Tab gelten die globalen Variablen.
- * @typedef {{ docId: string, view: Partial<TabView>, state?: Matrix, undo?: string[], redo?: string[],
- *             lastSaved?: string | null, scrollY?: number, external?: boolean }} AppTab
- */
 
 /** @param {TabPrefs | Partial<TabView>} source @returns {Partial<TabView>} */
-const pickView = source => Object.fromEntries(VIEW_KEYS.filter(k => k in source).map(k => [k, source[k]]));
+export const pickView = source => Object.fromEntries(VIEW_KEYS.filter(k => k in source).map(k => [k, source[k]]));
 
 /**
  * Geöffnete App-Tabs beim Start: gespeicherter Arbeitsbereich (nur noch vorhandene Matrizen),
@@ -69,52 +69,54 @@ function loadInitialTabs() {
   return { list, active: active || list[0].docId, closed: (ws && Array.isArray(ws.closed)) ? ws.closed : [] };
 }
 
-/** Matrix für den allerersten Start: das erste eingebundene Beispiel, sonst eine leere Matrix. */
+/** Matrix für den allerersten Start: das erste Beispiel, sonst eine leere Matrix. */
 function startExample() {
-  const first = Examples.all()[0];
   try {
-    return (first && Examples.load(first.id)) || Model.blankState();
+    return Examples.loadFirst();
   } catch (e) {
-    console.warn(`Beispiel „${first.id}“ ist ungültig:`, Util.errorMessage(e));
+    console.warn('Erstes Beispiel ist ungültig:', Util.errorMessage(e));
     return Model.blankState();
   }
 }
 
 const initial = loadInitialTabs();
 /** @type {AppTab[]} */
-const tabs = initial.list;
+export const tabs = initial.list;
 /** Zuletzt geschlossene Matrizen (IDs, neueste zuerst). @type {string[]} */
-// eslint-disable-next-line prefer-const -- wird in tabs.js und dialogs.js neu gesetzt
-let closedTabs = initial.closed;
+export let closedTabs = initial.closed;
 
 // loadInitialTabs liefert immer mindestens einen Tab, jeweils mit geladener Matrix
 const initialTab = tabs.find(t => t.docId === initial.active) || tabs[0];
-// eslint-disable-next-line prefer-const -- wird beim Tab-Wechsel (tabs.js) neu gesetzt
-let docId = initialTab.docId;
+export let docId = initialTab.docId;
 /** @type {Matrix} */
-let state = /** @type {Matrix} */ (initialTab.state);
+export let state = /** @type {Matrix} */ (initialTab.state);
 /** @type {TabPrefs} */
-const prefs = { ...Store.loadPrefs(DEFAULT_PREFS), ...initialTab.view };
-/** `data-fid` des Felds, das nach dem nächsten Neuzeichnen den Fokus bekommt. */
-// eslint-disable-next-line prefer-const -- wird in Aktionen und beim Rendern neu gesetzt
-let pendingFocus = null;
+export const prefs = { ...Store.loadPrefs(DEFAULT_PREFS), ...initialTab.view };
+/** `data-fid` des Felds, das nach dem nächsten Neuzeichnen den Fokus bekommt. @type {string | null} */
+export let pendingFocus = null;
+/** @param {string | null} fid */
+export function setPendingFocus(fid) { pendingFocus = fid; }
 /** Beim Drucken werden alle Kategorien ausgeklappt. */
-// eslint-disable-next-line prefer-const -- wird beim Drucken in main.js umgeschaltet
-let printing = false;
+export let printing = false;
+/** @param {boolean} on */
+export function setPrinting(on) { printing = on; }
+/** @param {string[]} ids */
+export function setClosedTabs(ids) { closedTabs = ids; }
 
-const activeConcept = () => state.concepts.find(c => c.id === state.activeConceptId) || null;
+export const activeConcept = () => state.concepts.find(c => c.id === state.activeConceptId) || null;
 /** Betrag in der Währung der aktuellen Matrix. @param {number} n */
-const money = n => Util.formatMoney(n, state.settings.currency);
+export const money = n => Util.formatMoney(n, state.settings.currency);
 
 // ---------- Speichern ----------
 
-let lastSaved = null;
+/** @type {string | null} */
+export let lastSaved = null;
 /** Verzögerung beim Speichern während des Tippens (ms). */
 const SAVE_DELAY = 300;
 let saveTimer = 0;
 
 /** Sofort speichern (und ein ausstehendes verzögertes Speichern erledigen). */
-function save() {
+export function save() {
   clearTimeout(saveTimer);
   saveTimer = 0;
   const json = JSON.stringify(state);
@@ -134,12 +136,12 @@ function scheduleSave() {
 }
 
 /** Ausstehendes verzögertes Speichern sofort erledigen (no-op, wenn nichts aussteht). */
-function flushSave() {
+export function flushSave() {
   if (saveTimer) save();
 }
 
 /** Geöffnete Tabs, aktiven Tab und deren Ansichten merken. @param {{ tabOnly?: boolean }} [opts] */
-function saveWorkspace(opts) {
+export function saveWorkspace(opts) {
   Store.saveWorkspace({
     tabs: tabs.map(t => ({ docId: t.docId, view: t.docId === docId ? pickView(prefs) : t.view })),
     active: docId,
@@ -152,7 +154,7 @@ function saveWorkspace(opts) {
  * @template {keyof TabPrefs} K
  * @param {K} key @param {TabPrefs[K]} value
  */
-function setPref(key, value) {
+export function setPref(key, value) {
   prefs[key] = value;
   Store.savePrefs(prefs);
   saveWorkspace();
@@ -161,9 +163,9 @@ function setPref(key, value) {
 // ---------- Verlauf (Rückgängig / Wiederholen) – je App-Tab ----------
 
 /** @type {string[]} */
-let undoStack = [];
+export let undoStack = [];
 /** @type {string[]} */
-let redoStack = [];
+export let redoStack = [];
 const snapshot = () => JSON.stringify(state);
 
 function pushHistory(snap) {
@@ -179,14 +181,14 @@ function clearHistory() {
 }
 
 /** Strukturelle Änderung: Verlauf sichern, ändern, speichern, neu zeichnen. @param {(m: Matrix) => void} fn */
-function mutate(fn) {
+export function mutate(fn) {
   pushHistory(snapshot());
   fn(state);
   save();
   render();
 }
 
-function undo() {
+export function undo() {
   const snap = undoStack.pop();
   if (snap == null) return;
   redoStack.push(snapshot());
@@ -195,7 +197,7 @@ function undo() {
   render();
 }
 
-function redo() {
+export function redo() {
   const snap = redoStack.pop();
   if (snap == null) return;
   undoStack.push(snapshot());
@@ -211,7 +213,7 @@ function redo() {
  * @param {(value: string) => void} apply
  * @param {() => void} [after] Aktualisierung nach jeder Eingabe (Standard: `refreshLight`)
  */
-function bindField(el, apply, after = refreshLight) {
+export function bindField(el, apply, after = refreshLight) {
   el.addEventListener('focus', () => { el._snap = snapshot(); });
   el.addEventListener('input', () => {
     if (el._snap == null) el._snap = snapshot();
@@ -227,7 +229,7 @@ function bindField(el, apply, after = refreshLight) {
 }
 
 /** Übernimmt den Stand, den ein anderer Browser-Tab für die aktive Matrix gespeichert hat. */
-function adoptExternalChange() {
+export function adoptExternalChange() {
   const doc = Store.readDoc(docId);
   if (!doc) return;
   state = doc.data;
@@ -239,20 +241,33 @@ function adoptExternalChange() {
 // ---------- Ansicht ----------
 
 /** @param {TabPrefs['mode']} mode */
-function setMode(mode) {
+export function setMode(mode) {
   setPref('mode', mode);
   render();
 }
 
 /** @param {string | null} cid */
-const collapseKey = cid => cid || Model.NO_CATEGORY;
+export const collapseKey = cid => cid || Model.NO_CATEGORY;
 /** @param {string | null} cid */
-const isCollapsed = cid => !printing && !!(prefs.collapsed && prefs.collapsed[collapseKey(cid)]);
+export const isCollapsed = cid => !printing && !!(prefs.collapsed && prefs.collapsed[collapseKey(cid)]);
 
 /** @param {string | null} cid @param {boolean} value */
-function setCollapsed(cid, value) {
+export function setCollapsed(cid, value) {
   const next = { ...(prefs.collapsed || {}) };
   if (value) next[collapseKey(cid)] = true;
   else delete next[collapseKey(cid)];
   setPref('collapsed', next);
+}
+
+/**
+ * Stand eines Tab-Eintrags als aktiven Stand übernehmen (Tab-Wechsel, js/ui/tabs.js).
+ * @param {AppTab} t
+ */
+export function setActiveDoc(t) {
+  docId = t.docId;
+  state = /** @type {Matrix} */ (t.state); // Tab-Einträge halten ihre Matrix immer bereit
+  undoStack = t.undo || [];
+  redoStack = t.redo || [];
+  // `null` heißt „noch nie gespeichert“ (neuer Tab) – nicht mit „unbekannt“ verwechseln
+  lastSaved = t.lastSaved !== undefined ? t.lastSaved : JSON.stringify(state);
 }

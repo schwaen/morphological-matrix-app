@@ -3,7 +3,14 @@
  * einer Ausprägung (Popover, Bearbeiten-Modus) und die Übersicht als Verträglichkeitsmatrix
  * (Dialog „Verträglichkeiten“). Die Logik steht in js/consistency.js.
  */
-'use strict';
+import { Consistency } from '../consistency.js';
+import { Model } from '../model.js';
+import { Ops } from '../ops.js';
+import { Texts } from '../texts.js';
+import { bindField, mutate, prefs, state } from './core.js';
+import { $, $$, closeDialog, h, iconBtn, openDialog, placeNear, rebuild, replaceWith } from './dom.js';
+import { formatCount } from './render-panels.js';
+import { consistentCount, onCountReady } from './count.js';
 
 /** Ausprägung samt Parameter und Anzeigetexten zu einer ID. @param {string} oid */
 function optionRef(oid) {
@@ -21,7 +28,7 @@ function optionWithParam(oid) {
 const otherOf = (c, oid) => (c.a === oid ? c.b : c.a);
 
 /** Hinweis für eine gewählte Ausprägung mit unverträglichen Partnern. @param {string} oid @param {MatrixConstraint[]} list */
-function conflictText(oid, list) {
+export function conflictText(oid, list) {
   return {
     type: 'excluded',
     label: Texts.cons.conflictLabel,
@@ -30,7 +37,7 @@ function conflictText(oid, list) {
 }
 
 /** Hinweis für eine nicht gewählte Ausprägung. @param {{ type: MatrixConstraintType, with: string, note: string }} st */
-function statusText(st) {
+export function statusText(st) {
   return {
     type: st.type,
     label: Texts.cons.types[st.type],
@@ -39,20 +46,20 @@ function statusText(st) {
 }
 
 /** „Induktion ✕ Muskelkraft“ bzw. mit „!“ für bedingte Paare. @param {MatrixConstraint} c */
-function pairLabel(c) {
+export function pairLabel(c) {
   const a = optionRef(c.a);
   const b = optionRef(c.b);
   return `${a ? a.text : '?'} ${c.type === 'excluded' ? '✕' : '!'} ${b ? b.text : '?'}`;
 }
 
 /** Kleines Kennzeichen „⚠ n“ für Konzepte mit unverträglichen Paaren. @param {MatrixConcept} c */
-function conflictPill(c) {
+export function conflictPill(c) {
   const n = Consistency.conflicts(state, c).excluded.length;
   return n ? h('span', { class: 'cons-pill excluded', title: Texts.cons.conceptConflicts(n) }, `⚠ ${n}`) : null;
 }
 
 /** Kasten in der Zusammenfassung: Unverträglichkeiten und bedingte Paare des Konzepts. @param {MatrixConcept} c */
-function conflictBox(c) {
+export function conflictBox(c) {
   const { excluded, conditional } = Consistency.conflicts(state, c);
   if (!excluded.length && !conditional.length) return null;
   /** @param {MatrixConstraint} x */
@@ -96,7 +103,7 @@ function setPair(a, b, type) {
 let consPopFor = null;
 
 /** Zähler unter dem Text einer Ausprägung (öffnet ebenfalls das Popover). @param {MatrixOption} o */
-function constraintCount(o) {
+export function constraintCount(o) {
   const n = Consistency.countFor(state, o.id);
   if (!n.excluded && !n.conditional) return null;
   return h('button', {
@@ -109,7 +116,7 @@ function constraintCount(o) {
 }
 
 /** Knopf in der Werkzeugleiste der Ausprägung. @param {MatrixOption} o */
-function constraintButton(o) {
+export function constraintButton(o) {
   const n = Consistency.countFor(state, o.id);
   const btn = iconBtn('ban', Texts.cons.edit, e => openConsPop(o.id, /** @type {HTMLElement} */ (e.currentTarget)), { active: n.excluded + n.conditional > 0 });
   btn.dataset.consBtn = o.id;
@@ -208,7 +215,7 @@ function renderConsPop() {
 /** Im Dialog gewähltes Paar. @type {{ a: string, b: string } | null} */
 let consSelected = null;
 
-function openConsDialog() {
+export function openConsDialog() {
   consSelected = null;
   $('#consBody').replaceChildren(); // beim Öffnen immer frisch aufbauen (z. B. andere Matrix)
   renderConsDialog();
@@ -242,10 +249,17 @@ function renderConsDialog() {
   else buildConsGrid(body, P, sig);
   rebuild($('#consDetail'), consDetail());
 
-  const total = state.parameters.reduce((n, p) => n * BigInt(p.options.length), 1n);
-  const ok = Consistency.countConsistent(state);
-  $('#consSummary').textContent = Texts.cons.summary(state.constraints.length, formatCount(total).text, ok == null ? Texts.cons.notCountable : formatCount(ok).text);
+  renderConsSummary();
 }
+
+/** Zusammenfassung über der Verträglichkeitsmatrix (Zahl der Paare und widerspruchsfreien Kombinationen). */
+function renderConsSummary() {
+  const total = state.parameters.reduce((n, p) => n * BigInt(p.options.length), 1n);
+  const { value: ok } = consistentCount(state);
+  const okText = ok === undefined ? '…' : ok == null ? Texts.cons.notCountable : formatCount(ok).text;
+  $('#consSummary').textContent = Texts.cons.summary(state.constraints.length, formatCount(total).text, okText);
+}
+onCountReady(() => { if ($('#consDialog').open) renderConsSummary(); });
 
 /**
  * Dreiecksmatrix neu aufbauen: Zeilen = Ausprägungen der Parameter 2…n, Spalten = 1…n−1.
@@ -367,12 +381,12 @@ function consDetail() {
 }
 
 /** Nach jeder Änderung: offenes Popover bzw. offenen Dialog aktualisieren. */
-function refreshConstraintEditors() {
+export function refreshConstraintEditors() {
   if (consPopFor != null) renderConsPop();
   if ($('#consDialog').open) renderConsDialog();
 }
 
-function initConstraints() {
+export function initConstraints() {
   const body = $('#consBody');
   // Klick wählt aus (Änderung rechts im Detailbereich), Doppelklick schaltet direkt weiter
   body.addEventListener('click', e => {

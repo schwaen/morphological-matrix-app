@@ -32,10 +32,13 @@ jobs:
       - name: Unit-Tests (node:test)
         run: npm run test:unit
 
+      - name: Build (Vite)
+        run: npm run build
+
       - name: Browser installieren
         run: npx playwright install --with-deps chromium
 
-      - name: Browser-Tests (Playwright)
+      - name: Browser-Tests (Playwright, gegen den Build)
         run: npm run test:e2e
 
       - name: Testbericht hochladen

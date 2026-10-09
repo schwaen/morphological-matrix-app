@@ -4,18 +4,19 @@
  * Modus (prefs.lines): „all“ alle deutlich, „active“ nur das aktive Konzept deutlich (andere
  * dezent), „off“ keine. Beim Darüberfahren über ein Konzept wird dessen Linie hervorgehoben.
  */
-'use strict';
+import { isCollapsed, prefs, state } from './core.js';
+import { $, $$, shownColor } from './dom.js';
 
 let linesFrame = 0;
 /** Konzept, über dem gerade der Mauszeiger steht (Hervorhebung), sonst `null`. @type {string | null} */
 let hoveredConcept = null;
 /** Linien im nächsten Frame neu zeichnen (fasst mehrere Anforderungen zusammen). */
-function scheduleLines() {
+export function scheduleLines() {
   cancelAnimationFrame(linesFrame);
   linesFrame = requestAnimationFrame(drawLines);
 }
 
-function drawLines() {
+export function drawLines() {
   const svg = $('#lines');
   const wrap = $('#matrixWrap');
   svg.replaceChildren();
@@ -72,7 +73,7 @@ function drawLines() {
  * Deutlichkeit der Linien nach Modus, aktivem und hervorgehobenem Konzept setzen – ohne neu zu
  * zeichnen (auch für das Verlaufsdiagramm im Konzeptvergleich).
  */
-function emphasizeConcepts() {
+export function emphasizeConcepts() {
   const dimmed = prefs.lines === 'active' ? '.12' : '.55';
   $$('#lines path, #compareChart [data-cid]').forEach(el => {
     const cid = /** @type {HTMLElement} */ (/** @type {unknown} */ (el)).dataset.cid;
@@ -95,7 +96,7 @@ function emphasizeConcepts() {
 }
 
 /** Konzept beim Darüberfahren hervorheben (`null` = keines). @param {string | null} cid */
-function hoverConcept(cid) {
+export function hoverConcept(cid) {
   if (hoveredConcept === cid) return;
   hoveredConcept = cid;
   emphasizeConcepts();

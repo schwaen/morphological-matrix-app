@@ -4,14 +4,19 @@
  * (eingeklappte Kategorien werden dabei aufgeklappt). Die Suche gilt nur für die Ansicht und
  * wird nicht gespeichert.
  */
-'use strict';
+import { Model } from '../model.js';
+import { Texts } from '../texts.js';
+import { isCollapsed, setCollapsed, state } from './core.js';
+import { $ } from './dom.js';
+import { scheduleLines } from './lines.js';
+import { renderCategoryNav, renderMatrix } from './render-matrix.js';
 
 let searchQuery = '';
 /** Position des aktuellen Treffers in `hits`, `-1` = noch keiner angesprungen. */
 let searchIndex = -1;
 
 /** Treffer der aktuellen Suche oder `null`, wenn nicht gesucht wird. */
-function searchResult() {
+export function searchResult() {
   return searchQuery.trim() ? Model.search(state, searchQuery) : null;
 }
 
@@ -20,7 +25,7 @@ function searchResult() {
  * @param {ReturnType<typeof Model.search> | null} found
  * @param {string} pid @param {string | null} oid `null` = Parameterzelle
  */
-function searchClass(found, pid, oid) {
+export function searchClass(found, pid, oid) {
   if (!found) return '';
   const hit = oid ? found.options.has(oid) : found.hits.some(x => x.pid === pid && x.oid === null);
   if (hit) return ' is-match';
@@ -67,7 +72,7 @@ function stepSearch(delta) {
 }
 
 /** Aktuellen Treffer nach dem Rendern der Matrix kennzeichnen. */
-function markCurrentMatch(found) {
+export function markCurrentMatch(found) {
   if (!found || searchIndex < 0 || searchIndex >= found.hits.length) return;
   const { pid, oid } = found.hits[searchIndex];
   const sel = oid ? `[data-oid="${CSS.escape(oid)}"]` : `[data-pid="${CSS.escape(pid)}"]`;
@@ -75,7 +80,7 @@ function markCurrentMatch(found) {
   if (el) el.classList.add('is-current-match');
 }
 
-function initSearch() {
+export function initSearch() {
   const input = $('#matrixSearch');
   input.addEventListener('input', () => setSearch(input.value));
   input.addEventListener('keydown', e => {

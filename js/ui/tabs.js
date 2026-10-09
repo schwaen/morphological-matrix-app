@@ -3,11 +3,20 @@
  * Jeder Tab behält Ansicht, Rückgängig-Verlauf und Scroll-Position. Der aktive Tab zeigt den
  * Titel als Eingabefeld (Doppelklick zum Umbenennen).
  */
-'use strict';
+import { Store } from '../storage.js';
+import { Texts } from '../texts.js';
+import {
+  adoptExternalChange, bindField, CLOSED_LIMIT, closedTabs, DEFAULT_PREFS, docId, flushSave, lastSaved,
+  pickView, prefs, redoStack, save, saveWorkspace, setActiveDoc, setClosedTabs, state, tabs, undoStack,
+} from './core.js';
+import { MENU_ACTIONS } from './dialogs.js';
+import { $, h, icon, placeNear, replaceWith, toast } from './dom.js';
+import { refreshLight, render } from './render-panels.js';
+import { Util } from '../util.js';
 
 const activeTab = () => tabs.find(t => t.docId === docId);
 /** @param {string} id */
-const tabById = id => tabs.find(t => t.docId === id) || null;
+export const tabById = id => tabs.find(t => t.docId === id) || null;
 
 /** Stand des aktiven Tabs in seinem Eintrag ablegen (vor einem Wechsel). */
 function stashActiveTab() {
@@ -21,12 +30,7 @@ function stashActiveTab() {
 
 /** Stand eines Tab-Eintrags als aktiven Stand laden. @param {AppTab} t */
 function loadTab(t) {
-  docId = t.docId;
-  state = /** @type {Matrix} */ (t.state); // Tab-Einträge halten ihre Matrix immer bereit
-  undoStack = t.undo || [];
-  redoStack = t.redo || [];
-  // `null` heißt „noch nie gespeichert“ (neuer Tab) – nicht mit „unbekannt“ verwechseln
-  lastSaved = t.lastSaved !== undefined ? t.lastSaved : JSON.stringify(state);
+  setActiveDoc(t);
   // Ansicht des Tabs übernehmen; fehlende Werte (z. B. neuer Tab) mit Standardwerten
   prefs.mode = t.view.mode || DEFAULT_PREFS.mode;
   prefs.compareOpen = t.view.compareOpen ?? DEFAULT_PREFS.compareOpen;
@@ -39,7 +43,7 @@ function loadTab(t) {
 }
 
 /** Zu einem geöffneten Tab wechseln. @param {string} id */
-function activateTab(id) {
+export function activateTab(id) {
   if (id === docId) return;
   const t = tabById(id);
   if (!t) return;
@@ -54,7 +58,7 @@ function activateTab(id) {
  * Matrix in einem App-Tab öffnen – ist sie schon offen, dorthin wechseln.
  * @param {string} id @param {Matrix} data @param {string} [message]
  */
-function openInTab(id, data, message) {
+export function openInTab(id, data, message) {
   if (tabById(id)) {
     activateTab(id);
   } else {
@@ -64,7 +68,7 @@ function openInTab(id, data, message) {
     /** @type {AppTab} */
     const t = { docId: id, view: { mode: prefs.mode, compareOpen: prefs.compareOpen, compareView: prefs.compareView, compareDiff: prefs.compareDiff, compareSort: prefs.compareSort, compareHideConflicts: prefs.compareHideConflicts }, state: data, lastSaved: null };
     tabs.splice(at, 0, t);
-    closedTabs = closedTabs.filter(x => x !== id);
+    setClosedTabs(closedTabs.filter(x => x !== id));
     loadTab(t);
     save();
     saveWorkspace();
@@ -75,7 +79,7 @@ function openInTab(id, data, message) {
 }
 
 /** Neue Matrix anlegen und in einem neuen Tab öffnen. */
-function openNewDoc(data, message) {
+export function openNewDoc(data, message) {
   openInTab(Util.uid(), data, message);
 }
 
@@ -87,7 +91,7 @@ function closeTab(id) {
   const wasActive = id === docId;
   if (wasActive) stashActiveTab();
   tabs.splice(idx, 1);
-  closedTabs = [id, ...closedTabs.filter(x => x !== id)].slice(0, CLOSED_LIMIT);
+  setClosedTabs([id, ...closedTabs.filter(x => x !== id)].slice(0, CLOSED_LIMIT));
   if (wasActive) {
     const next = tabs[Math.min(idx, tabs.length - 1)];
     loadTab(next);
@@ -101,10 +105,10 @@ function closeTab(id) {
 }
 
 /** Zuletzt geschlossenen Tab wieder öffnen. @param {string} id */
-function reopenTab(id) {
+export function reopenTab(id) {
   const doc = Store.readDoc(id);
   if (!doc) {
-    closedTabs = closedTabs.filter(x => x !== id);
+    setClosedTabs(closedTabs.filter(x => x !== id));
     saveWorkspace();
     toast(Texts.errors.docMissing);
     return;
@@ -127,7 +131,7 @@ function moveTab(id, to) {
  * aktualisieren, inaktive neu laden und mit einem Punkt markieren.
  * @param {string} id
  */
-function onExternalDocChange(id) {
+export function onExternalDocChange(id) {
   if (id === docId) { adoptExternalChange(); return; }
   const t = tabById(id);
   const doc = t && Store.readDoc(id);
@@ -141,7 +145,7 @@ function onExternalDocChange(id) {
 /** Titel eines Tabs (aktiver Tab: aktueller Stand). @param {AppTab} t */
 const tabTitle = t => ((t.docId === docId ? state : t.state)?.title || Texts.fallback.unnamedMatrix);
 
-function renderTabs() {
+export function renderTabs() {
   const nav = $('#appTabs');
   const closable = tabs.length > 1;
   const items = tabs.map((t, i) => {
@@ -227,7 +231,7 @@ function startRenaming() {
 
 // ---------- Menü „+“ ----------
 
-function toggleTabMenu(open) {
+export function toggleTabMenu(open) {
   const menu = $('#tabMenu');
   const btn = $('#tabAddBtn');
   const willOpen = open ?? menu.hidden;

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadApp, plain } from './load.js';
+import { withGlobals } from './env.js';
 
 const { IO, Zip, Model, Texts, example: kaffeemaschine } = loadApp();
 const dec = new TextDecoder();
@@ -32,13 +33,10 @@ const centralOffset = zip => new DataView(zip.buffer, zip.byteOffset).getUint32(
 const sample = [{ name: 'a.json', text: '{"a":1}' }, { name: 'b.txt', text: 'Bä'.repeat(50) }];
 
 test('ZIP: ohne Kompression (älterer Browser) gespeichert und überall lesbar', async () => {
-  const { Zip: Plain } = loadApp({ CompressionStream: undefined });
-  const zip = await Plain.create(sample);
+  const zip = await withGlobals({ CompressionStream: undefined }, () => Zip.create(sample));
   assert.equal(new DataView(zip.buffer).getUint16(8, true), 0); // Verfahren „gespeichert“
-  for (const reader of [Plain, Zip]) {
-    const back = await reader.read(zip);
-    assert.deepEqual(plain(back.map(e => ({ name: e.name, text: dec.decode(e.data) }))), sample);
-  }
+  const back = await Zip.read(zip);
+  assert.deepEqual(plain(back.map(e => ({ name: e.name, text: dec.decode(e.data) }))), sample);
 });
 
 test('ZIP: Ordnereinträge werden übersprungen', async () => {
@@ -66,8 +64,8 @@ test('ZIP: unbekanntes Kompressionsverfahren wird abgelehnt', async () => {
   new DataView(odd.buffer).setUint16(centralOffset(zip) + 10, 99, true);
   await assert.rejects(Zip.read(odd), new RegExp(Texts.errors.zipMethod));
   // Komprimiertes Archiv in einem Browser ohne DecompressionStream
-  const { Zip: NoInflate } = loadApp({ DecompressionStream: undefined });
-  await assert.rejects(NoInflate.read(zip), new RegExp(Texts.errors.zipMethod));
+  await withGlobals({ DecompressionStream: undefined },
+    () => assert.rejects(Zip.read(zip), new RegExp(Texts.errors.zipMethod)));
 });
 
 const doc = (id, title, savedAt = 1000) => {

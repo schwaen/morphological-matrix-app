@@ -1,4 +1,3 @@
-/* global state, render -- globale Variablen der App, nur innerhalb von page.evaluate */
 import { test, expect, setEvaluation } from './fixtures.js';
 
 const headers = page => page.locator('#compareTable thead th').evaluateAll(els => els.slice(1).map(el => el.textContent.trim()));
@@ -8,10 +7,14 @@ test('Konzeptvergleich: nur Unterschiede zeigen', async ({ page }) => {
   await expect(paramRows(page)).toHaveCount(6);
   // Alle Konzepte wählen bei „Reinigung“ dasselbe
   await page.evaluate(() => {
-    const p = state.parameters.find(x => x.name === 'Reinigung');
-    state.concepts.forEach(c => { c.selections[p.id] = p.options[0].id; });
-    render();
+    const id = JSON.parse(sessionStorage.getItem('morphologische-matrix:workspace')).active;
+    const key = 'morphologische-matrix:doc:' + id;
+    const doc = JSON.parse(localStorage.getItem(key));
+    const p = doc.data.parameters.find(x => x.name === 'Reinigung');
+    doc.data.concepts.forEach(c => { c.selections[p.id] = p.options[0].id; });
+    localStorage.setItem(key, JSON.stringify(doc));
   });
+  await page.reload();
   await expect(page.locator('.compare-diff-count')).toHaveText('5 von 6 Parametern unterschiedlich');
   await page.check('#compareDiff');
   await expect(paramRows(page)).toHaveCount(5);

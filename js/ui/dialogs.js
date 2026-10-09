@@ -2,11 +2,21 @@
  * Menü „Datei“ und Dialoge: Bibliothek („Meine Matrizen“), Beispiele, Bewertungseinstellungen,
  * Import/Export, Teilen und Drucken.
  */
-'use strict';
+import { Examples } from '../examples.js';
+import { IO } from '../io.js';
+import { Model } from '../model.js';
+import { Store } from '../storage.js';
+import { Languages, Texts } from '../texts.js';
+import { openConsDialog } from './constraints.js';
+import { closedTabs, docId, prefs, save, saveWorkspace, setClosedTabs, setMode, state } from './core.js';
+import { $, closeDialog, download, h, iconBtn, openDialog, toast } from './dom.js';
+import { activateTab, openInTab, openNewDoc, tabById } from './tabs.js';
+import { Util } from '../util.js';
+import { Zip } from '../zip.js';
 
 // ---------- Import / Export / Teilen ----------
 
-function exportJson() {
+export function exportJson() {
   download(IO.fileName(state, 'json'), IO.toJson(state), 'application/json');
 }
 
@@ -15,7 +25,7 @@ function exportCsv() {
 }
 
 /** @param {File} file */
-function importJson(file) {
+export function importJson(file) {
   const reader = new FileReader();
   reader.onload = () => {
     try {
@@ -40,7 +50,7 @@ async function shareLink() {
 }
 
 /** Öffnet eine per Link geteilte Matrix als neue Matrix in einem neuen App-Tab. */
-function loadFromHash() {
+export function loadFromHash() {
   try {
     const next = IO.decodeShareHash(location.hash);
     if (!next) return;
@@ -65,7 +75,7 @@ function openLibrary() {
   openDialog($('#libraryDialog'));
 }
 
-function renderLibrary() {
+export function renderLibrary() {
   const docs = Store.listDocs();
   if (!docs.some(d => d.id === docId)) docs.unshift({ id: docId, savedAt: Date.now(), data: state });
   const items = docs.map(doc => {
@@ -94,7 +104,7 @@ function renderLibrary() {
         iconBtn('trash', open ? Texts.library.deleteOpen : Texts.library.delete, () => {
           if (!window.confirm(Texts.prompt.deleteMatrix(title))) return;
           Store.removeDoc(doc.id);
-          closedTabs = closedTabs.filter(x => x !== doc.id);
+          setClosedTabs(closedTabs.filter(x => x !== doc.id));
           saveWorkspace();
           renderLibrary();
         }, { danger: true, disabled: open })));
@@ -104,13 +114,24 @@ function renderLibrary() {
 
 // ---------- Beispiele ----------
 
-function openExamples() {
-  renderExamples();
+/** Auswahl sofort öffnen; die Liste folgt, sobald die Beispiele geladen sind. */
+async function openExamples() {
+  const list = $('#exampleList');
+  list.setAttribute('aria-busy', 'true');
+  list.replaceChildren(h('li', { class: 'doc-empty' }, Texts.examples.loading));
   openDialog($('#examplesDialog'));
+  try {
+    renderExamples(await Examples.all());
+  } catch (e) {
+    closeDialog($('#examplesDialog'));
+    toast(Texts.errors.fileInvalid(Util.errorMessage(e)));
+  } finally {
+    list.removeAttribute('aria-busy');
+  }
 }
 
-function renderExamples() {
-  const examples = Examples.all();
+/** @param {ExampleDef[]} examples */
+function renderExamples(examples) {
   const items = examples.map(ex => {
     const d = /** @type {any} */ (ex.data);
     const count = v => (Array.isArray(v) ? v.length : 0);
@@ -122,29 +143,28 @@ function renderExamples() {
       h('div', { class: 'doc-actions' },
         h('button', {
           type: 'button', class: 'btn btn-small',
-          onclick: () => { closeDialog($('#examplesDialog')); openExample(ex.id); },
+          onclick: () => { closeDialog($('#examplesDialog')); openExample(ex); },
         }, Texts.examples.open)));
   });
   $('#exampleList').replaceChildren(...(items.length ? items : [h('li', { class: 'doc-empty' }, Texts.examples.empty)]));
 }
 
-/** Beispiel als neue Matrix in einem neuen Tab öffnen. @param {string} id */
-function openExample(id) {
+/** Beispiel als neue Matrix in einem neuen Tab öffnen. @param {ExampleDef} ex */
+function openExample(ex) {
   let data;
   try {
-    data = Examples.load(id);
+    data = Examples.toMatrix(ex);
   } catch (e) {
     toast(Texts.errors.fileInvalid(Util.errorMessage(e)));
     return;
   }
-  const ex = Examples.get(id);
-  if (data && ex) openNewDoc(data, Texts.toast.exampleOpened(ex.name));
+  openNewDoc(data, Texts.toast.exampleOpened(ex.name));
 }
 
 // ---------- Backup ----------
 
 /** Alle Matrizen als ZIP-Archiv herunterladen (je Matrix eine JSON-Datei). */
-async function exportBackup() {
+export async function exportBackup() {
   save();
   const docs = Store.listDocs();
   if (!docs.length) { toast(Texts.backup.empty); return; }
@@ -159,7 +179,7 @@ async function exportBackup() {
  * werden nie überschrieben (siehe `IO.planRestore`).
  * @param {File[]} files
  */
-async function restoreBackup(files) {
+export async function restoreBackup(files) {
   /** @type {Array<{ name: string, text: string }>} */
   const texts = [];
   const dec = new TextDecoder();
@@ -195,7 +215,7 @@ async function restoreBackup(files) {
 
 // ---------- Bewertungseinstellungen ----------
 
-function syncSettingsForm() {
+export function syncSettingsForm() {
   const s = state.settings;
   $('#setCosts').checked = s.costs;
   $('#setCurrency').value = s.currency;
@@ -213,7 +233,7 @@ function openSettings() {
 
 // ---------- Menü ----------
 
-function toggleMenu(open) {
+export function toggleMenu(open) {
   const btn = $('#menuBtn');
   const list = $('#menuList');
   const willOpen = open ?? list.hidden;
@@ -227,7 +247,7 @@ function toggleMenu(open) {
  * wechseln). Ausstehende Eingaben werden vorher gespeichert; die geöffneten Tabs bleiben.
  * @param {string} lang
  */
-function switchLanguage(lang) {
+export function switchLanguage(lang) {
   if (lang === Texts.meta.lang || !Languages.packs[lang]) return;
   save();
   saveWorkspace();
@@ -236,7 +256,7 @@ function switchLanguage(lang) {
 }
 
 /** Aktionen der Menüeinträge (`data-action` in index.html). */
-const MENU_ACTIONS = {
+export const MENU_ACTIONS = {
   new: () => { openNewDoc(Model.blankState(), Texts.toast.newMatrix); setMode('edit'); },
   example: openExamples,
   open: openLibrary,

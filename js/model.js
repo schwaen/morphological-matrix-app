@@ -1,10 +1,11 @@
 /*
  * Model – Datenmodell der Matrix: Standardwerte, Beispiel, Normalisierung importierter
- * Daten und reine Abfragen. Ohne DOM; stellt den globalen Namensraum `Model` bereit.
+ * Daten und reine Abfragen. Ohne DOM; exportiert den Namensraum `Model`.
  */
-'use strict';
+import { Texts } from './texts.js';
+import { Util } from './util.js';
 
-const Model = (() => {
+export const Model = (() => {
   const { uid, str, num, isColor } = Util;
 
   /**

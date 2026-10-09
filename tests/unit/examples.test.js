@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import path from 'node:path';
-import { loadApp, plain, EXAMPLE_FILES } from './load.js';
+import fs from 'node:fs';
+import { loadApp, plain } from './load.js';
 
 const { Model, Examples, Consistency, Evaluation } = loadApp();
+const examples = await Examples.all();
 
 /** Notizen und Verträglichkeiten sind in Dateien optional (fehlend = leer); für den Vergleich mit `normalize` ergänzen. */
 function withEmptyNotes(data) {
@@ -15,13 +16,13 @@ function withEmptyNotes(data) {
   return d;
 }
 
-test('Jede eingebundene Beispiel-Datei meldet genau ein Beispiel an', () => {
-  assert.ok(EXAMPLE_FILES.length > 0, 'mindestens ein Beispiel in index.html eingebunden');
-  assert.deepEqual(plain(Examples.all().map(e => e.id)), EXAMPLE_FILES.map(f => path.basename(f, '.js')),
-    'id entspricht dem Dateinamen, Reihenfolge wie in index.html');
+test('Jede Beispiel-Datei ist eingetragen; id entspricht dem Dateinamen', () => {
+  const files = fs.readdirSync('examples').filter(f => f.endsWith('.json')).map(f => f.slice(0, -5));
+  assert.deepEqual([...Examples.ids()].sort(), files.sort(), 'jede Datei unter examples/ in js/examples.js eingetragen');
+  assert.deepEqual(examples.map(e => e.id), Examples.ids(), 'id in der Datei = Eintrag in js/examples.js');
 });
 
-for (const ex of Examples.all()) {
+for (const ex of examples) {
   test(`Beispiel „${ex.id}“ ist vollständig und im aktuellen Datenformat`, () => {
     assert.ok(ex.name && typeof ex.name === 'string', 'name fehlt');
     assert.equal(ex.data.version, Model.SCHEMA_VERSION, 'version');
@@ -33,34 +34,19 @@ for (const ex of Examples.all()) {
   });
 }
 
-test('Laden ergibt jeweils eine eigene Kopie', () => {
-  const a = Examples.load('kaffeemaschine');
-  const b = Examples.load('kaffeemaschine');
+test('Laden ergibt jeweils eine eigene Kopie', async () => {
+  const a = await Examples.load('kaffeemaschine');
+  const b = await Examples.load('kaffeemaschine');
   a.title = 'geändert';
   a.parameters[0].options.pop();
   assert.equal(b.title, 'Beispiel: Kaffeemaschine');
-  assert.equal(Examples.load('kaffeemaschine').parameters[0].options.length, b.parameters[0].options.length);
-  assert.equal(Examples.load('gibt-es-nicht'), null);
+  assert.equal((await Examples.load('kaffeemaschine')).parameters[0].options.length, b.parameters[0].options.length);
+  assert.equal(Examples.loadFirst().title, 'Beispiel: Kaffeemaschine');
+  assert.equal(await Examples.load('gibt-es-nicht'), null);
 });
 
-test('Doppelte oder unvollständige Beispiele werden ignoriert', () => {
-  const app = loadApp();
-  const before = app.Examples.all().length;
-  const warn = console.warn;
-  console.warn = () => {};
-  try {
-    app.Examples.register({ id: 'kaffeemaschine', name: 'Doppelt', data: { parameters: [] } });
-    app.Examples.register({ name: 'Ohne id', data: { parameters: [] } });
-    app.Examples.register({ id: 'ohne-daten', name: 'Ohne Daten' });
-  } finally {
-    console.warn = warn;
-  }
-  assert.equal(app.Examples.all().length, before);
-  assert.equal(app.Examples.get('kaffeemaschine').name, 'Kaffeemaschine');
-});
-
-test('Food-Truck: automatische Konzepte und MoSCoW-Pfade sind verträglich, das Stammtisch-Konzept nicht', () => {
-  const m = Examples.load('food-truck');
+test('Food-Truck: automatische Konzepte und MoSCoW-Pfade sind verträglich, das Stammtisch-Konzept nicht', async () => {
+  const m = await Examples.load('food-truck');
   assert.equal(m.settings.moscow, true);
   for (const [id, gen] of Object.entries(Evaluation.GENERATORS)) {
     const res = gen.build(m);
@@ -75,8 +61,8 @@ test('Food-Truck: automatische Konzepte und MoSCoW-Pfade sind verträglich, das 
   assert.equal(Consistency.countConsistent(m), 10_160_640n);
 });
 
-test('Krimi: alle Konzepte ohne Logikfehler, Zufall bleibt widerspruchsfrei', () => {
-  const m = Examples.load('krimi');
+test('Krimi: alle Konzepte ohne Logikfehler, Zufall bleibt widerspruchsfrei', async () => {
+  const m = await Examples.load('krimi');
   assert.equal(m.settings.costs || m.settings.utility || m.settings.moscow, false);
   for (const c of m.concepts) assert.equal(Consistency.conflicts(m, c).excluded.length, 0, c.name);
   let seed = 7;
