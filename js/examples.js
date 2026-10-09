@@ -10,16 +10,15 @@ import first from '../examples/kaffeemaschine.json' with { type: 'json' };
 /** Beispiele in der Reihenfolge der Auswahl (id = Dateiname unter examples/ ohne .json). */
 const IDS = ['kaffeemaschine', 'skill-matrix-frontend', 'firmen-event', 'lastenrad', 'food-truck', 'krimi'];
 
-/**
- * Beispiel-Datei laden. Vite liefert die Dateien als eigene Assets aus (`new URL` mit
- * `import.meta.url`); das erste Beispiel ist fest eingebunden.
- * @param {string} id @returns {Promise<ExampleDef>}
- */
+/** Übrige Beispiele: von Vite als eigene Dateien gebaut und erst bei Bedarf geladen. */
+const lazy = import.meta.glob(['../examples/*.json', '!../examples/kaffeemaschine.json'], { import: 'default' });
+
+/** @param {string} id @returns {Promise<ExampleDef>} */
 async function fetchExample(id) {
   if (id === first.id) return /** @type {ExampleDef} */ (first);
-  const res = await fetch(new URL(`../examples/${id}.json`, import.meta.url));
-  if (!res.ok) throw new Error(`${id}.json: HTTP ${res.status}`);
-  return res.json();
+  const load = lazy[`../examples/${id}.json`];
+  if (!load) throw new Error(`${id}.json fehlt`);
+  return /** @type {Promise<ExampleDef>} */ (load());
 }
 
 export const Examples = (() => {

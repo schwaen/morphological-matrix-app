@@ -82,13 +82,13 @@ npm run preview  # gebaute App ansehen, http://localhost:4173/
 | `js/evaluation.js` | `Evaluation` – Kosten, Nutzwert, Preis-Leistung, Prioritätsprofil, Kennzahlenbericht, automatische Konzepte (ohne DOM) |
 | `js/ops.js` | `Ops` – strukturelle Änderungen an einer Matrix: Parameter, Ausprägungen, Kategorien, Konzepte (ohne DOM) |
 | `js/io.js` | `IO` – JSON, CSV, Teilen-Links, Backup (ohne DOM) |
-| `js/zip.js` | `Zip` – ZIP-Archive schreiben und lesen, ohne Bibliothek (ohne DOM) |
+| `js/zip.js` | `Zip` – ZIP-Archive schreiben und lesen mit [fflate](https://github.com/101arrowz/fflate); wird erst beim Backup geladen (ohne DOM) |
 | `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, geöffnete Tabs, Einstellungen pro Browser-Tab) |
 | `js/examples.js` | `Examples` – Verzeichnis der mitgelieferten Beispiele (das erste fest eingebunden, die übrigen bei Bedarf nachgeladen) |
 | `examples/` | Mitgelieferte Beispiele, je Beispiel eine JSON-Datei (Anleitung in `examples/README.md`) |
 | `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `tabs` (App-Tabs), `actions`, `render-matrix`, `render-panels`, `render-chart` (Verlauf), `search` (Suche), `notes` (Notizen), `constraints` (Verträglichkeiten), `count` (Zählung im Worker), `start` (Start-Menü, Hilfe), `lines`, `dialogs`, `main` (Einstieg) |
 | `types.d.ts` | Typen des Datenmodells (nur Entwicklung) |
-| `vite.config.js` | Build-Einstellungen (relative Pfade für GitHub Pages) |
+| `vite.config.js` | Build-Einstellungen (relative Pfade für GitHub Pages) und Einstellungen der Unit-Tests (Vitest) |
 | `scripts/` | Hilfsskripte der Entwicklung (strenge Typprüfung der Logik) |
 | `docs/DATENFORMAT.md` | Datenformat (JSON, Speicherung, Teilen-Links), Versionen und Migrationen |
 | `tests/unit/` | Unit-Tests der Logik (`node:test`) |
@@ -112,7 +112,7 @@ npm run dev         # Entwicklungsserver (Vite)
 npm run build       # Build nach dist/
 npm run lint        # ESLint
 npm run typecheck   # Typprüfung des JavaScript per JSDoc (tsc)
-npm run test:unit   # Unit-Tests der Logik (node:test, ohne Browser)
+npm run test:unit   # Unit-Tests der Logik (Vitest, ohne Browser)
 npm run coverage    # Unit-Tests mit Abdeckungsbericht je Datei
 npm run test:e2e    # Browser-Tests (Playwright) gegen den Build (vite preview); vorher npm run build
 npm test            # alles zusammen (inkl. Build)
@@ -121,6 +121,6 @@ npm test            # alles zusammen (inkl. Build)
 - **Typen:** Das Datenmodell ist in `types.d.ts` beschrieben (nur für Editor und `tsc`, wird vom Browser nicht geladen). Die Skripte nutzen diese Typen über JSDoc-Kommentare; `tsc` prüft auch die Bezüge zwischen den Dateien.
 - **Typprüfung in zwei Stufen:** `jsconfig.json` prüft den gesamten Code im `strict`-Modus (u. a. `null`/`undefined`-Prüfungen). `tsconfig.logic.json` verlangt für die DOM-freien Logik-Dateien unter `js/` zusätzlich Typangaben für alle Parameter (`noImplicitAny`); ausgenommen sind `js/texts.js` und die Sprachdateien unter `js/i18n/`, die nur Textbausteine enthalten (`scripts/typecheck-logic.js` filtert deren Meldungen aus).
 - **Tests:** `tests/e2e/` prüft den Build, so wie er auf GitHub Pages läuft (Playwright startet dafür `vite preview`) – je Funktionsbereich eine Datei (Grundlagen, Speichern/Export, Backup, Sprachen, Beispiele, App-Tabs, mehrere Browser-Tabs, Bewertung, MoSCoW, automatische Konzepte, Kategorien, Reihenfolge). Jeder Test startet mit leerem Speicher und schlägt bei JavaScript-Fehlern der Seite fehl.
-- **Unit-Tests:** `tests/unit/` importiert die DOM-freien Module direkt (`tests/unit/load.js`). Die App wählt ihre Sprache beim Laden; Standard in den Tests ist Deutsch, `util-en.test.js` lädt sie auf Englisch (`env-en.js`). Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft. `npm run coverage` zeigt die Abdeckung je Datei (Zeilen, Zweige, Funktionen).
+- **Unit-Tests:** `tests/unit/` prüft die DOM-freien Module mit Vitest (gleiche Vite-Konfiguration wie der Build, `vite.config.js`). Die App wählt ihre Sprache beim Laden; Standard in den Tests ist Deutsch (`tests/unit/setup.js`), `util-en.test.js` stellt per `vi.hoisted` auf Englisch um. Die automatischen Konzepte werden u. a. auf 300 Zufallsmatrizen gegen eine vollständige Durchrechnung geprüft. `npm run coverage` zeigt die Abdeckung je Datei (Zeilen, Zweige, Funktionen).
 - **CI:** `.github/workflows/ci.yml` führt Lint, Typprüfung, Unit-Tests, Build und Browser-Tests bei jedem Pull Request aus.
 - **Veröffentlichung:** `.github/workflows/pages.yml` baut die App bei jedem Push auf `main` und veröffentlicht `dist/` auf GitHub Pages (Einstellung des Repositorys: *Settings → Pages → Source: GitHub Actions*).

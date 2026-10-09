@@ -1,9 +1,9 @@
-import './env-en.js';
-import { test } from 'node:test';
+import { test, vi } from 'vitest';
 import assert from 'node:assert/strict';
 import { loadApp } from './load.js';
 
-// App mit englischer Oberfläche (siehe env-en.js)
+// App mit englischer Oberfläche: Sprache vor dem Laden der Module umstellen
+vi.hoisted(() => vi.stubGlobal('navigator', { language: 'en-US' }));
 const { Util, Texts } = loadApp();
 const sp = s => s.replace(/\s/g, ' ');
 

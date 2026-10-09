@@ -22,7 +22,7 @@ Jedes Beispiel steht als JSON-Datei in diesem Ordner. Die App zeigt alle eingetr
 
 1. Matrix in der App erstellen und über **Datei → Als JSON speichern** exportieren.
 2. Neue Datei `examples/<id>.json` anlegen (Kleinbuchstaben und Bindestriche, z. B. `e-bike-antrieb.json`) und den Inhalt der exportierten Datei als `data` einsetzen.
-3. In `js/examples.js` die id in die Liste `IDS` eintragen – die Reihenfolge dort ist die Reihenfolge in der Auswahl.
+3. In `js/examples.js` die id in die Liste `IDS` eintragen – die Reihenfolge dort ist die Reihenfolge in der Auswahl. Die Datei selbst findet Vite automatisch.
 4. `npm run test:unit` ausführen: Der Test prüft, dass jede Datei eingetragen ist und dass jedes Beispiel vollständig ist (id = Dateiname, aktuelles Datenformat, keine ungültigen Verweise oder doppelten IDs).
 
 Ein Beispiel entfernen: Datei löschen und den Eintrag in `js/examples.js` entfernen.
