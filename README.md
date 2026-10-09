@@ -72,7 +72,7 @@ npm run preview  # gebaute App ansehen, http://localhost:4173/
 | Datei / Ordner | Inhalt |
 |---|---|
 | `index.html` | Seitengerüst; bindet den Einstieg `js/ui/main.js` als Modul ein |
-| `styles.css` | Design in Kaskaden-Ebenen (`@layer`): Tokens, Grundstile, Bausteine, Bereiche, Druck |
+| `styles.css`, `css/` | Design in Kaskaden-Ebenen (`@layer`: Tokens, Grundstile, Bausteine, Bereiche, Druck); `styles.css` legt die Reihenfolge der Ebenen fest und bindet je Bereich eine Datei aus `css/` ein |
 | `js/i18n/de.js`, `js/i18n/en.js` | Alle Texte der Oberfläche je Sprache – vom JavaScript erzeugte und unter `ui` die statischen Texte der Seite; `de.js` ist maßgeblich |
 | `js/texts.js` | `Texts` (Texte der aktiven Sprache) und `Languages` (Sprachwahl) |
 | `js/util.js` | `Util` – Zahlen, Texte, Kodierung (ohne DOM) |
@@ -86,12 +86,12 @@ npm run preview  # gebaute App ansehen, http://localhost:4173/
 | `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, geöffnete Tabs, Einstellungen pro Browser-Tab) |
 | `js/examples.js` | `Examples` – Verzeichnis der mitgelieferten Beispiele (das erste fest eingebunden, die übrigen bei Bedarf nachgeladen) |
 | `examples/` | Mitgelieferte Beispiele, je Beispiel eine JSON-Datei (Anleitung in `examples/README.md`) |
-| `js/ui/` | Oberfläche (Preact-Komponenten in `.jsx`): `core` (Zustand, Verlauf, Neuzeichnen), `components` (Symbole, Logo), `dom` (Helfer fürs statische Gerüst, Positionierung schwebender Elemente), `tabs` (App-Tabs, Menü „+“), `actions`, `render-matrix` (Matrix, Kategorien), `render-panels` (Kennzahlen, Konzepte, Zusammenfassung, Vergleich), `render-chart` (Verlauf), `search` (Suche), `notes` (Notizen), `constraints` (Verträglichkeiten), `count` (Zählung im Worker), `start` (Start-Menü, Hilfe), `lines` (Verbindungslinien), `dialogs`, `main` (Einstieg) |
+| `js/ui/` | Oberfläche (Preact-Komponenten in `.jsx`): `core` (Zustand, Verlauf, Neuzeichnen), `components` (Symbole, Logo), `dom` (Helfer fürs DOM, Positionierung schwebender Elemente), `chrome` (Rahmen: Moduswahl, Rückgängig, Knöpfe unter der Matrix, automatische Konzepte, Linienmodus, Kopf des Vergleichs, Bewertungseinstellungen), `tabs` (App-Tabs, Menü „+“), `actions`, `render-matrix` (Matrix, Kategorien), `render-panels` (Kennzahlen, Konzepte, Zusammenfassung, Inhalt des Vergleichs), `render-chart` (Verlauf), `search` (Suche), `notes` (Notizen), `constraints` (Verträglichkeiten), `count` (Zählung im Worker), `start` (Start-Menü, Hilfe), `lines` (Verbindungslinien), `dialogs`, `main` (Einstieg) |
 | `types.d.ts` | Typen des Datenmodells (nur Entwicklung) |
 | `vite.config.js` | Build-Einstellungen (relative Pfade für GitHub Pages) und Einstellungen der Unit-Tests (Vitest) |
 | `scripts/` | Hilfsskripte der Entwicklung (strenge Typprüfung der Logik) |
 | `docs/DATENFORMAT.md` | Datenformat (JSON, Speicherung, Teilen-Links), Versionen und Migrationen |
-| `tests/unit/` | Unit-Tests der Logik (`node:test`) |
+| `tests/unit/` | Unit-Tests der Logik (Vitest) |
 | `tests/e2e/` | Browser-Tests (Playwright) |
 
 **Texte und Sprachen:** Alle Texte stehen je Sprache in `js/i18n/` – `index.html` enthält nur Schlüssel (`data-i18n` für Text, `data-i18n-html` für Text mit Formatierung, `data-i18n-attr="title:…;aria-label:…"` für Attribute), die beim Start gefüllt werden. Formulierungen ändern betrifft also nur die Sprachdateien. `en.js` muss dieselbe Struktur wie `de.js` haben; das prüfen die Typprüfung und ein Unit-Test (`tests/unit/i18n.test.js`, auch für alle Schlüssel aus `index.html`). Eine weitere Sprache: Datei `js/i18n/<code>.js` nach dem Muster von `en.js` anlegen, in `js/texts.js` importieren und in `Languages` eintragen sowie im Menü (`data-lang`) ergänzen. Inhalte der Beispiele sind Daten und stehen je Beispiel in einer eigenen JSON-Datei unter `examples/`.
@@ -100,7 +100,7 @@ npm run preview  # gebaute App ansehen, http://localhost:4173/
 
 **Aufbau:** Alle Dateien sind ES-Module mit ausdrücklichen `import`/`export`; Vite bündelt sie für die Auslieferung. Die Logik-Dateien exportieren je einen Namensraum (`Util`, `Model`, `Consistency`, `Evaluation`, `Ops`, `IO`, `Zip`, `Store`) und arbeiten auf einer übergebenen Matrix statt auf globalem Zustand – so sind sie ohne Browser unit-testbar. Der Zustand des aktiven Tabs liegt in `js/ui/core.js`; andere Module lesen ihn über Importe und ändern ihn nur über die dortigen Funktionen. Änderungen an der Matrix laufen über `mutate()` (strukturell, mit Rückgängig; die eigentliche Änderung erledigt eine Funktion aus `Ops`), `fieldProps()` (Texteingaben) bzw. `setPref()` (Ansicht pro Tab) – siehe Kopfkommentar in `js/ui/core.js`.
 
-**Oberfläche:** Die Bereiche der Seite sind Preact-Komponenten, die in ihre Container in `index.html` eingehängt werden. Die Matrix bleibt ein gewöhnliches Objekt; jede Änderung erhöht das Signal `revision` (über `render()`), und alle Komponenten, die es lesen, zeichnen neu – Preact gleicht nur die Unterschiede im DOM ab, sodass Fokus, Cursor und Bildlaufpositionen erhalten bleiben. Reiner Ansichtszustand (gewähltes Feld, offenes Popover, Hervorhebung, Suche) steht in eigenen Signalen. Gezeichnet wird sofort (`options.debounceRendering` in `main.js`), damit Code, der danach das DOM braucht (Fokus, Verbindungslinien), es vorfindet. Wichtig: Eine Komponente, die selbst ein Signal liest, zeichnet @preact/signals bei gleichen Props nicht mit ihrer Elternkomponente neu – sie muss dann zusätzlich `revision` lesen.
+**Oberfläche:** Die Bereiche der Seite sind Preact-Komponenten, die in ihre Container in `index.html` eingehängt werden. Die Matrix bleibt ein gewöhnliches Objekt; jede Änderung erhöht das Signal `revision` (über `render()`), und alle Komponenten, die es lesen, zeichnen neu – Preact gleicht nur die Unterschiede im DOM ab, sodass Fokus, Cursor und Bildlaufpositionen erhalten bleiben. Reiner Ansichtszustand (gewähltes Feld, offenes Popover, Hervorhebung, Suche) steht in eigenen Signalen. Gezeichnet wird sofort (`options.debounceRendering` in `main.js`), damit Code, der danach das DOM braucht (Fokus, Verbindungslinien), es vorfindet. Komponenten, die die Matrix anzeigen, holen sie über `useMatrix()` (liest `revision`). Da die Matrix verändert statt ersetzt wird, schaltet `main.js` außerdem die Abkürzung von @preact/signals ab, die Komponenten mit eigenen Signalen bei gleichen Props überspringt; die Hook-Regeln prüft ESLint (`eslint-plugin-react-hooks`). `index.html` enthält für die Bereiche nur leere Container mit festen IDs.
 
 ## Entwicklung
 

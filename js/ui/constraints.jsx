@@ -181,7 +181,7 @@ export function ConstraintButton({ o }) {
 }
 
 /** @param {string} oid @param {HTMLElement} anchor */
-export function openConsPop(oid, anchor) {
+function openConsPop(oid, anchor) {
   consPopFor.value = oid;
   const pop = $('#consPop');
   pop.hidden = false;
@@ -452,7 +452,6 @@ export function initConstraints() {
   dialog.addEventListener('close', () => { consOpen.value = false; });
   $('#consClose').addEventListener('click', () => closeDialog(dialog));
   $('#consDone').addEventListener('click', () => closeDialog(dialog));
-  $('#consOpenBtn').addEventListener('click', openConsDialog);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && consPopFor.value != null) { e.preventDefault(); closeConsPop(); }
   });

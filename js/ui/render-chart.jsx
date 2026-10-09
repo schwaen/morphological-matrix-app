@@ -31,14 +31,12 @@ function Label({ text, px, charW, ...attrs }) {
 }
 
 /**
- * @param {{ shown: () => boolean, content: () => CompareContent }} props
- *   `shown`: Diagramm sichtbar (sonst nichts berechnen), `content`: Inhalt des Vergleichs
+ * @param {{ content: () => CompareContent }} props `content`: Inhalt des Vergleichs
  */
-export function CompareChart({ shown, content }) {
+export function CompareChart({ content }) {
   useMatrix();
   const hot = hovered.value;
   const [axis, setAxis] = useState(/** @type {number | null} */ (null));
-  if (!shown()) return null;
   const view = content();
   const m = state;
   const params = view.groups.flatMap(g => g.items.map(({ p }) => p));

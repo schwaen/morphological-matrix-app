@@ -7,9 +7,8 @@
 import { effect, signal } from '@preact/signals';
 import { Model } from '../model.js';
 import { Texts } from '../texts.js';
-import { isCollapsed, revision, setCollapsed, state } from './core.js';
+import { isCollapsed, render, revision, setCollapsed, state } from './core.js';
 import { $ } from './dom.jsx';
-import { render } from './render-panels.jsx';
 
 const searchQuery = signal('');
 /** Position des aktuellen Treffers in `hits`, `-1` = noch keiner angesprungen. */
@@ -21,7 +20,7 @@ export function searchResult() {
 }
 
 /** Aktueller Treffer (nach Enter bzw. den Pfeilen) oder `null`. @param {ReturnType<typeof Model.search> | null} found */
-export function currentMatch(found) {
+function currentMatch(found) {
   const i = searchIndex.value;
   return found && i >= 0 && i < found.hits.length ? found.hits[i] : null;
 }

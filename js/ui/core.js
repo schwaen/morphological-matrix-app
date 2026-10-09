@@ -23,12 +23,29 @@ import { Examples } from '../examples.js';
 import { Model } from '../model.js';
 import { Store } from '../storage.js';
 import { Texts } from '../texts.js';
-import { toast } from './dom.jsx';
-import { render, updateHistoryButtons } from './render-panels.jsx';
+import { autosizeAll, focusField, toast } from './dom.jsx';
 import { Util } from '../util.js';
 
 /** Zähler für Änderungen an Matrix und Ansicht; Komponenten lesen ihn (über `useMatrix`), um neu zu zeichnen. */
 export const revision = signal(0);
+
+/**
+ * Neu zeichnen nach jeder Änderung: Alle Komponenten folgen `revision` (Preact zeichnet sofort,
+ * siehe main.js); danach bekommt ein vorgemerktes Feld den Fokus.
+ */
+export function render() {
+  revision.value++;
+  autosizeAll();
+  applyPendingFocus();
+}
+
+/** Vorgemerktes Feld (`setPendingFocus`) fokussieren, sobald es gezeichnet ist. */
+export function applyPendingFocus() {
+  if (!pendingFocus) return;
+  const fid = pendingFocus;
+  pendingFocus = null;
+  focusField(fid);
+}
 
 /**
  * Für Komponenten: Matrix des aktiven Tabs – und bei jeder Änderung neu zeichnen.
@@ -112,7 +129,7 @@ export let state = /** @type {Matrix} */ (initialTab.state);
 /** @type {TabPrefs} */
 export const prefs = { ...Store.loadPrefs(DEFAULT_PREFS), ...initialTab.view };
 /** `data-fid` des Felds, das nach dem nächsten Neuzeichnen den Fokus bekommt. @type {string | null} */
-export let pendingFocus = null;
+let pendingFocus = null;
 /** @param {string | null} fid */
 export function setPendingFocus(fid) { pendingFocus = fid; }
 /** Beim Drucken werden alle Kategorien ausgeklappt. */
@@ -191,7 +208,7 @@ function pushHistory(snap) {
   undoStack.push(snap);
   if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
   redoStack.length = 0;
-  updateHistoryButtons();
+  revision.value++; // Rückgängig-Knopf freigeben
 }
 
 function clearHistory() {

@@ -1,6 +1,6 @@
 /*
- * Neuzeichnen und alles außerhalb der Matrix: Kennzahlen, Konzeptliste, Zusammenfassung,
- * Konzeptvergleich (Tabelle; Verlauf in render-chart.jsx) und Sichtbarkeit der Generatoren.
+ * Alles außerhalb der Matrix: Kennzahlen, Konzeptliste, Zusammenfassung und Inhalt des
+ * Konzeptvergleichs (Tabelle; Verlauf in render-chart.jsx, Rahmen in chrome.jsx).
  */
 import { Fragment, render as mount } from 'preact';
 import { Consistency } from '../consistency.js';
@@ -10,55 +10,12 @@ import { Texts } from '../texts.js';
 import { deleteConcept, duplicateConcept, setActiveConcept } from './actions.js';
 import { Icon, IconButton } from './components.jsx';
 import { ConflictBox, ConflictPill, pairLabel } from './constraints.jsx';
-import {
-  activeConcept, fieldProps, money, pendingFocus, prefs, printing, redoStack, revision, setPendingFocus,
-  setPref, state, undoStack, useMatrix,
-} from './core.js';
+import { activeConcept, fieldProps, money, prefs, render, state, useMatrix } from './core.js';
 import { consistentCount } from './count.js';
-import { syncSettingsForm } from './dialogs.jsx';
-import { $, $$, autosizeAll, focusField, shownColor } from './dom.jsx';
-import { hoverConcept, scheduleLines } from './lines.js';
-import { CompareChart } from './render-chart.jsx';
+import { $, shownColor } from './dom.jsx';
+import { hoverConcept } from './lines.js';
 import { categoryColor } from './render-matrix.jsx';
 import { Util } from '../util.js';
-
-/**
- * Neu zeichnen nach jeder Änderung: Die Komponenten folgen dem Signal `revision`; hier bleibt
- * nur, was am statischen Gerüst in index.html hängt (Titel, Knöpfe, Sichtbarkeit).
- */
-export function render() {
-  revision.value++;
-  document.title = Texts.app.documentTitle(state.title);
-  const desc = $('#description');
-  if (document.activeElement !== desc) desc.value = state.description;
-
-  $$('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === prefs.mode)));
-  $$('[data-lines]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lines === prefs.lines)));
-  $('#addParamBtn').hidden = prefs.mode !== 'edit';
-  $('#addCategoryBtn').hidden = prefs.mode !== 'edit';
-  $('#consOpenBtn').hidden = prefs.mode !== 'edit';
-
-  renderGenerators();
-  renderHint();
-  renderCompare();
-  syncSettingsForm();
-  updateHistoryButtons();
-  autosizeAll();
-  applyPendingFocus();
-  scheduleLines();
-}
-
-export function applyPendingFocus() {
-  if (!pendingFocus) return;
-  const fid = pendingFocus;
-  setPendingFocus(null);
-  focusField(fid);
-}
-
-export function updateHistoryButtons() {
-  $('#undoBtn').disabled = !undoStack.length;
-  $('#redoBtn').disabled = !redoStack.length;
-}
 
 /**
  * Anzahl für die Kennzahl-Kachel: bis unter eine Billion exakt, darüber gerundet in Worten
@@ -116,13 +73,6 @@ function ConsistentCount() {
   );
 }
 
-function renderHint() {
-  const c = activeConcept();
-  $('#hint').textContent = prefs.mode === 'edit'
-    ? Texts.hint.edit
-    : (c ? Texts.hint.select(Model.nameOrUnnamed(c)) : Texts.hint.noConcept);
-}
-
 // ---------- Konzepte ----------
 
 function ConceptList() {
@@ -165,22 +115,6 @@ function ConceptItem({ c, ci }) {
       </span>
     </li>
   );
-}
-
-function renderGenerators() {
-  let any = false;
-  $$('[data-generate]').forEach(btn => {
-    const gen = Evaluation.GENERATORS[btn.dataset.generate || ''];
-    const on = !!gen && gen.available(state);
-    btn.hidden = !on;
-    any = any || on;
-  });
-  // Gruppen ohne verfügbare Knöpfe ausblenden (z. B. nur MoSCoW aktiv)
-  $$('#autoConcepts .auto-buttons').forEach(group => {
-    group.hidden = ![...group.querySelectorAll('button')].some(b => !b.hidden);
-  });
-  $('#autoMoscow').hidden = $('#autoMoscow .auto-buttons').hidden;
-  $('#autoConcepts').hidden = !any;
 }
 
 /** „2 Werte fehlen“ bzw. leer. @param {number} missing */
@@ -269,29 +203,6 @@ function PriorityProfile({ counts, all = false }) {
 
 // ---------- Konzeptvergleich ----------
 
-/** Rahmen des Konzeptvergleichs (statisches Gerüst in index.html): sichtbar, offen, Ansicht. */
-export function renderCompare() {
-  const section = $('#compareSection');
-  if (!state.concepts.length || !state.parameters.length) {
-    section.hidden = true;
-    return;
-  }
-  section.hidden = false;
-  // Beim Drucken immer offen und als Tabelle
-  const open = printing || prefs.compareOpen !== false;
-  const chart = !printing && prefs.compareView === 'chart';
-  $('#compareToggle').setAttribute('aria-expanded', String(open));
-  $('#compareBody').hidden = !open;
-  $('#compareMeta').textContent = Texts.compare.conceptCount(state.concepts.length);
-  $$('[data-compare-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.compareView === prefs.compareView)));
-  $('#compareTable').hidden = chart;
-  $('#compareChart').hidden = !chart;
-}
-
-/** Vergleich wird angezeigt (sonst muss er nicht berechnet werden). @param {'table' | 'chart'} view */
-const compareShown = view => state.concepts.length > 0 && state.parameters.length > 0
-  && (printing || (prefs.compareOpen !== false && (prefs.compareView === 'chart') === (view === 'chart')));
-
 /**
  * Inhalt des Konzeptvergleichs: Konzepte in der gewählten Reihenfolge (mit Rang) und die
  * Parametergruppen – bei „Nur Unterschiede“ ohne Parameter, die alle Konzepte gleich gewählt haben.
@@ -309,19 +220,11 @@ export function compareContent() {
 }
 
 /**
- * Ansichtseinstellung des Vergleichs ändern und neu zeichnen.
- * @template {keyof TabPrefs} K @param {K} key @param {TabPrefs[K]} value
+ * Schalter „Nur Unterschiede“, „Konzepte mit Konflikt ausblenden“ und Sortierung.
+ * @param {{ setView: <K extends keyof TabPrefs>(key: K, value: TabPrefs[K]) => void }} props
  */
-export function setCompareView(key, value) {
-  setPref(key, value);
-  render();
-}
-
-/** Schalter „Nur Unterschiede“, „Konzepte mit Konflikt ausblenden“ und Sortierung. */
-function CompareTools() {
-  useMatrix();
-  if (!state.concepts.length || !state.parameters.length || prefs.compareOpen === false) return null;
-  const m = state;
+export function CompareTools({ setView }) {
+  const m = useMatrix();
   const differing = Model.differingParameters(m).size;
   const keys = /** @type {Array<keyof typeof Evaluation.RANKINGS>} */ (Object.keys(Evaluation.RANKINGS))
     .filter(k => Evaluation.RANKINGS[k].enabled(m.settings));
@@ -333,7 +236,7 @@ function CompareTools() {
       <label class="check compare-diff">
         <input
           type="checkbox" id="compareDiff" checked={!!prefs.compareDiff} disabled={m.concepts.length < 2}
-          onChange={e => setCompareView('compareDiff', checked(e))}
+          onChange={e => setView('compareDiff', checked(e))}
         />
         {Texts.compare.onlyDiff}
         <span class="compare-diff-count">{Texts.compare.diffCount(differing, m.parameters.length)}</span>
@@ -342,7 +245,7 @@ function CompareTools() {
         <label class="check compare-hide">
           <input
             type="checkbox" id="compareHideConflicts" checked={!!prefs.compareHideConflicts}
-            onChange={e => setCompareView('compareHideConflicts', checked(e))}
+            onChange={e => setView('compareHideConflicts', checked(e))}
           />
           {Texts.cons.hideConflicts}
         </label>
@@ -350,7 +253,7 @@ function CompareTools() {
       {keys.length ? (
         <label class="compare-sort">
           <span>{Texts.compare.sortBy}</span>
-          <select id="compareSort" value={current} onChange={e => setCompareView('compareSort', /** @type {any} */ (/** @type {HTMLSelectElement} */ (e.currentTarget).value))}>
+          <select id="compareSort" value={current} onChange={e => setView('compareSort', /** @type {any} */ (/** @type {HTMLSelectElement} */ (e.currentTarget).value))}>
             {['order', ...keys].map(k => <option key={k} value={k}>{Texts.compare.sort[/** @type {keyof typeof Texts.compare.sort} */ (k)]}</option>)}
           </select>
         </label>
@@ -363,10 +266,8 @@ function CompareTools() {
 const metricClass = (incomplete, best) => [incomplete ? 'incomplete' : '', best ? 'best' : ''].join(' ').trim() || undefined;
 
 /** Konzeptvergleich als Tabelle: Parameter als Zeilen, Konzepte als Spalten, Kennzahlen im Fuß. */
-function CompareTable() {
-  useMatrix();
-  if (!compareShown('table')) return null;
-  const m = state;
+export function CompareTable() {
+  const m = useMatrix();
   const { ranked, groups } = compareContent();
   const showCats = m.categories.length > 0;
   const span = ranked.length + 1;
@@ -476,7 +377,4 @@ export function initPanels() {
   mount(<Stats />, $('#stats'));
   mount(<ConceptList />, $('#conceptList'));
   mount(<Summary />, $('#conceptSummary'));
-  mount(<CompareTools />, $('#compareTools'));
-  mount(<CompareTable />, $('#compareTable'));
-  mount(<CompareChart shown={() => compareShown('chart')} content={compareContent} />, $('#compareChart'));
 }

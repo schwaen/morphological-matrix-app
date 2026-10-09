@@ -243,19 +243,7 @@ export async function restoreBackup(files) {
 
 // ---------- Bewertungseinstellungen ----------
 
-export function syncSettingsForm() {
-  const s = state.settings;
-  $('#setCosts').checked = s.costs;
-  $('#setCurrency').value = s.currency;
-  $('#setCurrency').disabled = !s.costs;
-  $('#setUtility').checked = s.utility;
-  $('#setMoscow').checked = s.moscow;
-  $('#setScale').value = String(s.utilityMax);
-  $('#setScale').disabled = !s.utility;
-}
-
 function openSettings() {
-  syncSettingsForm();
   openDialog($('#settingsDialog'));
 }
 

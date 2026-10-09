@@ -7,9 +7,8 @@
 import { signal } from '@preact/signals';
 import { render as mount } from 'preact';
 import { Icon, IconButton } from './components.jsx';
-import { fieldProps, prefs, setPendingFocus } from './core.js';
+import { applyPendingFocus, fieldProps, prefs, render, setPendingFocus } from './core.js';
 import { $, placeNear } from './dom.jsx';
-import { applyPendingFocus, render } from './render-panels.jsx';
 
 /** IDs (Ausprägung oder Parameter), deren leeres Notizfeld gerade geöffnet ist. */
 const openNotes = signal(/** @type {ReadonlySet<string>} */ (new Set()));
