@@ -50,21 +50,16 @@
   .param-foot:empty { display: none; }
   /* Mit Maus: Zeilenwerkzeuge als schwebende Leiste, damit die Zelle kompakt bleibt */
   @media (hover: hover) {
-    .param-cell .row-tools {
-      position: absolute; top: 4px; right: 4px; margin: 0; padding: 1px;
+    /* Auf der oberen Zellkante (Parameter und Ausprägungen gleich), damit die Textfelder frei bleiben */
+    .param-cell .row-tools, .opt-cell.edit .opt-tools {
+      position: absolute; top: -14px; right: 6px; z-index: 3; margin: 0; padding: 1px;
       background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow);
       opacity: 0; pointer-events: none; transition: opacity .12s;
     }
-    .param-cell:hover .row-tools, .param-cell:focus-within .row-tools { opacity: 1; pointer-events: auto; }
-    /* Auf der oberen Zellkante, damit das Textfeld frei bleibt */
-    .opt-cell.edit .opt-tools {
-      position: absolute; top: -14px; right: 6px; z-index: 3; padding: 1px;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow);
-      opacity: 0; pointer-events: none; transition: opacity .12s;
-    }
+    .param-cell:hover .row-tools, .param-cell:focus-within .row-tools,
     .opt-cell.edit:hover .opt-tools, .opt-cell.edit:focus-within .opt-tools { opacity: 1; pointer-events: auto; }
-    .opt-cell.edit .opt-tools .icon-btn { width: 22px; height: 22px; }
-    .opt-cell.edit .opt-tools .icon-btn svg { width: 14px; height: 14px; }
+    .param-cell .row-tools .icon-btn, .opt-cell.edit .opt-tools .icon-btn { width: 22px; height: 22px; }
+    .param-cell .row-tools .icon-btn svg, .opt-cell.edit .opt-tools .icon-btn svg { width: 14px; height: 14px; }
   }
 
   .opt-cell { border-radius: var(--radius-sm); min-width: 0; }

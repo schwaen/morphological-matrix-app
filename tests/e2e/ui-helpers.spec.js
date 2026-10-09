@@ -56,3 +56,18 @@ test('Schwebende Elemente bleiben im sichtbaren Bereich (schmales Fenster)', asy
   await expect(page.locator('#notePop')).toBeVisible();
   expect(await inViewport(page, '#notePop')).toBe(true);
 });
+
+test('Werkzeugleisten verdecken die Textfelder von Parameter und Ausprägung nicht', async ({ page }) => {
+  await page.click('[data-mode="edit"]');
+  for (const [cell, field] of [['.param-cell', '.param-name'], ['.opt-cell.edit', 'textarea']]) {
+    const c = page.locator(cell).nth(1);
+    await c.hover();
+    await expect(c.locator('.row-tools, .opt-tools').first()).toHaveCSS('opacity', '1');
+    // Rechtes Ende der ersten Textzeile: hier lag die Leiste früher über dem Namen
+    const free = await c.locator(field).first().evaluate(el => {
+      const r = el.getBoundingClientRect();
+      return document.elementFromPoint(r.right - 6, r.top + 12) === el;
+    });
+    expect(free, `${cell}: Textfeld frei`).toBe(true);
+  }
+});
