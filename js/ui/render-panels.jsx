@@ -19,11 +19,14 @@ import { syncSettingsForm } from './dialogs.js';
 import { $, $$, autosizeAll, focusField, shownColor } from './dom.js';
 import { hoverConcept, scheduleLines } from './lines.js';
 import { CompareChart } from './render-chart.jsx';
-import { categoryColor, renderCategoryNav, renderMatrix, weightPercent } from './render-matrix.js';
+import { categoryColor } from './render-matrix.jsx';
 import { renderTabs } from './tabs.js';
 import { Util } from '../util.js';
 
-/** Komplettes Neuzeichnen nach strukturellen Änderungen. */
+/**
+ * Neu zeichnen nach jeder Änderung: Die Komponenten folgen dem Signal `revision`; hier bleibt
+ * nur, was am statischen Gerüst in index.html hängt (Titel, Knöpfe, Sichtbarkeit).
+ */
 export function render() {
   revision.value++;
   document.title = Texts.app.documentTitle(state.title);
@@ -38,22 +41,13 @@ export function render() {
   $('#addCategoryBtn').hidden = prefs.mode !== 'edit';
   $('#consOpenBtn').hidden = prefs.mode !== 'edit';
 
-  renderMatrix();
   renderGenerators();
-  refreshLight();
+  renderHint();
+  renderCompare();
   syncSettingsForm();
   updateHistoryButtons();
   autosizeAll();
   applyPendingFocus();
-}
-
-/** Aktualisierung, die die (noch nicht als Komponente gebaute) Matrix nicht neu erzeugt (z. B. beim Tippen). */
-export function refreshLight() {
-  revision.value++;
-  updateWeightPercents();
-  renderCategoryNav();
-  renderHint();
-  renderCompare();
   scheduleLines();
 }
 
@@ -67,13 +61,6 @@ export function applyPendingFocus() {
 export function updateHistoryButtons() {
   $('#undoBtn').disabled = !undoStack.length;
   $('#redoBtn').disabled = !redoStack.length;
-}
-
-function updateWeightPercents() {
-  for (const p of state.parameters) {
-    const el = $(`[data-weight-pct="${p.id}"]`);
-    if (el) el.textContent = weightPercent(p);
-  }
 }
 
 /**
@@ -329,7 +316,7 @@ export function compareContent() {
  */
 export function setCompareView(key, value) {
   setPref(key, value);
-  refreshLight();
+  render();
 }
 
 /** Schalter „Nur Unterschiede“, „Konzepte mit Konflikt ausblenden“ und Sortierung. */

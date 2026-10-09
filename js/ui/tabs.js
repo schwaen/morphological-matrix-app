@@ -11,7 +11,7 @@ import {
 } from './core.js';
 import { MENU_ACTIONS } from './dialogs.js';
 import { $, h, icon, placeNear, replaceWith, toast } from './dom.js';
-import { refreshLight, render } from './render-panels.jsx';
+import { render } from './render-panels.jsx';
 import { Util } from '../util.js';
 
 const activeTab = () => tabs.find(t => t.docId === docId);
@@ -216,7 +216,7 @@ function titleInput() {
   bindField(input, v => { state.title = v; }, () => {
     document.title = Texts.app.documentTitle(state.title);
     input.size = Math.max(8, Math.min(32, input.value.length + 1));
-    refreshLight();
+    render();
   });
   return input;
 }

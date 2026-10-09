@@ -22,7 +22,7 @@ import { Model } from '../model.js';
 import { Store } from '../storage.js';
 import { Texts } from '../texts.js';
 import { toast } from './dom.js';
-import { refreshLight, render, updateHistoryButtons } from './render-panels.jsx';
+import { render, updateHistoryButtons } from './render-panels.jsx';
 import { Util } from '../util.js';
 
 /** Zähler für Änderungen an Matrix und Ansicht; Komponenten lesen ihn, um neu zu zeichnen. */
@@ -219,9 +219,9 @@ export function redo() {
  * (sonst ginge der Fokus verloren). Der Verlaufseintrag entsteht beim Verlassen.
  * @param {any} el
  * @param {(value: string) => void} apply
- * @param {() => void} [after] Aktualisierung nach jeder Eingabe (Standard: `refreshLight`)
+ * @param {() => void} [after] Aktualisierung nach jeder Eingabe (Standard: `render`)
  */
-export function bindField(el, apply, after = refreshLight) {
+export function bindField(el, apply, after = render) {
   el.addEventListener('focus', () => { el._snap = snapshot(); });
   el.addEventListener('input', () => {
     if (el._snap == null) el._snap = snapshot();
@@ -245,7 +245,7 @@ const fieldSnaps = new WeakMap();
  * @param {(value: string) => void} apply
  * @param {() => void} [after] nach jeder Eingabe (Standard: neu zeichnen)
  */
-export function fieldProps(apply, after = refreshLight) {
+export function fieldProps(apply, after = render) {
   return {
     onFocus: (/** @type {Event} */ e) => { fieldSnaps.set(/** @type {EventTarget} */ (e.currentTarget), snapshot()); },
     onInput: (/** @type {Event} */ e) => {

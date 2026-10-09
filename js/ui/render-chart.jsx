@@ -11,7 +11,7 @@ import { setActiveConcept } from './actions.js';
 import { revision, state } from './core.js';
 import { shownColor } from './dom.js';
 import { hovered, hoverConcept } from './lines.js';
-import { categoryColor } from './render-matrix.js';
+import { categoryColor } from './render-matrix.jsx';
 
 const CHART = { colW: 132, rowH: 28, padX: 16, catH: 22, headH: 30, gap: 10, bottom: 12 };
 

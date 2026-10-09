@@ -4,14 +4,14 @@
  * (Dialog „Verträglichkeiten“). Die Logik steht in js/consistency.js.
  */
 import { signal } from '@preact/signals';
-import { render as mount } from 'preact';
+import { Component, render as mount } from 'preact';
 import { Consistency } from '../consistency.js';
 import { Model } from '../model.js';
 import { Ops } from '../ops.js';
 import { Texts } from '../texts.js';
 import { fieldProps, mutate, prefs, revision, state } from './core.js';
 import { consistentCount } from './count.js';
-import { $, closeDialog, h, iconBtn, openDialog, placeNear } from './dom.js';
+import { $, closeDialog, openDialog, placeNear } from './dom.js';
 import { IconButton } from './components.jsx';
 import { formatCount } from './render-panels.jsx';
 
@@ -153,25 +153,31 @@ function ConstraintNote({ c }) {
 /** Ausprägung, deren Verträglichkeiten das Popover gerade zeigt, sonst `null`. */
 const consPopFor = signal(/** @type {string | null} */ (null));
 
-/** Zähler unter dem Text einer Ausprägung (öffnet ebenfalls das Popover). @param {MatrixOption} o */
-export function constraintCount(o) {
+/** Zähler unter dem Text einer Ausprägung (öffnet ebenfalls das Popover). @param {{ o: MatrixOption }} props */
+export function ConstraintCount({ o }) {
   const n = Consistency.countFor(state, o.id);
   if (!n.excluded && !n.conditional) return null;
-  return h('button', {
-    type: 'button', class: 'cons-count', title: Texts.cons.countTitle(n.excluded, n.conditional),
-    'aria-label': `${Texts.cons.edit} – ${Texts.cons.countTitle(n.excluded, n.conditional)}`,
-    onclick: e => openConsPop(o.id, e.currentTarget),
-  },
-  n.excluded ? h('span', { class: 'cons-pill excluded' }, `⊘ ${n.excluded}`) : null,
-  n.conditional ? h('span', { class: 'cons-pill conditional' }, `! ${n.conditional}`) : null);
+  const title = Texts.cons.countTitle(n.excluded, n.conditional);
+  return (
+    <button
+      type="button" class="cons-count" title={title} aria-label={`${Texts.cons.edit} – ${title}`}
+      onClick={e => openConsPop(o.id, /** @type {HTMLElement} */ (e.currentTarget))}
+    >
+      {n.excluded ? <span class="cons-pill excluded">{`⊘ ${n.excluded}`}</span> : null}
+      {n.conditional ? <span class="cons-pill conditional">{`! ${n.conditional}`}</span> : null}
+    </button>
+  );
 }
 
-/** Knopf in der Werkzeugleiste der Ausprägung. @param {MatrixOption} o */
-export function constraintButton(o) {
+/** Knopf in der Werkzeugleiste der Ausprägung. @param {{ o: MatrixOption }} props */
+export function ConstraintButton({ o }) {
   const n = Consistency.countFor(state, o.id);
-  const btn = iconBtn('ban', Texts.cons.edit, e => openConsPop(o.id, /** @type {HTMLElement} */ (e.currentTarget)), { active: n.excluded + n.conditional > 0 });
-  btn.dataset.consBtn = o.id;
-  return btn;
+  return (
+    <IconButton
+      icon="ban" label={Texts.cons.edit} active={n.excluded + n.conditional > 0} data-cons-btn={o.id}
+      onClick={e => openConsPop(o.id, /** @type {HTMLElement} */ (e.currentTarget))}
+    />
+  );
 }
 
 /** @param {string} oid @param {HTMLElement} anchor */
@@ -323,35 +329,63 @@ function ConsGrid({ P, selected }) {
       </thead>
       <tbody>
         {rows.flatMap(({ p: rp, pi: rpi }, ri) => rp.options.map((ro, roi) => {
+          // Felder der Zeile als Daten; die Zeile zeichnet nur neu, wenn sich daran etwas ändert
+          /** @type {ConsCell[]} */
+          const cells = [];
           let col = 0;
-          return (
-            <tr key={ro.id} class={roi === 0 ? 'grp' : undefined}>
-              {roi === 0 ? <th class="rg-param" rowSpan={rp.options.length} scope="rowgroup">{Model.parameterLabel(rp, rpi)}</th> : null}
-              <th class="rg-opt" scope="row">{optText(ro, roi)}</th>
-              {cols.flatMap(({ p: cp }, ci) => cp.options.map((co, coi) => {
-                const base = coi === 0 ? 'grp' : '';
-                const c = col++;
-                if (ci > ri) return <td key={co.id} class={`na ${base}`} />;
-                const pair = Consistency.key(ro.id, co.id);
-                const x = Consistency.get(state, ro.id, co.id);
-                const type = x ? x.type : 'ok';
-                const isSel = pair === selKey;
-                return (
-                  <td
-                    key={co.id} role="gridcell" class={`${type} ${base}${isSel ? ' sel' : ''}`}
-                    data-pair={pair} data-a={ro.id} data-b={co.id} data-col={c}
-                    aria-label={Texts.cons.cellLabel(optText(ro, roi), optText(co, coi), Texts.cons.states[type])}
-                    aria-selected={isSel} tabIndex={pair === tabKey ? 0 : -1}
-                    title={x && x.note ? x.note : Texts.cons.stateTitles[type]}
-                  >{type === 'excluded' ? '✕' : type === 'conditional' ? '!' : ''}</td>
-                );
-              }))}
-            </tr>
-          );
+          cols.forEach(({ p: cp }, ci) => cp.options.forEach((co, coi) => {
+            const base = coi === 0 ? 'grp' : '';
+            const c = col++;
+            if (ci > ri) { cells.push({ id: co.id, base, na: true }); return; }
+            const pair = Consistency.key(ro.id, co.id);
+            const x = Consistency.get(state, ro.id, co.id);
+            cells.push({
+              id: co.id, base, col: c, pair, type: x ? x.type : 'ok', note: x ? x.note : '', name: optText(co, coi),
+              sel: pair === selKey, tab: pair === tabKey,
+            });
+          }));
+          const head = roi === 0 ? { label: Model.parameterLabel(rp, rpi), span: rp.options.length } : null;
+          const name = optText(ro, roi);
+          return <ConsRow key={ro.id} oid={ro.id} name={name} head={head} cells={cells} sig={JSON.stringify([name, head, cells])} />;
         }))}
       </tbody>
     </table>
   );
+}
+
+/**
+ * Ein Feld der Verträglichkeitsmatrix (`na`: oberhalb der Diagonale, ohne Paar).
+ * @typedef {{ id: string, base: string, na?: boolean, col?: number, pair?: string, type?: 'ok' | MatrixConstraintType,
+ *             note?: string, name?: string, sel?: boolean, tab?: boolean }} ConsCell
+ */
+
+/**
+ * Eine Zeile der Verträglichkeitsmatrix. `sig` fasst alle Angaben zusammen; ist sie unverändert,
+ * überspringt Preact die Zeile (bei großen Matrizen sind das Tausende Felder).
+ * @param {{ oid: string, name: string, head: { label: string, span: number } | null, cells: ConsCell[], sig: string }} props
+ */
+function ConsRowView({ oid, name, head, cells }) {
+  return (
+  <tr class={head ? 'grp' : undefined}>
+    {head ? <th class="rg-param" rowSpan={head.span} scope="rowgroup">{head.label}</th> : null}
+    <th class="rg-opt" scope="row">{name}</th>
+    {cells.map(c => (c.na ? <td key={c.id} class={`na ${c.base}`} /> : (
+      <td
+        key={c.id} role="gridcell" class={`${c.type} ${c.base}${c.sel ? ' sel' : ''}`}
+        data-pair={c.pair} data-a={oid} data-b={c.id} data-col={c.col}
+        aria-label={Texts.cons.cellLabel(name, c.name ?? '', Texts.cons.states[c.type ?? 'ok'])}
+        aria-selected={!!c.sel} tabIndex={c.tab ? 0 : -1}
+        title={c.note || Texts.cons.stateTitles[c.type ?? 'ok']}
+      >{c.type === 'excluded' ? '✕' : c.type === 'conditional' ? '!' : ''}</td>
+    )))}
+  </tr>
+  );
+}
+/** @extends {Component<{ oid: string, name: string, head: { label: string, span: number } | null, cells: ConsCell[], sig: string }>} */
+class ConsRow extends Component {
+  /** @param {{ sig: string }} next */
+  shouldComponentUpdate(next) { return next.sig !== this.props.sig; }
+  render() { return ConsRowView(this.props); }
 }
 
 /** Feld auswählen (ohne es zu ändern): Details rechts zeigen. @param {HTMLElement} td */

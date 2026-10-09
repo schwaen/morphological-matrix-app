@@ -16,11 +16,12 @@ import {
 } from './dialogs.js';
 import { $, $$, applyStaticTexts, autosize, closeDialog, darkScheme } from './dom.js';
 import { drawLines, scheduleLines } from './lines.js';
-import { initNotePop } from './notes.js';
+import { initNotePop } from './notes.jsx';
 import { initPanels, render, setCompareView } from './render-panels.jsx';
 import { initSearch } from './search.js';
 import { initStart } from './start.js';
 import { onExternalDocChange, tabById, toggleTabMenu } from './tabs.js';
+import { initMatrix } from './render-matrix.jsx';
 
 function bindEvents() {
   const desc = $('#description');
@@ -177,6 +178,7 @@ function init() {
   bindEvents();
   initSearch();
   initNotePop();
+  initMatrix();
   initPanels();
   initConstraints();
   initStart();

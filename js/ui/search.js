@@ -2,22 +2,28 @@
  * Suche in der Matrix: markiert Parameter und Ausprägungen, deren Text die Eingabe enthält,
  * blendet Zeilen ohne Treffer ab und springt mit Enter / Umschalt+Enter von Treffer zu Treffer
  * (eingeklappte Kategorien werden dabei aufgeklappt). Die Suche gilt nur für die Ansicht und
- * wird nicht gespeichert.
+ * wird nicht gespeichert. Suchtext und aktueller Treffer sind Signale; die Matrix liest sie.
  */
+import { effect, signal } from '@preact/signals';
 import { Model } from '../model.js';
 import { Texts } from '../texts.js';
-import { isCollapsed, setCollapsed, state } from './core.js';
+import { isCollapsed, revision, setCollapsed, state } from './core.js';
 import { $ } from './dom.js';
-import { scheduleLines } from './lines.js';
-import { renderCategoryNav, renderMatrix } from './render-matrix.js';
+import { render } from './render-panels.jsx';
 
-let searchQuery = '';
+const searchQuery = signal('');
 /** Position des aktuellen Treffers in `hits`, `-1` = noch keiner angesprungen. */
-let searchIndex = -1;
+const searchIndex = signal(-1);
 
 /** Treffer der aktuellen Suche oder `null`, wenn nicht gesucht wird. */
 export function searchResult() {
-  return searchQuery.trim() ? Model.search(state, searchQuery) : null;
+  return searchQuery.value.trim() ? Model.search(state, searchQuery.value) : null;
+}
+
+/** Aktueller Treffer (nach Enter bzw. den Pfeilen) oder `null`. @param {ReturnType<typeof Model.search> | null} found */
+export function currentMatch(found) {
+  const i = searchIndex.value;
+  return found && i >= 0 && i < found.hits.length ? found.hits[i] : null;
 }
 
 /**
@@ -27,29 +33,31 @@ export function searchResult() {
  */
 export function searchClass(found, pid, oid) {
   if (!found) return '';
+  const current = currentMatch(found);
+  const isCurrent = !!current && current.pid === pid && current.oid === oid;
   const hit = oid ? found.options.has(oid) : found.hits.some(x => x.pid === pid && x.oid === null);
-  if (hit) return ' is-match';
+  if (hit) return isCurrent ? ' is-match is-current-match' : ' is-match';
   return found.params.has(pid) ? '' : ' is-dim';
 }
 
-/** Anzahl der Treffer bzw. Position anzeigen und die Pfeile freigeben. */
-function updateSearchStatus(found = searchResult()) {
+/** Anzahl der Treffer bzw. Position anzeigen und die Pfeile freigeben (statische Elemente in index.html). */
+function updateSearchStatus() {
+  revision.value; // Treffer ändern sich auch mit der Matrix
+  const found = searchResult();
   const n = found ? found.hits.length : 0;
+  const i = searchIndex.value;
   const status = $('#searchCount');
-  status.textContent = !found ? '' : (n ? Texts.search.count(searchIndex < 0 ? null : searchIndex + 1, n) : Texts.search.none);
+  status.textContent = !found ? '' : (n ? Texts.search.count(i < 0 ? null : i + 1, n) : Texts.search.none);
   status.classList.toggle('is-none', !!found && !n);
   $('#searchPrev').disabled = !n;
   $('#searchNext').disabled = !n;
 }
 
-/** Suchtext übernehmen und Markierungen aktualisieren. @param {string} value */
+/** Suchtext übernehmen. @param {string} value */
 function setSearch(value) {
-  searchQuery = value;
-  searchIndex = -1;
-  renderMatrix();
-  renderCategoryNav();
-  updateSearchStatus();
-  scheduleLines();
+  searchQuery.value = value;
+  searchIndex.value = -1;
+  render();
 }
 
 /** Zum nächsten (`+1`) bzw. vorherigen (`-1`) Treffer springen. @param {number} delta */
@@ -57,27 +65,14 @@ function stepSearch(delta) {
   const found = searchResult();
   if (!found || !found.hits.length) return;
   const n = found.hits.length;
-  searchIndex = searchIndex < 0 ? (delta > 0 ? 0 : n - 1) : (searchIndex + delta + n) % n;
-  const hit = found.hits[searchIndex];
+  const i = searchIndex.value;
+  searchIndex.value = i < 0 ? (delta > 0 ? 0 : n - 1) : (i + delta + n) % n;
+  const hit = found.hits[searchIndex.value];
   const p = state.parameters.find(x => x.id === hit.pid);
-  if (p && state.categories.length && isCollapsed(p.categoryId)) {
-    setCollapsed(p.categoryId, false);
-    renderCategoryNav();
-  }
-  renderMatrix();
-  scheduleLines();
-  updateSearchStatus(found);
+  if (p && state.categories.length && isCollapsed(p.categoryId)) setCollapsed(p.categoryId, false);
+  render();
   const el = $('.is-current-match', $('#matrix'));
   if (el) el.scrollIntoView({ block: 'center', inline: 'nearest' });
-}
-
-/** Aktuellen Treffer nach dem Rendern der Matrix kennzeichnen. */
-export function markCurrentMatch(found) {
-  if (!found || searchIndex < 0 || searchIndex >= found.hits.length) return;
-  const { pid, oid } = found.hits[searchIndex];
-  const sel = oid ? `[data-oid="${CSS.escape(oid)}"]` : `[data-pid="${CSS.escape(pid)}"]`;
-  const el = $(sel, $('#matrix'));
-  if (el) el.classList.add('is-current-match');
 }
 
 export function initSearch() {
@@ -95,5 +90,5 @@ export function initSearch() {
   });
   $('#searchNext').addEventListener('click', () => stepSearch(1));
   $('#searchPrev').addEventListener('click', () => stepSearch(-1));
-  updateSearchStatus();
+  effect(updateSearchStatus);
 }
