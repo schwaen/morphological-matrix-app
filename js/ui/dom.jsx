@@ -3,7 +3,6 @@
  * Hinweise, Downloads, Textfeldhöhe, statische Texte und Konzeptfarben.
  * Einstieg der Oberfläche ist js/ui/main.js (eingebunden in index.html, gebündelt von Vite).
  */
-import { computePosition, flip, offset, shift as shiftInto } from '@floating-ui/dom';
 import { render as mount } from 'preact';
 import { Model } from '../model.js';
 import { Texts } from '../texts.js';
@@ -33,22 +32,33 @@ export function closeDialog(dialog) {
 }
 
 /**
- * Schwebendes Element neben seinem Auslöser platzieren, vollständig im sichtbaren Bereich
- * (Floating UI: bei Platzmangel auf die andere Seite klappen, am Rand verschieben).
- * `below`: unter dem Auslöser, waagerecht um `shift` versetzt; `right`: rechts daneben,
- * senkrecht um `shift` versetzt. Gilt für `position: fixed` und `position: absolute` gleichermaßen.
+ * Schwebendes Element neben seinem Auslöser platzieren, vollständig im sichtbaren Bereich.
+ * `below`: unter dem Auslöser (passt es nicht, darüber), waagerecht um `shift` versetzt;
+ * `right`: rechts daneben (passt es nicht, links), senkrecht um `shift` versetzt.
+ * Bei `position: absolute` (im Dokument) kommt die Bildlaufposition hinzu, bei `fixed` nicht.
+ * Das Element muss sichtbar sein (Größe messbar).
  * @param {HTMLElement} el @param {Element} anchor Auslöser
  * @param {{ side?: 'below' | 'right', gap?: number, shift?: number, margin?: number }} [opts]
- * @returns {Promise<void>}
  */
-export async function placeNear(el, anchor, { side = 'below', gap = 6, shift = 0, margin = 8 } = {}) {
-  const { x, y } = await computePosition(anchor, el, {
-    placement: side === 'below' ? 'bottom-start' : 'right-start',
-    strategy: getComputedStyle(el).position === 'fixed' ? 'fixed' : 'absolute',
-    middleware: [offset({ mainAxis: gap, crossAxis: shift }), flip({ padding: margin }), shiftInto({ padding: margin })],
-  });
-  el.style.left = `${x}px`;
-  el.style.top = `${y}px`;
+export function placeNear(el, anchor, { side = 'below', gap = 6, shift = 0, margin = 8 } = {}) {
+  const r = anchor.getBoundingClientRect();
+  const w = el.offsetWidth;
+  const ht = el.offsetHeight;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const clamp = (/** @type {number} */ v, /** @type {number} */ size, /** @type {number} */ max) => Math.max(margin, Math.min(v, max - size - margin));
+  let left;
+  let top;
+  if (side === 'below') {
+    left = clamp(r.left + shift, w, vw);
+    top = r.bottom + gap + ht <= vh - margin ? r.bottom + gap : Math.max(margin, r.top - ht - gap);
+  } else {
+    left = r.right + gap + w <= vw - margin ? r.right + gap : Math.max(margin, r.left - w - gap);
+    top = clamp(r.top + shift, ht, vh);
+  }
+  const page = getComputedStyle(el).position !== 'fixed';
+  el.style.left = `${left + (page ? window.scrollX : 0)}px`;
+  el.style.top = `${top + (page ? window.scrollY : 0)}px`;
 }
 
 let toastTimer = 0;
