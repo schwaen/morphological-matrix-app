@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 /**
  * Komponenten, die nur in JSX vorkommen (`<Matrix />`), gelten für no-unused-vars sonst als
@@ -25,9 +26,12 @@ export default [
       ecmaVersion: 2025, sourceType: 'module', globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
-    plugins: { local: { rules: { 'jsx-uses-vars': jsxUsesVars } } },
+    plugins: { local: { rules: { 'jsx-uses-vars': jsxUsesVars } }, 'react-hooks': reactHooks },
     rules: {
       'local/jsx-uses-vars': 'error',
+      // Hooks (Preact): nur auf oberster Ebene einer Komponente, vollständige Abhängigkeiten
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'error',
       'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }],
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'prefer-const': 'error',

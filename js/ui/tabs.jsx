@@ -11,7 +11,8 @@ import { Texts } from '../texts.js';
 import { Icon } from './components.jsx';
 import {
   adoptExternalChange, CLOSED_LIMIT, closedTabs, DEFAULT_PREFS, docId, fieldProps, flushSave, lastSaved,
-  pickView, prefs, redoStack, revision, save, saveWorkspace, setActiveDoc, setClosedTabs, state, tabs, undoStack,
+  pickView, prefs, redoStack, save, saveWorkspace, setActiveDoc, setClosedTabs, state, tabs, undoStack,
+  useMatrix,
 } from './core.js';
 import { MENU_ACTIONS } from './dialogs.jsx';
 import { $, placeNear, toast } from './dom.jsx';
@@ -156,7 +157,7 @@ const tabMenuOpen = signal(false);
 
 /** Tab-Leiste mit dem Knopf „+“ (`#appTabs`). */
 function TabBar() {
-  revision.value;
+  useMatrix();
   // Aktiven Tab nur waagerecht in Sicht bringen (scrollIntoView würde auch die Seite verschieben)
   useLayoutEffect(() => {
     const bar = /** @type {HTMLElement} */ (document.getElementById('appTabs'));
@@ -166,7 +167,7 @@ function TabBar() {
     const right = left + current.offsetWidth;
     if (left < bar.scrollLeft) bar.scrollLeft = left;
     else if (right > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = right - bar.clientWidth;
-  }, [docId, tabs.length]);
+  });
   const closable = tabs.length > 1;
   /** @param {Event} e */
   const onClose = e => !!/** @type {HTMLElement} */ (e.target).closest('.tab-close');
@@ -218,7 +219,7 @@ function TabBar() {
 
 /** Titel des aktiven Tabs: schreibgeschützt, Doppelklick zum Bearbeiten. */
 function TitleInput() {
-  revision.value; // liest auch `renaming` – ohne revision zeichnete es bei Änderungen nicht neu
+  useMatrix();
   return (
     <input
       id="title" class="tab-title-input" type="text" value={state.title} readOnly={!renaming.value}
@@ -256,7 +257,7 @@ export function toggleTabMenu(open) {
 
 /** Einträge des Menüs „+“: neu, Beispiel, Import, Bibliothek, zuletzt geschlossene Tabs. */
 function TabMenu() {
-  revision.value;
+  useMatrix();
   if (!tabMenuOpen.value) return null;
   /** @param {{ label: string, action: () => void }} props */
   const Item = ({ label, action }) => (

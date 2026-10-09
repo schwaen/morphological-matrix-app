@@ -11,8 +11,8 @@ import { deleteConcept, duplicateConcept, setActiveConcept } from './actions.js'
 import { Icon, IconButton } from './components.jsx';
 import { ConflictBox, ConflictPill, pairLabel } from './constraints.jsx';
 import {
-  activeConcept, fieldProps, money, pendingFocus, printing, prefs, redoStack, revision, setPendingFocus, setPref,
-  state, undoStack,
+  activeConcept, fieldProps, money, pendingFocus, prefs, printing, redoStack, revision, setPendingFocus,
+  setPref, state, undoStack, useMatrix,
 } from './core.js';
 import { consistentCount } from './count.js';
 import { syncSettingsForm } from './dialogs.jsx';
@@ -86,7 +86,7 @@ function Stat({ value, label, title = null, children }) {
 }
 
 function Stats() {
-  revision.value;
+  useMatrix();
   const P = state.parameters.length;
   const O = state.parameters.reduce((n, p) => n + p.options.length, 0);
   const combos = P ? state.parameters.reduce((n, p) => n * BigInt(p.options.length), 1n) : 0n;
@@ -106,7 +106,7 @@ function Stats() {
 
 /** Anteil der widerspruchsfreien Kombinationen (gezählt im Web Worker; bis dahin der letzte Wert). */
 function ConsistentCount() {
-  revision.value; // liest auch das Signal der Zählung – ohne revision zeichnete es bei Änderungen nicht neu
+  useMatrix();
   const { value: ok, pending } = consistentCount(state);
   const okText = ok === undefined ? '…' : ok == null ? Texts.cons.notCountable : formatCount(ok).text;
   return (
@@ -126,7 +126,7 @@ function renderHint() {
 // ---------- Konzepte ----------
 
 function ConceptList() {
-  revision.value;
+  useMatrix();
   if (!state.concepts.length) return <li class="summary-empty">{Texts.concept.none}</li>;
   return <>{state.concepts.map((c, ci) => <ConceptItem key={c.id} c={c} ci={ci} />)}</>;
 }
@@ -191,7 +191,7 @@ function missingNote(missing) {
 // ---------- Zusammenfassung ----------
 
 function Summary() {
-  revision.value;
+  useMatrix();
   const c = activeConcept();
   if (!c) return <p class="summary-empty">{Texts.summary.noConcept}</p>;
   const showCats = state.categories.length > 0;
@@ -319,7 +319,7 @@ export function setCompareView(key, value) {
 
 /** Schalter „Nur Unterschiede“, „Konzepte mit Konflikt ausblenden“ und Sortierung. */
 function CompareTools() {
-  revision.value;
+  useMatrix();
   if (!state.concepts.length || !state.parameters.length || prefs.compareOpen === false) return null;
   const m = state;
   const differing = Model.differingParameters(m).size;
@@ -364,7 +364,7 @@ const metricClass = (incomplete, best) => [incomplete ? 'incomplete' : '', best 
 
 /** Konzeptvergleich als Tabelle: Parameter als Zeilen, Konzepte als Spalten, Kennzahlen im Fuß. */
 function CompareTable() {
-  revision.value;
+  useMatrix();
   if (!compareShown('table')) return null;
   const m = state;
   const { ranked, groups } = compareContent();

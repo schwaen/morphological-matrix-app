@@ -2,7 +2,7 @@
  * Start der App: Ereignisse verdrahten, geteilte Links übernehmen, erstes Zeichnen.
  * Einstieg der App (in index.html als Modul eingebunden).
  */
-import { options } from 'preact';
+import { Component, options } from 'preact';
 import { Store } from '../storage.js';
 import {
   addCategory, addConcept, addParameter, changeScale, changeSetting, clearActive, generateConcept,
@@ -172,6 +172,11 @@ function bindEvents() {
 // Komponenten sofort neu zeichnen statt gesammelt im nächsten Mikrotask: Code, der nach einer
 // Änderung das DOM braucht (Fokus setzen, Verbindungslinien messen), findet es so schon vor.
 options.debounceRendering = cb => cb();
+// @preact/signals überspringt Komponenten, die selbst ein Signal lesen, wenn ihre Props gleich
+// bleiben. Die Matrix ist aber ein veränderliches Objekt – gleiche Props heißen nicht gleicher
+// Inhalt. Daher wie in Preact üblich: jede Komponente zeichnet mit ihrer Elternkomponente neu.
+// (Eigene shouldComponentUpdate-Methoden einzelner Komponenten bleiben wirksam.)
+delete (/** @type {any} */ (Component.prototype)).shouldComponentUpdate;
 
 function init() {
   applyStaticTexts();

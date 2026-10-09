@@ -8,7 +8,7 @@ import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Model } from '../model.js';
 import { Texts } from '../texts.js';
 import { setActiveConcept } from './actions.js';
-import { revision, state } from './core.js';
+import { state, useMatrix } from './core.js';
 import { shownColor } from './dom.jsx';
 import { hovered, hoverConcept } from './lines.js';
 import { categoryColor } from './render-matrix.jsx';
@@ -35,7 +35,7 @@ function Label({ text, px, charW, ...attrs }) {
  *   `shown`: Diagramm sichtbar (sonst nichts berechnen), `content`: Inhalt des Vergleichs
  */
 export function CompareChart({ shown, content }) {
-  revision.value;
+  useMatrix();
   const hot = hovered.value;
   const [axis, setAxis] = useState(/** @type {number | null} */ (null));
   if (!shown()) return null;

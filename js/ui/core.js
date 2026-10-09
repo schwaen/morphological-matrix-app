@@ -15,8 +15,8 @@
  * Neuzeichnen: Die Matrix ist ein gewöhnliches Objekt, das `Ops` direkt ändert. Das Signal
  * `revision` zählt jede Änderung; Komponenten lesen es und zeichnen dadurch neu (Preact gleicht
  * nur die Unterschiede im DOM ab, Fokus und Eingaben bleiben erhalten).
- * Wichtig: Eine Komponente, die selbst ein Signal liest, zeichnet @preact/signals bei gleichen
- * Props nicht mehr mit ihrer Elternkomponente neu – sie muss dann auch `revision` lesen.
+ * Komponenten, die die Matrix anzeigen, rufen `useMatrix()` auf. (main.js stellt außerdem das
+ * Preact-Standardverhalten wieder her: jede Komponente zeichnet mit ihrer Elternkomponente neu.)
  */
 import { signal } from '@preact/signals';
 import { Examples } from '../examples.js';
@@ -27,8 +27,17 @@ import { toast } from './dom.jsx';
 import { render, updateHistoryButtons } from './render-panels.jsx';
 import { Util } from '../util.js';
 
-/** Zähler für Änderungen an Matrix und Ansicht; Komponenten lesen ihn, um neu zu zeichnen. */
+/** Zähler für Änderungen an Matrix und Ansicht; Komponenten lesen ihn (über `useMatrix`), um neu zu zeichnen. */
 export const revision = signal(0);
+
+/**
+ * Für Komponenten: Matrix des aktiven Tabs – und bei jeder Änderung neu zeichnen.
+ * @returns {Matrix}
+ */
+export function useMatrix() {
+  revision.value;
+  return state;
+}
 
 const HISTORY_LIMIT = 200;
 /** @type {TabPrefs} */
