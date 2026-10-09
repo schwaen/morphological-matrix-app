@@ -1,6 +1,6 @@
 # Morphologische Matrix
 
-Responsive Web-App zum Erstellen einer morphologischen Matrix (Zwicky-Box). Läuft im Browser, ohne Server-Backend und ohne Laufzeit-Abhängigkeiten; gebaut wird mit [Vite](https://vite.dev).
+Responsive Web-App zum Erstellen einer morphologischen Matrix (Zwicky-Box). Läuft im Browser, ohne Server-Backend; die Oberfläche nutzt [Preact](https://preactjs.com) mit [Signals](https://preactjs.com/guide/v10/signals/), gebaut wird mit [Vite](https://vite.dev).
 
 ## Starten
 
@@ -86,7 +86,7 @@ npm run preview  # gebaute App ansehen, http://localhost:4173/
 | `js/storage.js` | `Store` – Speicherung im Browser (Bibliothek, geöffnete Tabs, Einstellungen pro Browser-Tab) |
 | `js/examples.js` | `Examples` – Verzeichnis der mitgelieferten Beispiele (das erste fest eingebunden, die übrigen bei Bedarf nachgeladen) |
 | `examples/` | Mitgelieferte Beispiele, je Beispiel eine JSON-Datei (Anleitung in `examples/README.md`) |
-| `js/ui/` | Oberfläche: `dom` (Helfer), `core` (Zustand, Verlauf), `tabs` (App-Tabs), `actions`, `render-matrix`, `render-panels`, `render-chart` (Verlauf), `search` (Suche), `notes` (Notizen), `constraints` (Verträglichkeiten), `count` (Zählung im Worker), `start` (Start-Menü, Hilfe), `lines`, `dialogs`, `main` (Einstieg) |
+| `js/ui/` | Oberfläche (Preact-Komponenten in `.jsx`): `core` (Zustand, Verlauf, Neuzeichnen), `components` (Symbole, Logo), `dom` (Helfer fürs statische Gerüst, Positionierung mit [Floating UI](https://floating-ui.com)), `tabs` (App-Tabs, Menü „+“), `actions`, `render-matrix` (Matrix, Kategorien), `render-panels` (Kennzahlen, Konzepte, Zusammenfassung, Vergleich), `render-chart` (Verlauf), `search` (Suche), `notes` (Notizen), `constraints` (Verträglichkeiten), `count` (Zählung im Worker), `start` (Start-Menü, Hilfe), `lines` (Verbindungslinien), `dialogs`, `main` (Einstieg) |
 | `types.d.ts` | Typen des Datenmodells (nur Entwicklung) |
 | `vite.config.js` | Build-Einstellungen (relative Pfade für GitHub Pages) und Einstellungen der Unit-Tests (Vitest) |
 | `scripts/` | Hilfsskripte der Entwicklung (strenge Typprüfung der Logik) |
@@ -98,7 +98,9 @@ npm run preview  # gebaute App ansehen, http://localhost:4173/
 
 **Datenformat:** Gespeicherte Matrizen, JSON-Export und Teilen-Links tragen eine Formatversion; ältere Daten werden beim Öffnen automatisch umgewandelt, Daten aus einer neueren App-Version werden abgelehnt. Details in [`docs/DATENFORMAT.md`](docs/DATENFORMAT.md).
 
-**Aufbau:** Alle Dateien sind ES-Module mit ausdrücklichen `import`/`export`; Vite bündelt sie für die Auslieferung. Die Logik-Dateien exportieren je einen Namensraum (`Util`, `Model`, `Consistency`, `Evaluation`, `Ops`, `IO`, `Zip`, `Store`) und arbeiten auf einer übergebenen Matrix statt auf globalem Zustand – so sind sie ohne Browser unit-testbar. Der Zustand des aktiven Tabs liegt in `js/ui/core.js`; andere Module lesen ihn über Importe und ändern ihn nur über die dortigen Funktionen. Änderungen an der Matrix laufen über `mutate()` (strukturell, mit Rückgängig; die eigentliche Änderung erledigt eine Funktion aus `Ops`), `bindField()` (Texteingaben) bzw. `setPref()` (Ansicht pro Tab) – siehe Kopfkommentar in `js/ui/core.js`.
+**Aufbau:** Alle Dateien sind ES-Module mit ausdrücklichen `import`/`export`; Vite bündelt sie für die Auslieferung. Die Logik-Dateien exportieren je einen Namensraum (`Util`, `Model`, `Consistency`, `Evaluation`, `Ops`, `IO`, `Zip`, `Store`) und arbeiten auf einer übergebenen Matrix statt auf globalem Zustand – so sind sie ohne Browser unit-testbar. Der Zustand des aktiven Tabs liegt in `js/ui/core.js`; andere Module lesen ihn über Importe und ändern ihn nur über die dortigen Funktionen. Änderungen an der Matrix laufen über `mutate()` (strukturell, mit Rückgängig; die eigentliche Änderung erledigt eine Funktion aus `Ops`), `fieldProps()` (Texteingaben) bzw. `setPref()` (Ansicht pro Tab) – siehe Kopfkommentar in `js/ui/core.js`.
+
+**Oberfläche:** Die Bereiche der Seite sind Preact-Komponenten, die in ihre Container in `index.html` eingehängt werden. Die Matrix bleibt ein gewöhnliches Objekt; jede Änderung erhöht das Signal `revision` (über `render()`), und alle Komponenten, die es lesen, zeichnen neu – Preact gleicht nur die Unterschiede im DOM ab, sodass Fokus, Cursor und Bildlaufpositionen erhalten bleiben. Reiner Ansichtszustand (gewähltes Feld, offenes Popover, Hervorhebung, Suche) steht in eigenen Signalen. Gezeichnet wird sofort (`options.debounceRendering` in `main.js`), damit Code, der danach das DOM braucht (Fokus, Verbindungslinien), es vorfindet. Wichtig: Eine Komponente, die selbst ein Signal liest, zeichnet @preact/signals bei gleichen Props nicht mit ihrer Elternkomponente neu – sie muss dann zusätzlich `revision` lesen.
 
 ## Entwicklung
 
