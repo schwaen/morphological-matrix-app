@@ -2,6 +2,7 @@
  * DOM-Helfer der Oberfläche: Elemente erzeugen, Symbole, Dialoge, Hinweise, Downloads.
  * Einstieg der Oberfläche ist js/ui/main.js (eingebunden in index.html, gebündelt von Vite).
  */
+import { computePosition, flip, offset, shift as shiftInto } from '@floating-ui/dom';
 import { Model } from '../model.js';
 import { Texts } from '../texts.js';
 import { undo } from './core.js';
@@ -142,31 +143,22 @@ export function rebuild(container, ...children) {
 }
 
 /**
- * Schwebendes Element neben seinem Auslöser platzieren, vollständig im sichtbaren Bereich.
- * `below`: unter dem Auslöser (passt es nicht, darüber), waagerecht um `shift` versetzt;
- * `right`: rechts daneben (passt es nicht, links), senkrecht um `shift` versetzt.
- * Für `position: fixed` gelten Fensterkoordinaten, mit `page: true` (für `position: absolute`
- * im Dokument) kommt die Bildlaufposition hinzu. Das Element muss sichtbar sein (Größe messbar).
- * @param {HTMLElement} el @param {DOMRect} r Rechteck des Auslösers
- * @param {{ side?: 'below' | 'right', gap?: number, shift?: number, margin?: number, page?: boolean }} [opts]
+ * Schwebendes Element neben seinem Auslöser platzieren, vollständig im sichtbaren Bereich
+ * (Floating UI: bei Platzmangel auf die andere Seite klappen, am Rand verschieben).
+ * `below`: unter dem Auslöser, waagerecht um `shift` versetzt; `right`: rechts daneben,
+ * senkrecht um `shift` versetzt. Gilt für `position: fixed` und `position: absolute` gleichermaßen.
+ * @param {HTMLElement} el @param {Element} anchor Auslöser
+ * @param {{ side?: 'below' | 'right', gap?: number, shift?: number, margin?: number }} [opts]
+ * @returns {Promise<void>}
  */
-export function placeNear(el, r, { side = 'below', gap = 6, shift = 0, margin = 8, page = false } = {}) {
-  const w = el.offsetWidth;
-  const ht = el.offsetHeight;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const clamp = (/** @type {number} */ v, /** @type {number} */ size, /** @type {number} */ max) => Math.max(margin, Math.min(v, max - size - margin));
-  let left;
-  let top;
-  if (side === 'below') {
-    left = clamp(r.left + shift, w, vw);
-    top = r.bottom + gap + ht <= vh - margin ? r.bottom + gap : Math.max(margin, r.top - ht - gap);
-  } else {
-    left = r.right + gap + w <= vw - margin ? r.right + gap : Math.max(margin, r.left - w - gap);
-    top = clamp(r.top + shift, ht, vh);
-  }
-  el.style.left = `${left + (page ? window.scrollX : 0)}px`;
-  el.style.top = `${top + (page ? window.scrollY : 0)}px`;
+export async function placeNear(el, anchor, { side = 'below', gap = 6, shift = 0, margin = 8 } = {}) {
+  const { x, y } = await computePosition(anchor, el, {
+    placement: side === 'below' ? 'bottom-start' : 'right-start',
+    strategy: getComputedStyle(el).position === 'fixed' ? 'fixed' : 'absolute',
+    middleware: [offset({ mainAxis: gap, crossAxis: shift }), flip({ padding: margin }), shiftInto({ padding: margin })],
+  });
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
 }
 
 let toastTimer = 0;

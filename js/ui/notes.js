@@ -80,7 +80,7 @@ function showNotePop(el) {
     d.cons ? h('div', { class: `pop-cons ${d.consType}` }, h('strong', null, d.consLabel), d.cons) : null,
     d.note ? h('div', null, h('strong', null, d.noteLabel), d.note) : null);
   pop.hidden = false;
-  placeNear(pop, el.getBoundingClientRect(), { shift: 12, margin: 4 });
+  placeNear(pop, el, { shift: 12, margin: 4 });
 }
 
 function hideNotePop() {

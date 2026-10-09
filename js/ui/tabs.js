@@ -238,7 +238,7 @@ export function toggleTabMenu(open) {
   if (willOpen) {
     renderTabMenu();
     menu.hidden = false;
-    placeNear(menu, btn.getBoundingClientRect());
+    placeNear(menu, btn);
   }
   menu.hidden = !willOpen;
   if (btn) btn.setAttribute('aria-expanded', String(willOpen));

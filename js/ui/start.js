@@ -19,7 +19,7 @@ function toggleStartMenu(open) {
   if (willOpen) {
     renderStartMenu();
     menu.hidden = false;
-    placeNear(menu, btn.getBoundingClientRect());
+    placeNear(menu, btn);
   }
   menu.hidden = !willOpen;
   btn.setAttribute('aria-expanded', String(willOpen));

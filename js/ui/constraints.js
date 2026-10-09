@@ -131,7 +131,7 @@ function openConsPop(oid, anchor) {
   pop.hidden = false;
   // Rechts neben der Zelle (sonst links), etwas nach oben versetzt; scrollt mit der Seite
   const cell = anchor.closest('.opt-cell') || anchor;
-  placeNear(pop, cell.getBoundingClientRect(), { side: 'right', gap: 8, shift: -40, page: true });
+  placeNear(pop, cell, { side: 'right', gap: 8, shift: -40 });
   $('.cons-pop-close', pop).focus();
 }
 
