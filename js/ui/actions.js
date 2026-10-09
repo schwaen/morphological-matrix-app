@@ -8,11 +8,9 @@ import { Model } from '../model.js';
 import { Ops } from '../ops.js';
 import { Texts } from '../texts.js';
 import {
-  activeConcept, collapseKey, isCollapsed, mutate, prefs, save, setCollapsed, setMode, setPendingFocus,
-  setPref, state,
+  activeConcept, collapseKey, isCollapsed, mutate, prefs, render, save, setCollapsed, setMode, setPendingFocus, setPref, state,
 } from './core.js';
 import { toast } from './dom.jsx';
-import { render } from './render-panels.jsx';
 import { Util } from '../util.js';
 
 /** Auswahlwert „neue Kategorie anlegen“ im Kategorie-Auswahlfeld eines Parameters. */

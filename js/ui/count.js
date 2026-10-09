@@ -10,8 +10,6 @@ import { Consistency } from '../consistency.js';
 const known = signal(/** @type {{ sig: string, value: bigint | null | undefined }} */ ({ sig: '', value: undefined }));
 /** Signatur und Nummer der laufenden Anfrage */
 let asked = { sig: '', id: 0 };
-/** @type {Set<() => void>} */
-const listeners = new Set();
 /** @type {Worker | null} */
 let worker = null;
 
@@ -22,7 +20,6 @@ function startWorker() {
     worker.onmessage = (/** @type {MessageEvent<{ id: number, value: bigint | null }>} */ e) => {
       if (e.data.id !== asked.id) return; // veraltete Antwort
       known.value = { sig: asked.sig, value: e.data.value };
-      listeners.forEach(fn => fn());
     };
   } catch (e) {
     worker = null;
@@ -53,9 +50,4 @@ export function consistentCount(m) {
     w.postMessage({ id: asked.id, matrix });
   }
   return { value: last.value, pending: true };
-}
-
-/** Anzeige anmelden, die nach jedem neuen Ergebnis aktualisiert wird. @param {() => void} fn */
-export function onCountReady(fn) {
-  listeners.add(fn);
 }

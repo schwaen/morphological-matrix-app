@@ -2,14 +2,11 @@
  * Start der App: Ereignisse verdrahten, geteilte Links übernehmen, erstes Zeichnen.
  * Einstieg der App (in index.html als Modul eingebunden).
  */
-import { options } from 'preact';
+import { Component, options } from 'preact';
 import { Store } from '../storage.js';
-import {
-  addCategory, addConcept, addParameter, changeScale, changeSetting, clearActive, generateConcept,
-  randomizeActive,
-} from './actions.js';
+import { addConcept, clearActive, randomizeActive } from './actions.js';
 import { initConstraints } from './constraints.jsx';
-import { bindField, flushSave, prefs, redo, save, saveWorkspace, setMode, setPref, setPrinting, state, undo } from './core.js';
+import { bindField, flushSave, prefs, redo, render, save, saveWorkspace, setPrinting, state, undo } from './core.js';
 import {
   MENU_ACTIONS, exportBackup, exportJson, importJson, loadFromHash, renderLibrary, restoreBackup,
   switchLanguage, toggleMenu,
@@ -17,39 +14,20 @@ import {
 import { $, $$, applyStaticTexts, autosize, closeDialog, darkScheme } from './dom.jsx';
 import { drawLines, scheduleLines } from './lines.js';
 import { initNotePop } from './notes.jsx';
-import { initPanels, render, setCompareView } from './render-panels.jsx';
+import { initPanels } from './render-panels.jsx';
 import { initSearch } from './search.js';
 import { initStart } from './start.jsx';
 import { initTabs, onExternalDocChange, tabById, toggleTabMenu } from './tabs.jsx';
 import { initMatrix } from './render-matrix.jsx';
+import { initChrome } from './chrome.jsx';
 
 function bindEvents() {
   const desc = $('#description');
   bindField(desc, v => { state.description = v; }, () => autosize(desc));
 
-  $$('[data-mode]').forEach(b => {
-    b.addEventListener('click', () => setMode(/** @type {TabPrefs['mode']} */ (b.dataset.mode)));
-  });
-  $('#undoBtn').addEventListener('click', undo);
-  $('#redoBtn').addEventListener('click', redo);
-  $('#addParamBtn').addEventListener('click', () => addParameter(null));
-  $('#addCategoryBtn').addEventListener('click', addCategory);
   $('#addConceptBtn').addEventListener('click', addConcept);
   $('#randomBtn').addEventListener('click', randomizeActive);
   $('#clearSelBtn').addEventListener('click', clearActive);
-  $$('[data-generate]').forEach(btn => {
-    btn.addEventListener('click', () => generateConcept(btn.dataset.generate || ''));
-  });
-  $$('[data-compare-view]').forEach(b => b.addEventListener('click', () => {
-    setPref('compareOpen', true);
-    setCompareView('compareView', /** @type {'table' | 'chart'} */ (b.dataset.compareView));
-  }));
-  $('#compareToggle').addEventListener('click', () => setCompareView('compareOpen', prefs.compareOpen === false));
-  $$('[data-lines]').forEach(btn => btn.addEventListener('click', () => {
-    setPref('lines', /** @type {TabPrefs['lines']} */ (btn.dataset.lines));
-    $$('[data-lines]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
-    scheduleLines();
-  }));
 
   // Menü
   $('#menuBtn').addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
@@ -94,11 +72,6 @@ function bindEvents() {
   $('#examplesClose').addEventListener('click', () => closeDialog($('#examplesDialog')));
   $('#settingsClose').addEventListener('click', () => closeDialog($('#settingsDialog')));
   $('#settingsDone').addEventListener('click', () => closeDialog($('#settingsDialog')));
-  $('#setCosts').addEventListener('change', e => changeSetting('costs', e.target.checked));
-  $('#setUtility').addEventListener('change', e => changeSetting('utility', e.target.checked));
-  $('#setMoscow').addEventListener('change', e => changeSetting('moscow', e.target.checked));
-  $('#setCurrency').addEventListener('change', e => changeSetting('currency', e.target.value));
-  $('#setScale').addEventListener('change', e => changeScale(Number(e.target.value)));
 
   $('#importFile').addEventListener('change', e => {
     const file = e.target.files && e.target.files[0];
@@ -172,12 +145,18 @@ function bindEvents() {
 // Komponenten sofort neu zeichnen statt gesammelt im nächsten Mikrotask: Code, der nach einer
 // Änderung das DOM braucht (Fokus setzen, Verbindungslinien messen), findet es so schon vor.
 options.debounceRendering = cb => cb();
+// @preact/signals überspringt Komponenten, die selbst ein Signal lesen, wenn ihre Props gleich
+// bleiben. Die Matrix ist aber ein veränderliches Objekt – gleiche Props heißen nicht gleicher
+// Inhalt. Daher wie in Preact üblich: jede Komponente zeichnet mit ihrer Elternkomponente neu.
+// (Eigene shouldComponentUpdate-Methoden einzelner Komponenten bleiben wirksam.)
+delete (/** @type {any} */ (Component.prototype)).shouldComponentUpdate;
 
 function init() {
   applyStaticTexts();
   bindEvents();
   initSearch();
   initNotePop();
+  initChrome();
   initTabs();
   initMatrix();
   initPanels();

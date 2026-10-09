@@ -1,0 +1,74 @@
+/* Bewertung: Kosten, Nutzwert, Priorität */
+@layer areas {
+  /* ===== Bewertung ===== */
+  .num-input {
+    width: 100%; min-width: 0; padding: 2px 6px;
+    border: 1px solid transparent; border-radius: 6px;
+    background: var(--surface-2); font-size: .82rem; font-variant-numeric: tabular-nums;
+  }
+  .num-input:hover { border-color: var(--border-strong); }
+  .num-input:focus { outline: none; background: var(--surface); border-color: var(--accent); }
+  .num-input[aria-invalid] { border-color: var(--danger); color: var(--danger); }
+  /* contain: Standardbreite der Eingabefelder zählt nicht zur Spaltenbreite */
+  .opt-metrics { display: flex; gap: 6px; padding: 0 6px 6px 9px; contain: inline-size; }
+  .metric-field { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 4px; }
+  .metric-unit { font-size: .72rem; font-weight: 600; color: var(--muted); }
+  .weight-field { display: flex; align-items: center; gap: 5px; padding: 0 2px 0 6px; font-size: .74rem; color: var(--muted); }
+  .weight-field .num-input { width: 44px; flex: none; }
+  .weight-pct { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* Obergrenze: Ein langer Text bricht um, statt alle Spalten auf seine Einzeilenbreite aufzuziehen */
+  .opt-label { display: flex; flex-direction: column; gap: 1px; max-inline-size: 15rem; }
+  .opt-metrics-view { font-size: .72rem; font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* Priorität (MoSCoW) */
+  .prio {
+    display: inline-grid; place-items: center; min-width: 18px; height: 17px; padding: 0 4px; margin-right: 5px;
+    border-radius: 5px; font-size: .68rem; font-weight: 700; letter-spacing: .02em; line-height: 1;
+    vertical-align: 1px; white-space: nowrap;
+  }
+  .prio-must { color: var(--prio-must); background: var(--prio-must-bg); }
+  .prio-should { color: var(--prio-should); background: var(--prio-should-bg); }
+  .prio-could { color: var(--prio-could); background: var(--prio-could-bg); }
+  .prio-wont { color: var(--prio-wont); background: var(--prio-wont-bg); }
+  .prio-none { color: var(--muted); background: var(--surface-2); font-weight: 600; }
+  .opt-label > .opt-metrics-view .prio-wont { text-decoration: line-through; }
+  .opt-cell.pick.is-wont:not(.is-active) { opacity: .6; }
+  .opt-prio { display: flex; align-items: center; gap: 3px; padding: 0 6px 6px 9px; contain: inline-size; }
+  .opt-prio .metric-unit { margin-right: 2px; }
+  .prio-btn {
+    flex: 1 1 0; min-width: 0; height: 22px; padding: 0;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--surface);
+    font-size: .7rem; font-weight: 700; color: var(--muted); cursor: pointer;
+  }
+  .prio-btn:hover { border-color: var(--border-strong); color: var(--text); }
+  .prio-btn[aria-pressed="true"] { border-color: currentColor; }
+  .prio-btn.prio-must[aria-pressed="true"] { color: var(--prio-must); background: var(--prio-must-bg); }
+  .prio-btn.prio-should[aria-pressed="true"] { color: var(--prio-should); background: var(--prio-should-bg); }
+  .prio-btn.prio-could[aria-pressed="true"] { color: var(--prio-could); background: var(--prio-could-bg); }
+  .prio-btn.prio-wont[aria-pressed="true"] { color: var(--prio-wont); background: var(--prio-wont-bg); }
+  .prio-profile { display: flex; flex-wrap: wrap; gap: 4px; }
+  .prio-profile .prio { margin: 0; }
+  .summary .prio-profile { margin: -4px 0 12px; }
+  .prio-note { display: block; margin-top: 2px; color: var(--muted); }
+  .setting-desc .prio { margin: 0 2px 0 0; }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .metric { display: flex; flex-direction: column; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+  .metric span { font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  .metric strong { font-size: 1.1rem; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .metric small { font-size: .72rem; color: var(--muted); }
+  .compare tfoot th, .compare tfoot td {
+    background: var(--surface-2); border-top: 1px solid var(--border-strong); border-bottom: 0;
+    font-weight: 650; font-variant-numeric: tabular-nums;
+  }
+  .compare tfoot th { color: var(--text); }
+  .compare tfoot tr + tr th, .compare tfoot tr + tr td { border-top: 1px solid var(--border); }
+  .compare td.incomplete { color: var(--muted); font-weight: 500; }
+  .compare td.best { color: var(--accent); }
+  .compare td.best::after {
+    /* Beschriftung aus der Sprachdatei (applyStaticTexts) */
+    content: var(--best-label, ""); display: inline-block; margin-left: 8px; padding: 1px 6px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent);
+    font-size: .64rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; vertical-align: 1px;
+  }
+  .th-note { display: block; font-size: .72rem; font-weight: 400; color: var(--muted); }
+}

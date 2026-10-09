@@ -3,7 +3,7 @@
  */
 
 /** Pfade der Symbole (24er-Raster, nur Kontur). */
-export const ICONS = {
+const ICONS = {
   up: 'M6 15l6-6 6 6',
   down: 'M6 9l6 6 6-6',
   left: 'M15 6l-6 6 6 6',

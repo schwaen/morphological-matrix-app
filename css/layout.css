@@ -1,0 +1,54 @@
+/* Layout, Karten, Beschreibung und Kennzahlen */
+@layer areas {
+  /* ===== Layout & Karten ===== */
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    /* Seitenleiste als eigene Spalte bis unten: klebt beim Scrollen, ohne den Vergleich zu überdecken */
+    grid-template-areas: "matrix concepts" "compare concepts";
+    grid-template-rows: auto 1fr;
+    gap: 16px;
+    max-width: 1680px; margin: 0 auto;
+    padding: 16px var(--gutter) 28px;
+  }
+  .matrix-section { grid-area: matrix; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+  .concepts-panel { grid-area: concepts; align-self: start; position: sticky; top: 72px; max-height: calc(100vh - 88px); overflow: auto; }
+  .compare-section { grid-area: compare; min-width: 0; align-self: start; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px;
+  }
+  .panel h2, .collapse-toggle {
+    margin: 0;
+    font-size: .72rem; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+  }
+
+  /* Beschreibung wie ein Untertitel */
+  .description {
+    width: 100%; resize: none; overflow: hidden;
+    padding: 2px; min-height: 0;
+    border: 0; border-bottom: 1px dashed transparent; border-radius: 0;
+    background: transparent; color: var(--text-2); font-size: .95rem;
+    field-sizing: content;
+  }
+  .description:hover { border-bottom-color: var(--border-strong); }
+  .description:focus { outline: none; border-bottom-color: var(--accent); }
+
+  /* Kennzahlen als Kacheln */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .stat {
+    display: flex; flex-direction: column-reverse; gap: 0; min-width: 0;
+    padding: 8px 12px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface); box-shadow: var(--shadow-xs);
+    font-size: .75rem; color: var(--muted);
+  }
+  .stat strong {
+    font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.25;
+    color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
+  }
+}

@@ -15,7 +15,7 @@ import {
 } from './actions.js';
 import { Icon, IconButton } from './components.jsx';
 import { ConstraintButton, ConstraintCount, conflictText, statusText } from './constraints.jsx';
-import { activeConcept, collapseKey, fieldProps, isCollapsed, money, prefs, revision, setPendingFocus, state } from './core.js';
+import { activeConcept, collapseKey, fieldProps, isCollapsed, money, prefs, setPendingFocus, state, useMatrix } from './core.js';
 import { $, focusField, shownColor } from './dom.jsx';
 import { scheduleLines } from './lines.js';
 import { NoteButton, NoteField, NoteMark, showNote } from './notes.jsx';
@@ -31,7 +31,7 @@ import { Util } from '../util.js';
 
 /** Die Matrix als Raster (`#matrix`); Spaltenzahl und Modus stehen am Container. */
 function Matrix() {
-  revision.value;
+  useMatrix();
   const editing = prefs.mode === 'edit';
   const maxOptions = Math.max(1, ...state.parameters.map(p => p.options.length));
   const cols = maxOptions + (editing ? 1 : 0);
@@ -299,7 +299,7 @@ function optionMetricsText(o) {
 }
 
 /** Gewichtsanteil eines Parameters als Text („25 %“). @param {MatrixParameter} p */
-export function weightPercent(p) {
+function weightPercent(p) {
   const share = Evaluation.weightShare(state, p);
   return share == null ? '–' : Util.formatPercent(share);
 }
@@ -446,7 +446,7 @@ function SearchBadge({ group, found }) {
 
 /** Chips über der Matrix: zu einer Kategorie springen, alle ein- bzw. ausklappen. */
 function CategoryNav() {
-  revision.value;
+  useMatrix();
   const show = state.categories.length > 0;
   useLayoutEffect(() => { $('#catNav').hidden = !show; });
   if (!show) return null;

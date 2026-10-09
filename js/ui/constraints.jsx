@@ -9,7 +9,7 @@ import { Consistency } from '../consistency.js';
 import { Model } from '../model.js';
 import { Ops } from '../ops.js';
 import { Texts } from '../texts.js';
-import { fieldProps, mutate, prefs, revision, state } from './core.js';
+import { fieldProps, mutate, prefs, state, useMatrix } from './core.js';
 import { consistentCount } from './count.js';
 import { $, closeDialog, openDialog, placeNear } from './dom.jsx';
 import { IconButton } from './components.jsx';
@@ -181,7 +181,7 @@ export function ConstraintButton({ o }) {
 }
 
 /** @param {string} oid @param {HTMLElement} anchor */
-export function openConsPop(oid, anchor) {
+function openConsPop(oid, anchor) {
   consPopFor.value = oid;
   const pop = $('#consPop');
   pop.hidden = false;
@@ -202,7 +202,7 @@ function closeConsPop() {
 
 /** Inhalt des Popovers: alle Ausprägungen der anderen Parameter mit Schaltern und Begründung. */
 function ConsPop() {
-  revision.value; // bei jeder Änderung der Matrix neu zeichnen
+  useMatrix();
   const oid = consPopFor.value;
   const ref = oid ? optionRef(oid) : null;
   if (!oid || !ref || prefs.mode !== 'edit') {
@@ -258,7 +258,7 @@ export function openConsDialog() {
 
 /** Zusammenfassung über der Matrix: Zahl der Paare und der widerspruchsfreien Kombinationen. */
 function ConsSummary() {
-  revision.value;
+  useMatrix();
   if (!consOpen.value) return null;
   const P = state.parameters.filter(p => p.options.length);
   if (P.length < 2) return null;
@@ -270,7 +270,7 @@ function ConsSummary() {
 
 /** Inhalt des Dialogs: Dreiecksmatrix und Detailbereich zum gewählten Paar. */
 function ConsBody() {
-  revision.value;
+  useMatrix();
   if (!consOpen.value) return null;
   const P = state.parameters.map((p, pi) => ({ p, pi })).filter(({ p }) => p.options.length);
   if (P.length < 2) return <p class="summary-empty">{Texts.cons.tooFew}</p>;
@@ -452,7 +452,6 @@ export function initConstraints() {
   dialog.addEventListener('close', () => { consOpen.value = false; });
   $('#consClose').addEventListener('click', () => closeDialog(dialog));
   $('#consDone').addEventListener('click', () => closeDialog(dialog));
-  $('#consOpenBtn').addEventListener('click', openConsDialog);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && consPopFor.value != null) { e.preventDefault(); closeConsPop(); }
   });

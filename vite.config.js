@@ -19,10 +19,10 @@ export default defineConfig({
     setupFiles: ['tests/unit/setup.js'],
     coverage: {
       provider: 'v8',
-      // DOM-freie Logik; Speicher (storage.js) und Worker laufen nur im Browser (E2E-Tests),
+      // DOM-freie Logik; der Worker läuft nur im Browser (E2E-Tests),
       // die Sprachdateien enthalten nur Textbausteine
       include: ['js/*.js'],
-      exclude: ['js/storage.js', 'js/count-worker.js'],
+      exclude: ['js/count-worker.js'],
       reporter: ['text'],
     },
   },

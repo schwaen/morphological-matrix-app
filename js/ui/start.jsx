@@ -8,7 +8,7 @@ import { Model } from '../model.js';
 import { Store } from '../storage.js';
 import { Texts } from '../texts.js';
 import { Logo } from './components.jsx';
-import { docId, revision } from './core.js';
+import { docId, useMatrix } from './core.js';
 import { MENU_ACTIONS } from './dialogs.jsx';
 import { $, $$, closeDialog, openDialog, placeNear } from './dom.jsx';
 import { reopenTab } from './tabs.jsx';
@@ -58,7 +58,7 @@ function StartItem({ label, icon, action, extra = null }) {
 }
 
 function StartMenu() {
-  revision.value;
+  useMatrix();
   if (!startOpen.value) return null;
   // Zuletzt gespeicherte Matrizen (ohne die gerade angezeigte)
   const recent = Store.listDocs().filter(doc => doc.id !== docId).slice(0, RECENT_COUNT);
