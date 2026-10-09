@@ -7,11 +7,16 @@
  * der des Ziel-Tabs geladen – der übrige Code muss von Tabs nichts wissen.
  *
  * Regeln für Änderungen:
- *  - Strukturelle Änderungen laufen über `mutate()` (Verlaufseintrag, Speichern, komplettes Neuzeichnen).
- *  - Texteingaben laufen über `bindField()` (kein Neuzeichnen beim Tippen, verzögertes Speichern,
- *    Verlaufseintrag beim Verlassen).
+ *  - Strukturelle Änderungen laufen über `mutate()` (Verlaufseintrag, Speichern, Neuzeichnen).
+ *  - Texteingaben laufen über `fieldProps()` (verzögertes Speichern beim Tippen, Verlaufseintrag
+ *    beim Verlassen).
  *  - Ansichtseinstellungen über `setPref()`; sie sind nicht Teil des Verlaufs.
+ *
+ * Neuzeichnen: Die Matrix ist ein gewöhnliches Objekt, das `Ops` direkt ändert. Das Signal
+ * `revision` zählt jede Änderung; alle Komponenten lesen es und zeichnen dadurch neu (Preact
+ * gleicht nur die Unterschiede im DOM ab, Fokus und Eingaben bleiben erhalten).
  */
+import { signal } from '@preact/signals';
 import { Examples } from '../examples.js';
 import { Model } from '../model.js';
 import { Store } from '../storage.js';
@@ -19,6 +24,9 @@ import { Texts } from '../texts.js';
 import { toast } from './dom.js';
 import { refreshLight, render, updateHistoryButtons } from './render-panels.js';
 import { Util } from '../util.js';
+
+/** Zähler für Änderungen an Matrix und Ansicht; Komponenten lesen ihn, um neu zu zeichnen. */
+export const revision = signal(0);
 
 const HISTORY_LIMIT = 200;
 /** @type {TabPrefs} */
@@ -226,6 +234,35 @@ export function bindField(el, apply, after = refreshLight) {
     if (el._snap != null && el._snap !== snapshot()) pushHistory(el._snap);
     el._snap = snapshot();
   });
+}
+
+/** Stand vor der laufenden Eingabe je Feld (für den Verlaufseintrag beim Verlassen). @type {WeakMap<EventTarget, string>} */
+const fieldSnaps = new WeakMap();
+
+/**
+ * Ereignisse eines Eingabefelds, das den Zustand beim Tippen ändert (JSX: `{...fieldProps(…)}`).
+ * Gespeichert wird nach einer kurzen Pause, der Verlaufseintrag entsteht beim Verlassen.
+ * @param {(value: string) => void} apply
+ * @param {() => void} [after] nach jeder Eingabe (Standard: neu zeichnen)
+ */
+export function fieldProps(apply, after = refreshLight) {
+  return {
+    onFocus: (/** @type {Event} */ e) => { fieldSnaps.set(/** @type {EventTarget} */ (e.currentTarget), snapshot()); },
+    onInput: (/** @type {Event} */ e) => {
+      const el = /** @type {HTMLInputElement} */ (e.currentTarget);
+      if (!fieldSnaps.has(el)) fieldSnaps.set(el, snapshot());
+      apply(el.value);
+      scheduleSave();
+      after();
+    },
+    onChange: (/** @type {Event} */ e) => {
+      const el = /** @type {EventTarget} */ (e.currentTarget);
+      flushSave();
+      const before = fieldSnaps.get(el);
+      if (before != null && before !== snapshot()) pushHistory(before);
+      fieldSnaps.set(el, snapshot());
+    },
+  };
 }
 
 /** Übernimmt den Stand, den ein anderer Browser-Tab für die aktive Matrix gespeichert hat. */

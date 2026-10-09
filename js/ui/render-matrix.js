@@ -11,7 +11,7 @@ import {
   moveCategory, moveOption, moveParameter, setAllCollapsed, setParameterCategory, setPriority, toggleCategory,
   toggleSelection,
 } from './actions.js';
-import { conflictText, constraintButton, constraintCount, statusText } from './constraints.js';
+import { conflictText, constraintButton, constraintCount, statusText } from './constraints.jsx';
 import { activeConcept, bindField, collapseKey, isCollapsed, money, prefs, setPendingFocus, state } from './core.js';
 import { $, focusField, h, icon, iconBtn, replaceWith, shownColor } from './dom.js';
 import { noteButton, noteField, noteMark, showNote } from './notes.js';

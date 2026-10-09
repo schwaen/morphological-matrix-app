@@ -7,9 +7,9 @@ import { Evaluation } from '../evaluation.js';
 import { Model } from '../model.js';
 import { Texts } from '../texts.js';
 import { deleteConcept, duplicateConcept, setActiveConcept, setActiveConceptLight } from './actions.js';
-import { conflictBox, conflictPill, pairLabel, refreshConstraintEditors } from './constraints.js';
+import { conflictBox, conflictPill, pairLabel } from './constraints.jsx';
 import {
-  activeConcept, bindField, money, pendingFocus, prefs, redoStack, setPendingFocus, setPref, state, undoStack,
+  activeConcept, bindField, money, pendingFocus, prefs, redoStack, revision, setPendingFocus, setPref, state, undoStack,
 } from './core.js';
 import { syncSettingsForm } from './dialogs.js';
 import { $, $$, autosize, autosizeAll, focusField, h, icon, iconBtn, rebuild, replaceWith, shownColor } from './dom.js';
@@ -22,6 +22,7 @@ import { consistentCount, onCountReady } from './count.js';
 
 /** Komplettes Neuzeichnen nach strukturellen Änderungen. */
 export function render() {
+  revision.value++;
   document.title = Texts.app.documentTitle(state.title);
   // Tab-Leiste nicht neu zeichnen, während der Titel bearbeitet wird (Fokus bliebe sonst nicht erhalten)
   if (!(document.activeElement && document.activeElement.id === 'title')) renderTabs();
@@ -42,11 +43,11 @@ export function render() {
   updateHistoryButtons();
   autosizeAll();
   applyPendingFocus();
-  refreshConstraintEditors();
 }
 
 /** Leichte Aktualisierung ohne Eingabefelder neu zu erzeugen (z. B. beim Tippen). */
 export function refreshLight() {
+  revision.value++;
   updateWeightPercents();
   renderCategoryNav();
   renderStats();

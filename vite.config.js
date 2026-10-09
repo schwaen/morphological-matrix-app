@@ -3,6 +3,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   // Relative Pfade: läuft unter https://<user>.github.io/<repo>/ ebenso wie lokal mit `vite preview`
   base: './',
+  // JSX der Oberfläche für Preact übersetzen (js/ui/*.jsx)
+  oxc: { jsx: { runtime: 'automatic', importSource: 'preact' } },
   build: {
     target: 'es2022',
     outDir: 'dist',

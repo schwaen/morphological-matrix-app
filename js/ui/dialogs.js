@@ -7,7 +7,7 @@ import { IO } from '../io.js';
 import { Model } from '../model.js';
 import { Store } from '../storage.js';
 import { Languages, Texts } from '../texts.js';
-import { openConsDialog } from './constraints.js';
+import { openConsDialog } from './constraints.jsx';
 import { closedTabs, docId, prefs, save, saveWorkspace, setClosedTabs, setMode, state } from './core.js';
 import { $, closeDialog, download, h, iconBtn, openDialog, toast } from './dom.js';
 import { activateTab, openInTab, openNewDoc, tabById } from './tabs.js';

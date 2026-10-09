@@ -2,12 +2,13 @@
  * Start der App: Ereignisse verdrahten, geteilte Links übernehmen, erstes Zeichnen.
  * Einstieg der App (in index.html als Modul eingebunden).
  */
+import { options } from 'preact';
 import { Store } from '../storage.js';
 import {
   addCategory, addConcept, addParameter, changeScale, changeSetting, clearActive, generateConcept,
   randomizeActive,
 } from './actions.js';
-import { initConstraints } from './constraints.js';
+import { initConstraints } from './constraints.jsx';
 import { bindField, flushSave, prefs, redo, save, saveWorkspace, setMode, setPref, setPrinting, state, undo } from './core.js';
 import {
   MENU_ACTIONS, exportBackup, exportJson, importJson, loadFromHash, renderLibrary, restoreBackup,
@@ -177,6 +178,10 @@ function bindEvents() {
     if ($('#libraryDialog').open) renderLibrary();
   });
 }
+
+// Komponenten sofort neu zeichnen statt gesammelt im nächsten Mikrotask: Code, der nach einer
+// Änderung das DOM braucht (Fokus setzen, Verbindungslinien messen), findet es so schon vor.
+options.debounceRendering = cb => cb();
 
 function init() {
   applyStaticTexts();
