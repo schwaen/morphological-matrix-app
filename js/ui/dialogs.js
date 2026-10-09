@@ -12,7 +12,6 @@ import { closedTabs, docId, prefs, save, saveWorkspace, setClosedTabs, setMode, 
 import { $, closeDialog, download, h, iconBtn, openDialog, toast } from './dom.js';
 import { activateTab, openInTab, openNewDoc, tabById } from './tabs.js';
 import { Util } from '../util.js';
-import { Zip } from '../zip.js';
 
 // ---------- Import / Export / Teilen ----------
 
@@ -163,12 +162,16 @@ function openExample(ex) {
 
 // ---------- Backup ----------
 
+/** ZIP-Modul (mit fflate) erst laden, wenn ein Backup erstellt oder eingelesen wird. */
+const loadZip = () => import('../zip.js');
+
 /** Alle Matrizen als ZIP-Archiv herunterladen (je Matrix eine JSON-Datei). */
 export async function exportBackup() {
   save();
   const docs = Store.listDocs();
   if (!docs.length) { toast(Texts.backup.empty); return; }
   const now = new Date();
+  const { Zip } = await loadZip();
   const zip = await Zip.create(IO.backupFiles(docs, now), now);
   download(IO.backupFileName(now), /** @type {BlobPart} */ (zip), 'application/zip');
   toast(Texts.backup.saved(docs.length));
@@ -184,6 +187,7 @@ export async function restoreBackup(files) {
   const texts = [];
   const dec = new TextDecoder();
   try {
+    const { Zip } = await loadZip();
     for (const file of files) {
       const bytes = new Uint8Array(await file.arrayBuffer());
       if (Zip.isZip(bytes)) {
