@@ -1,0 +1,29 @@
+/* Anpassungen für schmale Bildschirme und Touch (zuletzt, damit sie Vorrang haben) */
+@layer areas {
+  /* ===== Responsive ===== */
+  @media (max-width: 1000px) {
+    .layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "matrix" "concepts" "compare"; }
+    .concepts-panel { position: static; max-height: none; }
+  }
+
+  @media (max-width: 640px) {
+    :root { --param-col: 112px; --opt-min: 120px; --gutter: 12px; }
+    .app-header { position: relative; }
+    .brand { flex-basis: 100%; }
+    .app-tab.is-active { max-width: 75%; }
+    .tab-title-input { max-width: 100%; }
+    .toolbar { width: 100%; justify-content: space-between; }
+    .layout { padding-top: 12px; }
+    .matrix-wrap { padding: 6px; }
+    .matrix { gap: 5px; }
+    .param-cell { padding: 5px 7px; }
+    .segmented button { padding: 3px 10px; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  }
+
+  @media (hover: none) {
+    /* Touch: Werkzeuge als eigene Zeile unten rechts in der Zelle */
+    .opt-tools { order: 2; justify-content: flex-end; padding: 0 3px 3px; margin-top: auto; }
+    .opt-cell.pick:hover { transform: none; }
+  }
+}
