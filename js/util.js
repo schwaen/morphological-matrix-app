@@ -2,6 +2,7 @@
  * Util – kleine, DOM-freie Hilfsfunktionen (Zahlen, Texte, Kodierung).
  * Exportiert den Namensraum `Util`.
  */
+import { lexLess } from './lex.js';
 import { Texts } from './texts.js';
 
 export const Util = (() => {
@@ -111,15 +112,6 @@ export const Util = (() => {
       .replace(/ß/g, 'ss')
       .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '')
       .toLowerCase().slice(0, 60) || 'matrix';
-  }
-
-  /** Lexikografischer Vergleich zweier gleich langer Schlüssel. @param {number[]} a @param {number[]} b */
-  function lexLess(a, b) {
-    for (let i = 0; i < a.length; i++) {
-      if (a[i] < b[i]) return true;
-      if (a[i] > b[i]) return false;
-    }
-    return false;
   }
 
   /** UTF-8-Text → Base64url (für Links). @param {string} text */
