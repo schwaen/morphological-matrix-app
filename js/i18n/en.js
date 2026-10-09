@@ -3,10 +3,9 @@
  * test). Terminology: Parameter → parameter, Ausprägung → option, Konzept → concept,
  * Nutzwert → utility, Preis-Leistung → value for money. Provides `TextsEn`.
  */
-'use strict';
 
-/** @type {typeof TextsDe} */
-const TextsEn = (() => {
+/** @type {typeof import('./de.js').TextsDe} */
+export const TextsEn = (() => {
   /** Singular/plural: `plural(1, 'concept', 'concepts')` → “1 concept”. */
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
   /** Quotation marks as used in the interface. */
@@ -470,6 +469,7 @@ const TextsEn = (() => {
         plural(concepts, 'concept', 'concepts'),
       ].filter(Boolean).join(' · '),
       open: 'Open',
+      loading: 'Loading examples …',
       empty: 'No examples are included.',
     },
 

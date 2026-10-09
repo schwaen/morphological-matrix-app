@@ -2,10 +2,26 @@
  * Rendern außerhalb der Matrix: Kopfbereich, Kennzahlen, Konzeptliste,
  * Zusammenfassung, Konzeptvergleich und Sichtbarkeit der Konzept-Generatoren.
  */
-'use strict';
+import { Consistency } from '../consistency.js';
+import { Evaluation } from '../evaluation.js';
+import { Model } from '../model.js';
+import { Texts } from '../texts.js';
+import { deleteConcept, duplicateConcept, setActiveConcept, setActiveConceptLight } from './actions.js';
+import { conflictBox, conflictPill, pairLabel, refreshConstraintEditors } from './constraints.js';
+import {
+  activeConcept, bindField, money, pendingFocus, prefs, redoStack, setPendingFocus, setPref, state, undoStack,
+} from './core.js';
+import { syncSettingsForm } from './dialogs.js';
+import { $, $$, autosize, autosizeAll, focusField, h, icon, iconBtn, rebuild, replaceWith, shownColor } from './dom.js';
+import { hoverConcept, scheduleLines } from './lines.js';
+import { buildCompareChart } from './render-chart.js';
+import { categoryColor, renderCategoryNav, renderMatrix, weightPercent } from './render-matrix.js';
+import { renderTabs } from './tabs.js';
+import { Util } from '../util.js';
+import { consistentCount, onCountReady } from './count.js';
 
 /** Komplettes Neuzeichnen nach strukturellen Änderungen. */
-function render() {
+export function render() {
   document.title = Texts.app.documentTitle(state.title);
   // Tab-Leiste nicht neu zeichnen, während der Titel bearbeitet wird (Fokus bliebe sonst nicht erhalten)
   if (!(document.activeElement && document.activeElement.id === 'title')) renderTabs();
@@ -30,7 +46,7 @@ function render() {
 }
 
 /** Leichte Aktualisierung ohne Eingabefelder neu zu erzeugen (z. B. beim Tippen). */
-function refreshLight() {
+export function refreshLight() {
   updateWeightPercents();
   renderCategoryNav();
   renderStats();
@@ -41,14 +57,14 @@ function refreshLight() {
   scheduleLines();
 }
 
-function applyPendingFocus() {
+export function applyPendingFocus() {
   if (!pendingFocus) return;
   const fid = pendingFocus;
-  pendingFocus = null;
+  setPendingFocus(null);
   focusField(fid);
 }
 
-function updateHistoryButtons() {
+export function updateHistoryButtons() {
   $('#undoBtn').disabled = !undoStack.length;
   $('#redoBtn').disabled = !redoStack.length;
 }
@@ -65,7 +81,7 @@ function updateWeightPercents() {
  * (bzw. als Zehnerpotenz), damit die Zahl in die Kachel passt. Die exakte Zahl steht im Tooltip.
  * @param {bigint} n @returns {{ text: string, title: string | null }}
  */
-function formatCount(n) {
+export function formatCount(n) {
   const exact = Util.formatInteger(n);
   if (n < 10n ** 12n) return { text: exact, title: null };
   const { value, power } = Util.scaleBigInt(n);
@@ -78,6 +94,8 @@ function formatCount(n) {
   return { text: Texts.stats.approxPower(Util.formatNumber(mantissa), digits.length - 1), title: Texts.stats.exact(exact) };
 }
 
+onCountReady(() => renderStats());
+
 function renderStats() {
   const P = state.parameters.length;
   const O = state.parameters.reduce((n, p) => n + p.options.length, 0);
@@ -89,9 +107,10 @@ function renderStats() {
   const combiStat = stat(count.text, Texts.stats.combinations(combos === 1n), count.title);
   // Mit Unverträglichkeiten: Anteil der widerspruchsfreien Kombinationen (unter der Zahl)
   if (state.constraints.some(x => x.type === 'excluded')) {
-    const ok = Consistency.countConsistent(state);
-    const okText = ok == null ? Texts.cons.notCountable : formatCount(ok).text;
-    combiStat.prepend(h('span', { class: 'stat-sub', title: ok == null ? null : formatCount(ok).title }, Texts.cons.consistentCount(okText)));
+    // Gezählt im Web Worker; bis dahin gilt der letzte Wert („…“ beim ersten Mal)
+    const { value: ok, pending } = consistentCount(state);
+    const okText = ok === undefined ? '…' : ok == null ? Texts.cons.notCountable : formatCount(ok).text;
+    combiStat.prepend(h('span', { class: 'stat-sub', title: ok == null ? null : formatCount(ok).title, 'aria-busy': pending ? 'true' : null }, Texts.cons.consistentCount(okText)));
   }
   $('#stats').replaceChildren(
     stat(Util.formatInteger(P), Texts.stats.parameters),
@@ -273,7 +292,7 @@ function priorityProfileView(counts, all) {
 
 // ---------- Konzeptvergleich ----------
 
-function renderCompare() {
+export function renderCompare() {
   const section = $('#compareSection');
   if (!state.concepts.length || !state.parameters.length) {
     section.hidden = true;
@@ -302,7 +321,7 @@ function renderCompare() {
  * Parametergruppen – bei „Nur Unterschiede“ ohne Parameter, die alle Konzepte gleich gewählt haben.
  * @returns {CompareContent}
  */
-function compareContent() {
+export function compareContent() {
   const m = state;
   const report = Evaluation.conceptReport(m);
   const hide = prefs.compareHideConflicts && m.constraints.some(x => x.type === 'excluded');
@@ -350,7 +369,7 @@ function renderCompareTools() {
 const metricClass = (incomplete, best) => [incomplete ? 'incomplete' : '', best ? 'best' : ''].join(' ').trim() || null;
 
 /** @param {CompareContent} view */
-function buildCompareTable(view) {
+export function buildCompareTable(view) {
   const m = state;
   const { ranked, groups } = view;
   const head = h('thead', null, h('tr', null,

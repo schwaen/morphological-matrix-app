@@ -3,26 +3,38 @@
  * Jede strukturelle Änderung läuft über `mutate()`; hier bleibt nur, was zur Oberfläche gehört
  * (Fokus, Hinweise, Rückfragen, Ansichtswechsel).
  */
-'use strict';
+import { Evaluation } from '../evaluation.js';
+import { Model } from '../model.js';
+import { Ops } from '../ops.js';
+import { Texts } from '../texts.js';
+import {
+  activeConcept, collapseKey, isCollapsed, mutate, prefs, save, setCollapsed, setMode, setPendingFocus,
+  setPref, state,
+} from './core.js';
+import { $$, toast } from './dom.js';
+import { scheduleLines } from './lines.js';
+import { renderCategoryNav, renderMatrix } from './render-matrix.js';
+import { refreshLight, render } from './render-panels.js';
+import { Util } from '../util.js';
 
 /** Auswahlwert „neue Kategorie anlegen“ im Kategorie-Auswahlfeld eines Parameters. */
-const NEW_CATEGORY = '__new';
+export const NEW_CATEGORY = '__new';
 
 // ---------- Parameter ----------
 
 /** @param {string | null} [categoryId] */
-function addParameter(categoryId = null) {
+export function addParameter(categoryId = null) {
   const p = Model.newParameter(categoryId);
-  pendingFocus = `param:${p.id}`;
+  setPendingFocus(`param:${p.id}`);
   if (categoryId) setCollapsed(categoryId, false);
   mutate(m => Ops.addParameter(m, p));
 }
 
-function moveParameter(index, delta) {
+export function moveParameter(index, delta) {
   mutate(m => Ops.moveParameter(m, index, delta));
 }
 
-function deleteParameter(pid) {
+export function deleteParameter(pid) {
   const p = state.parameters.find(x => x.id === pid);
   mutate(m => Ops.deleteParameter(m, pid));
   toast(Texts.toast.parameterDeleted(Model.nameOrUnnamed(p)), true);
@@ -30,48 +42,48 @@ function deleteParameter(pid) {
 
 // ---------- Ausprägungen ----------
 
-function addOption(pid, afterIndex) {
+export function addOption(pid, afterIndex) {
   const o = Model.newOption();
-  pendingFocus = `opt:${o.id}`;
+  setPendingFocus(`opt:${o.id}`);
   mutate(m => Ops.addOption(m, pid, o, afterIndex));
 }
 
 /** Ausprägung innerhalb ihres Parameters nach links (−1) oder rechts (+1) verschieben. */
-function moveOption(pid, index, delta) {
+export function moveOption(pid, index, delta) {
   const p = state.parameters.find(x => x.id === pid);
   const target = index + delta;
   if (!p || target < 0 || target >= p.options.length) return;
   const focused = /** @type {HTMLElement | null} */ (document.activeElement);
-  pendingFocus = focused && focused.dataset.fid === `opt:${p.options[index].id}`
-    ? `opt:${p.options[index].id}` : null;
+  setPendingFocus(focused && focused.dataset.fid === `opt:${p.options[index].id}`
+    ? `opt:${p.options[index].id}` : null);
   mutate(m => Ops.moveOption(m, pid, index, delta));
 }
 
-function deleteOption(pid, oid) {
+export function deleteOption(pid, oid) {
   mutate(m => Ops.deleteOption(m, pid, oid));
 }
 
 // ---------- Kategorien ----------
 
-function addCategory() {
+export function addCategory() {
   const k = { id: Util.uid(), name: Texts.fallback.category(state.categories.length + 1), color: Model.nextCategoryColor(state.categories) };
-  pendingFocus = `cat:${k.id}`;
+  setPendingFocus(`cat:${k.id}`);
   if (prefs.mode !== 'edit') setPref('mode', 'edit');
   mutate(m => Ops.addCategory(m, k));
 }
 
-function moveCategory(index, delta) {
+export function moveCategory(index, delta) {
   mutate(m => Ops.moveCategory(m, index, delta));
 }
 
-function deleteCategory(cid) {
+export function deleteCategory(cid) {
   const k = Model.categoryById(state, cid);
   mutate(m => Ops.deleteCategory(m, cid));
   toast(Texts.toast.categoryDeleted(Model.nameOrUnnamed(k)), true);
 }
 
 /** @param {string} pid @param {string} cid Kategorie-ID, '' (ohne) oder NEW_CATEGORY */
-function setParameterCategory(pid, cid) {
+export function setParameterCategory(pid, cid) {
   if (cid === NEW_CATEGORY) {
     const name = window.prompt(Texts.prompt.newCategory, Texts.fallback.category(state.categories.length + 1));
     if (name == null) { renderMatrix(); return; } // Auswahlfeld zurücksetzen
@@ -87,14 +99,14 @@ function setParameterCategory(pid, cid) {
 }
 
 /** @param {string | null} cid */
-function toggleCategory(cid) {
+export function toggleCategory(cid) {
   setCollapsed(cid, !isCollapsed(cid));
   renderMatrix();
   renderCategoryNav();
   scheduleLines();
 }
 
-function setAllCollapsed(value) {
+export function setAllCollapsed(value) {
   for (const g of Model.categoryGroups(state)) setCollapsed(g.cat ? g.cat.id : null, value);
   renderMatrix();
   renderCategoryNav();
@@ -102,7 +114,7 @@ function setAllCollapsed(value) {
 }
 
 /** Kategorie aufklappen und dorthin scrollen. @param {string | null} cid */
-function jumpToCategory(cid) {
+export function jumpToCategory(cid) {
   if (isCollapsed(cid)) toggleCategory(cid);
   const band = document.querySelector(`[data-cat-band="${CSS.escape(collapseKey(cid))}"]`);
   if (band) band.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -110,28 +122,28 @@ function jumpToCategory(cid) {
 
 // ---------- Konzepte ----------
 
-function toggleSelection(pid, oid) {
+export function toggleSelection(pid, oid) {
   mutate(m => Ops.toggleSelection(m, pid, oid));
 }
 
-function addConcept() {
+export function addConcept() {
   const c = Model.newConcept(state);
   mutate(m => Ops.addConcept(m, c));
   if (prefs.mode !== 'select') setMode('select');
 }
 
-function duplicateConcept(cid) {
+export function duplicateConcept(cid) {
   mutate(m => Ops.duplicateConcept(m, cid));
 }
 
-function deleteConcept(cid) {
+export function deleteConcept(cid) {
   const c = state.concepts.find(x => x.id === cid);
   mutate(m => Ops.deleteConcept(m, cid));
   toast(Texts.toast.conceptDeleted(Model.nameOrUnnamed(c)), true);
 }
 
 /** Aktives Konzept wechseln (Ansichtsänderung, kein Verlaufseintrag). */
-function setActiveConcept(cid) {
+export function setActiveConcept(cid) {
   if (state.activeConceptId === cid) return;
   state.activeConceptId = cid;
   save();
@@ -139,7 +151,7 @@ function setActiveConcept(cid) {
 }
 
 /** Wie `setActiveConcept`, aber ohne die Konzeptliste (und damit das fokussierte Feld) neu zu erzeugen. */
-function setActiveConceptLight(cid) {
+export function setActiveConceptLight(cid) {
   if (state.activeConceptId === cid) return;
   state.activeConceptId = cid;
   save();
@@ -148,7 +160,7 @@ function setActiveConceptLight(cid) {
   refreshLight();
 }
 
-function randomizeActive() {
+export function randomizeActive() {
   if (!state.parameters.some(p => p.options.length)) {
     toast(Texts.toast.noOptions);
     return;
@@ -157,14 +169,14 @@ function randomizeActive() {
   if (prefs.mode !== 'select') setMode('select');
 }
 
-function clearActive() {
+export function clearActive() {
   const c = activeConcept();
   if (!c || !Object.keys(c.selections).length) return;
   mutate(m => Ops.clearActive(m));
 }
 
 /** Konzept nach einer Strategie aus `Evaluation.GENERATORS` erstellen. @param {string} key */
-function generateConcept(key) {
+export function generateConcept(key) {
   const gen = Evaluation.GENERATORS[key];
   if (!gen || !gen.available(state)) return;
   const { selections, skipped, error } = gen.build(state);
@@ -191,18 +203,18 @@ function generateConcept(key) {
  * Priorität (MoSCoW) einer Ausprägung setzen; dieselbe Priorität erneut gewählt entfernt sie.
  * @param {string} pid @param {string} oid @param {MatrixPriority} priority
  */
-function setPriority(pid, oid, priority) {
+export function setPriority(pid, oid, priority) {
   mutate(m => Ops.togglePriority(m, pid, oid, priority));
 }
 
 /** @template {keyof MatrixSettings} K @param {K} key @param {MatrixSettings[K]} value */
-function changeSetting(key, value) {
+export function changeSetting(key, value) {
   if (state.settings[key] === value) return;
   mutate(m => { m.settings[key] = value; });
 }
 
 /** Neue Nutzwert-Skala; vorhandene Werte werden auf Wunsch proportional umgerechnet. */
-function changeScale(max) {
+export function changeScale(max) {
   const oldMax = state.settings.utilityMax;
   if (max === oldMax) return;
   const hasScores = state.parameters.some(p => p.options.some(o => o.score != null));

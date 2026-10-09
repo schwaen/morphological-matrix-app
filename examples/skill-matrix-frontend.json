@@ -1,9 +1,4 @@
-/*
- * Beispiel „Skill-Matrix Frontend-Team“.
- * `data` hat dasselbe Format wie eine mit „Als JSON speichern“ exportierte Datei
- * (siehe docs/DATENFORMAT.md). Anleitung für weitere Beispiele: examples/README.md
- */
-Examples.register({
+{
   "id": "skill-matrix-frontend",
   "name": "Skill-Matrix Frontend-Team",
   "description": "Kompetenzen von drei Mitarbeitenden in Soft- und Hardskills eines Frontend-Entwicklers. Skala je Skill von 0 (keine Kenntnisse) bis 3 (Expertenwissen); der Nutzwert zeigt den gewichteten Kompetenzgrad.",
@@ -234,4 +229,4 @@ Examples.register({
     ],
     "activeConceptId": "m1"
   }
-});
+}

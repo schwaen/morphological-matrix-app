@@ -1,5 +1,16 @@
-/* global state, Consistency -- globale Variablen der App, nur innerhalb von page.evaluate */
-import { test, expect, menu } from './fixtures.js';
+import { test, expect, menu, storedMatrix } from './fixtures.js';
+
+/** Gespeichertes Paar zweier Ausprägungen (oder `null`). */
+async function pairOf(page, a, b) {
+  const [x, y] = a < b ? [a, b] : [b, a];
+  return (await storedMatrix(page)).constraints.find(c => c.a === x && c.b === y) || null;
+}
+
+/** Zahl der unverträglichen Paare unter den Ausprägungen des aktiven Konzepts. */
+function excludedInActive(m) {
+  const chosen = new Set(Object.values(m.concepts.find(c => c.id === m.activeConceptId).selections));
+  return m.constraints.filter(c => c.type === 'excluded' && chosen.has(c.a) && chosen.has(c.b)).length;
+}
 
 const selectOutdoor = page => page.locator('.concept[data-cid=c2]').click({ position: { x: 5, y: 5 } });
 
@@ -62,7 +73,7 @@ test('Pflege an der Ausprägung: Popover, Begründung, Zähler, Rückgängig', a
 
   await page.keyboard.press('Escape');
   await expect(pop).toBeHidden();
-  expect(await page.evaluate(() => Consistency.get(state, 'p1o4', 'p3o3'))).toEqual({ a: 'p1o4', b: 'p3o3', type: 'conditional', note: 'Pads nur mit Adapter' });
+  await expect.poll(() => pairOf(page, 'p1o4', 'p3o3')).toEqual({ a: 'p1o4', b: 'p3o3', type: 'conditional', note: 'Pads nur mit Adapter' });
 
   await page.keyboard.press('Control+z'); // Begründung
   await page.keyboard.press('Control+z'); // Paar
@@ -98,13 +109,13 @@ test('Verträglichkeitsmatrix: Klick wählt, Doppelklick wechselt, Detailbereich
   const muskel = page.locator('.opt-cell.edit[data-oid=p5o4]');
   await muskel.hover();
   await muskel.getByRole('button', { name: 'Ausprägung löschen' }).click();
-  expect(await page.evaluate(() => state.constraints.some(c => c.a === 'p5o4' || c.b === 'p5o4'))).toBe(false);
+  await expect.poll(async () => (await storedMatrix(page)).constraints.some(c => c.a === 'p5o4' || c.b === 'p5o4')).toBe(false);
 });
 
 test('Zufällig erzeugt nur verträgliche Kombinationen', async ({ page }) => {
   for (let i = 0; i < 15; i++) {
     await page.locator('#randomBtn').click();
-    expect(await page.evaluate(() => Consistency.conflicts(state, state.concepts.find(c => c.id === state.activeConceptId)).excluded.length)).toBe(0);
+    expect(excludedInActive(await storedMatrix(page))).toBe(0);
   }
 });
 
@@ -143,7 +154,7 @@ test('Verträglichkeitsmatrix: Begründung eines bedingten Paars korrigieren, oh
   await page.keyboard.type(' (ca. 20 Wh)');
   await note.press('Enter');
   await expect(pair).toHaveText('!');
-  expect(await page.evaluate(() => Consistency.get(state, 'p2o2', 'p5o3'))).toEqual({
+  await expect.poll(() => pairOf(page, 'p2o2', 'p5o3')).toEqual({
     a: 'p2o2', b: 'p5o3', type: 'conditional', note: 'Pumpe braucht zusätzlich einen kleinen Akku (ca. 20 Wh)',
   });
 

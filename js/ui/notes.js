@@ -4,7 +4,10 @@
  * zusammen mit Hinweisen zur Verträglichkeit.
  * Die Begründung je Konzept steht in der Zusammenfassung (render-panels.js).
  */
-'use strict';
+import { bindField, prefs, setPendingFocus } from './core.js';
+import { $, autosize, h, icon, iconBtn, placeNear, replaceWith } from './dom.js';
+import { renderMatrix } from './render-matrix.js';
+import { applyPendingFocus, refreshLight } from './render-panels.js';
 
 /** IDs (Ausprägung oder Parameter), deren leeres Notizfeld gerade geöffnet ist. */
 const openNotes = new Set();
@@ -14,7 +17,7 @@ const openNotes = new Set();
  * @param {{ note: string }} target Ausprägung oder Parameter
  * @param {string} id @param {{ cls: string, placeholder: string, label: string }} opts
  */
-function noteField(target, id, { cls, placeholder, label }) {
+export function noteField(target, id, { cls, placeholder, label }) {
   const ta = h('textarea', {
     class: `note-field ${cls} autosize`, rows: 1, value: target.note, placeholder,
     'aria-label': label, dataset: { fid: `note:${id}` },
@@ -32,7 +35,7 @@ function noteField(target, id, { cls, placeholder, label }) {
  * Knopf zum Öffnen der Notiz; zeigt an, ob es schon eine gibt.
  * @param {{ note: string }} target @param {string} id @param {[string, string]} labels hinzufügen, bearbeiten
  */
-function noteButton(target, id, labels) {
+export function noteButton(target, id, labels) {
   const btn = iconBtn('note', target.note ? labels[1] : labels[0], () => openNote(id), { active: !!target.note });
   btn.dataset.noteBtn = id;
   btn.dataset.labels = JSON.stringify(labels);
@@ -52,16 +55,16 @@ function syncNoteButton(id, has) {
 /** Notizfeld öffnen (bzw. das vorhandene fokussieren). @param {string} id */
 function openNote(id) {
   openNotes.add(id);
-  pendingFocus = `note:${id}`;
+  setPendingFocus(`note:${id}`);
   renderMatrix();
   applyPendingFocus();
 }
 
 /** Ob das Notizfeld angezeigt wird. @param {{ note: string }} target @param {string} id */
-const showNote = (target, id) => !!target.note || openNotes.has(id);
+export const showNote = (target, id) => !!target.note || openNotes.has(id);
 
 /** Kleines Notiz-Symbol (den Text erhalten Screenreader über `aria-description` der Zelle). */
-const noteMark = () => h('span', { class: 'note-ico', 'aria-hidden': 'true' }, icon('note'));
+export const noteMark = () => h('span', { class: 'note-ico', 'aria-hidden': 'true' }, icon('note'));
 
 // ---------- Popover beim Überfahren ----------
 
@@ -84,7 +87,7 @@ function hideNotePop() {
   $('#notePop').hidden = true;
 }
 
-function initNotePop() {
+export function initNotePop() {
   const matrix = $('#matrix');
   /** @param {Event} e */
   const target = e => /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest('[data-note], [data-cons]'));

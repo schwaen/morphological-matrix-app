@@ -2,8 +2,9 @@
   // Strengere Prüfung für die DOM-freien Logik-Dateien: zusätzlich keine impliziten any-Typen
   // (jeder Parameter braucht eine Typangabe). texts.js und die Sprachdateien unter js/i18n/ sind
   // ausgenommen – dort stehen nur Textbausteine; ihre Verwendung prüft jsconfig.json.
+  // Aufruf über scripts/typecheck-logic.js, das Meldungen zu diesen Dateien ausfiltert.
   "extends": "./jsconfig.json",
   "compilerOptions": { "noImplicitAny": true },
-  "include": ["js/*.js", "types.d.ts", "types-logic.d.ts"],
+  "include": ["js/*.js", "types.d.ts"],
   "exclude": ["js/texts.js", "js/i18n/*.js"]
 }

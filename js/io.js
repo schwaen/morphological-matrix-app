@@ -1,10 +1,14 @@
 /*
  * IO – Export (JSON, CSV) und Teilen-Links. Erzeugt nur Texte; das Herunterladen
- * übernimmt die Oberfläche. Stellt den globalen Namensraum `IO` bereit.
+ * übernimmt die Oberfläche. Exportiert den Namensraum `IO`.
  */
-'use strict';
+import { Consistency } from './consistency.js';
+import { Evaluation } from './evaluation.js';
+import { Model } from './model.js';
+import { Texts } from './texts.js';
+import { Util } from './util.js';
 
-const IO = (() => {
+export const IO = (() => {
   const { categoryById, optionText } = Model;
   const { weightOf, conceptReport } = Evaluation;
 

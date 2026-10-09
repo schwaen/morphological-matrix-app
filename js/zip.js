@@ -2,12 +2,12 @@
  * Zip – ZIP-Archive schreiben und lesen, ohne Bibliothek (für Backup und Wiederherstellung).
  * Komprimiert wird mit der eingebauten CompressionStream-API („deflate-raw“); fehlt sie,
  * werden die Dateien unkomprimiert gespeichert. Lesen kann gespeicherte und mit Deflate
- * komprimierte Einträge (z. B. auch von Hand neu gepackte Archive). Ohne DOM; stellt den
- * globalen Namensraum `Zip` bereit.
+ * komprimierte Einträge (z. B. auch von Hand neu gepackte Archive). Ohne DOM; exportiert den
+ * Namensraum `Zip`.
  */
-'use strict';
+import { Texts } from './texts.js';
 
-const Zip = (() => {
+export const Zip = (() => {
   /** @typedef {{ name: string, data: Uint8Array }} ZipEntry */
 
   const CRC_TABLE = (() => {

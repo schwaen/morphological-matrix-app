@@ -2,11 +2,12 @@
  * Store – Speicherung im Browser.
  * Jede Matrix liegt unter einem eigenen Schlüssel im localStorage. Welche Matrix ein Tab
  * bearbeitet und wie er sie anzeigt, steht im sessionStorage des Tabs – so arbeiten
- * mehrere Tabs unabhängig. Stellt den globalen Namensraum `Store` bereit.
+ * mehrere Tabs unabhängig. Exportiert den Namensraum `Store`.
  */
-'use strict';
+import { Model } from './model.js';
+import { Util } from './util.js';
 
-const Store = (() => {
+export const Store = (() => {
   const DOC_PREFIX = 'morphologische-matrix:doc:';
   const LEGACY_KEY = 'morphologische-matrix:v1';
   const TAB_DOC_KEY = 'morphologische-matrix:tab-doc';

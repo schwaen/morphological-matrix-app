@@ -1,11 +1,14 @@
 /*
  * Evaluation – Kosten, Nutzwert, Preis-Leistung und die Strategien für automatisch
  * erstellte Konzepte. Reine Funktionen auf einer Matrix (ohne DOM, ohne globalen Zustand);
- * stellt den globalen Namensraum `Evaluation` bereit.
+ * exportiert den Namensraum `Evaluation`.
  */
-'use strict';
+import { Consistency } from './consistency.js';
+import { Model } from './model.js';
+import { Texts } from './texts.js';
+import { Util } from './util.js';
 
-const Evaluation = (() => {
+export const Evaluation = (() => {
   const { selectedOption } = Model;
 
   /** @param {MatrixParameter} p */

@@ -2,13 +2,15 @@
  * Ops – strukturelle Änderungen an einer Matrix: Parameter, Ausprägungen, Kategorien,
  * Konzepte und Bewertungseinstellungen. Reine Funktionen ohne DOM und ohne globalen Zustand:
  * Sie ändern die übergebene Matrix direkt (passend zu `mutate()` in der Oberfläche) und geben
- * zurück, ob bzw. was sich geändert hat. Stellt den globalen Namensraum `Ops` bereit.
+ * zurück, ob bzw. was sich geändert hat. Exportiert den Namensraum `Ops`.
  *
  * Invariante: `m.parameters` bleibt nach Kategorien gruppiert sortiert (siehe `Model.resort`).
  */
-'use strict';
+import { Consistency } from './consistency.js';
+import { Model } from './model.js';
+import { Texts } from './texts.js';
 
-const Ops = (() => {
+export const Ops = (() => {
   /** @param {Matrix} m @param {string} pid */
   const param = (m, pid) => m.parameters.find(p => p.id === pid) || null;
 

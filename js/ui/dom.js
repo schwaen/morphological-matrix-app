@@ -1,9 +1,10 @@
 /*
  * DOM-Helfer der Oberfläche: Elemente erzeugen, Symbole, Dialoge, Hinweise, Downloads.
- * Die UI-Dateien unter js/ui/ sind klassische Skripte und teilen sich ihre Funktionen
- * über den globalen Gültigkeitsbereich (Reihenfolge siehe index.html).
+ * Einstieg der Oberfläche ist js/ui/main.js (eingebunden in index.html, gebündelt von Vite).
  */
-'use strict';
+import { Model } from '../model.js';
+import { Texts } from '../texts.js';
+import { undo } from './core.js';
 
 const ICONS = {
   up: 'M6 15l6-6 6 6',
@@ -22,13 +23,13 @@ const ICONS = {
  * Erstes passendes Element (bewusst lose typisiert: Formularfelder, Dialoge, …).
  * @type {(sel: string, root?: ParentNode) => any}
  */
-const $ = (sel, root = document) => root.querySelector(sel);
+export const $ = (sel, root = document) => root.querySelector(sel);
 
 /**
  * Alle passenden Elemente als Array.
  * @type {(sel: string, root?: ParentNode) => HTMLElement[]}
  */
-const $$ = (sel, root = document) => [.../** @type {NodeListOf<HTMLElement>} */ (root.querySelectorAll(sel))];
+export const $$ = (sel, root = document) => [.../** @type {NodeListOf<HTMLElement>} */ (root.querySelectorAll(sel))];
 
 /**
  * Element erzeugen. Attribute: `class`, `value`, `style` (Objekt, auch CSS-Variablen),
@@ -38,7 +39,7 @@ const $$ = (sel, root = document) => [.../** @type {NodeListOf<HTMLElement>} */ 
  * @param {...any} children
  * @returns {any}
  */
-function h(tag, attrs, ...children) {
+export function h(tag, attrs, ...children) {
   const el = /** @type {any} */ (document.createElement(tag));
   for (const [key, val] of Object.entries(attrs || {})) {
     if (val == null || val === false) continue;
@@ -57,7 +58,7 @@ function h(tag, attrs, ...children) {
 }
 
 /** @param {keyof typeof ICONS} name */
-function icon(name) {
+export function icon(name) {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');
@@ -74,7 +75,7 @@ function icon(name) {
  * @param {(e: Event) => void} onclick
  * @param {{ disabled?: boolean, danger?: boolean, small?: boolean, active?: boolean }} [opts]
  */
-function iconBtn(name, label, onclick, { disabled = false, danger = false, small = true, active = false } = {}) {
+export function iconBtn(name, label, onclick, { disabled = false, danger = false, small = true, active = false } = {}) {
   return h('button', {
     type: 'button',
     class: `icon-btn${small ? ' small' : ''}${danger ? ' danger' : ''}${active ? ' is-on' : ''}`,
@@ -86,17 +87,17 @@ function iconBtn(name, label, onclick, { disabled = false, danger = false, small
 }
 
 /** Kinder ersetzen; leere Einträge (null/false) werden ausgelassen, statt als „null“ zu erscheinen. */
-function replaceWith(el, ...children) {
+export function replaceWith(el, ...children) {
   el.replaceChildren(...children.flat(Infinity).filter(c => c != null && c !== false));
 }
 
 /** @param {any} dialog */
-function openDialog(dialog) {
+export function openDialog(dialog) {
   if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
 }
 
 /** @param {any} dialog */
-function closeDialog(dialog) {
+export function closeDialog(dialog) {
   if (dialog.close) dialog.close(); else dialog.removeAttribute('open');
 }
 
@@ -120,7 +121,7 @@ function focusKey(el) {
  * (samt Textauswahl in Eingabefeldern) und die Bildlaufpositionen der Elemente mit `data-scroll`.
  * @param {HTMLElement} container @param {...any} children wie bei `replaceWith`
  */
-function rebuild(container, ...children) {
+export function rebuild(container, ...children) {
   const active = /** @type {any} */ (document.activeElement);
   const inside = active && active !== container && container.contains(active) ? active : null;
   const key = inside ? focusKey(inside) : null;
@@ -149,7 +150,7 @@ function rebuild(container, ...children) {
  * @param {HTMLElement} el @param {DOMRect} r Rechteck des Auslösers
  * @param {{ side?: 'below' | 'right', gap?: number, shift?: number, margin?: number, page?: boolean }} [opts]
  */
-function placeNear(el, r, { side = 'below', gap = 6, shift = 0, margin = 8, page = false } = {}) {
+export function placeNear(el, r, { side = 'below', gap = 6, shift = 0, margin = 8, page = false } = {}) {
   const w = el.offsetWidth;
   const ht = el.offsetHeight;
   const vw = window.innerWidth;
@@ -170,7 +171,7 @@ function placeNear(el, r, { side = 'below', gap = 6, shift = 0, margin = 8, page
 
 let toastTimer = 0;
 /** Kurzer Hinweis unten; optional mit „Rückgängig“. */
-function toast(message, withUndo = false) {
+export function toast(message, withUndo = false) {
   const el = $('#toast');
   clearTimeout(toastTimer);
   // Ein offener Dialog liegt in der obersten Ebene über allem anderen – die Meldung muss
@@ -187,7 +188,7 @@ function toast(message, withUndo = false) {
 
 /** @param {string} filename @param {string} content @param {string} type */
 /** @param {string} filename @param {BlobPart} content @param {string} type */
-function download(filename, content, type) {
+export function download(filename, content, type) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const a = h('a', { href: url, download: filename });
@@ -198,7 +199,7 @@ function download(filename, content, type) {
 }
 
 /** Feld mit `data-fid` fokussieren und Cursor ans Ende setzen. @param {string} fid */
-function focusField(fid) {
+export function focusField(fid) {
   const el = /** @type {HTMLInputElement | HTMLTextAreaElement | null} */ (document.querySelector(`[data-fid="${CSS.escape(fid)}"]`));
   if (!el) return;
   el.focus();
@@ -209,13 +210,13 @@ function focusField(fid) {
 const supportsFieldSizing = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('field-sizing', 'content');
 
 /** Textfeldhöhe an den Inhalt anpassen (nur nötig ohne CSS `field-sizing`). */
-function autosize(el) {
+export function autosize(el) {
   if (supportsFieldSizing) return;
   el.style.height = 'auto';
   el.style.height = `${el.scrollHeight + 2}px`;
 }
 
-function autosizeAll() {
+export function autosizeAll() {
   if (supportsFieldSizing) return;
   $$('textarea.autosize, #description').forEach(autosize);
 }
@@ -238,7 +239,7 @@ function textFor(key) {
  * `data-i18n` (Textinhalt), `data-i18n-html` (Inhalt mit Formatierung, nur eigene Texte) und
  * `data-i18n-attr="attribut:schlüssel;…"` (z. B. title, aria-label, placeholder).
  */
-function applyStaticTexts() {
+export function applyStaticTexts() {
   document.documentElement.lang = Texts.meta.lang;
   // Beschriftung „bester Wert“ im Konzeptvergleich (CSS ::after)
   document.documentElement.style.setProperty('--best-label', JSON.stringify(Texts.compare.best));
@@ -255,13 +256,13 @@ function applyStaticTexts() {
 
 // ---------- Konzeptfarben im hellen/dunklen Farbschema ----------
 
-const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+export const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
 
 /**
  * Anzeigefarbe eines Konzepts: Im Dunkelmodus erscheinen die Farben der Standardreihe in ihrer
  * Dunkelstufe (Model.COLORS_DARK); selbst gewählte Farben bleiben unverändert.
  * @param {string} color gespeicherte Farbe
  */
-function shownColor(color) {
+export function shownColor(color) {
   return darkScheme.matches ? (Model.COLORS_DARK[color.toLowerCase()] || color) : color;
 }

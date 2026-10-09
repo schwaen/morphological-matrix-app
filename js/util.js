@@ -1,10 +1,10 @@
 /*
  * Util – kleine, DOM-freie Hilfsfunktionen (Zahlen, Texte, Kodierung).
- * Klassisches Skript ohne Build: stellt genau den globalen Namensraum `Util` bereit.
+ * Exportiert den Namensraum `Util`.
  */
-'use strict';
+import { Texts } from './texts.js';
 
-const Util = (() => {
+export const Util = (() => {
   // Zahlen- und Währungsformat der aktiven Sprache (Texts.meta)
   const locale = Texts.meta.locale;
   const numberFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });

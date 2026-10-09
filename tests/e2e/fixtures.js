@@ -1,10 +1,8 @@
 import { test as base, expect } from '@playwright/test';
-import { pathToFileURL } from 'node:url';
-import path from 'node:path';
 import fs from 'node:fs';
 
-/** Die App wird wie im Alltag direkt als Datei geöffnet (kein Server, kein Build). */
-export const APP_URL = pathToFileURL(path.resolve('index.html')).href;
+/** Gebaute App, ausgeliefert von `vite preview` (siehe playwright.config.js). */
+export const APP_URL = 'http://localhost:4173/';
 
 /**
  * `page` öffnet die App mit leerem Speicher und lässt den Test bei jedem

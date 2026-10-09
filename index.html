@@ -8,40 +8,7 @@
   <title></title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%234f46e5'/%3E%3Cg%20fill='%23fff'%20opacity='.32'%3E%3Crect%20x='13.3'%20y='5.5'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='21.1'%20y='5.5'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='5.5'%20y='13.3'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='13.3'%20y='13.3'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='5.5'%20y='21.1'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='21.1'%20y='21.1'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3C/g%3E%3Cg%20fill='%23fff'%3E%3Crect%20x='5.5'%20y='5.5'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='21.1'%20y='13.3'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3Crect%20x='13.3'%20y='21.1'%20width='5.6'%20height='5.6'%20rx='1.5'/%3E%3C/g%3E%3Cpath%20d='M8.3%2011.1C8.3%2012.2%2023.9%2012.2%2023.9%2013.3M23.9%2018.9C23.9%2020%2016.1%2020%2016.1%2021.1'%20fill='none'%20stroke='%23fb923c'%20stroke-width='1.6'%20stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
-  <!-- Klassische Skripte ohne Build; Reihenfolge ist wichtig: erst reine Logik, dann Oberfläche -->
-  <script src="js/i18n/de.js" defer></script>
-  <script src="js/i18n/en.js" defer></script>
-  <script src="js/texts.js" defer></script>
-  <script src="js/util.js" defer></script>
-  <script src="js/model.js" defer></script>
-  <script src="js/consistency.js" defer></script>
-  <script src="js/evaluation.js" defer></script>
-  <script src="js/ops.js" defer></script>
-  <script src="js/io.js" defer></script>
-  <script src="js/zip.js" defer></script>
-  <script src="js/storage.js" defer></script>
-  <script src="js/examples.js" defer></script>
-  <!-- Mitgelieferte Beispiele: je Beispiel eine Datei (Anleitung: examples/README.md) -->
-  <script src="examples/kaffeemaschine.js" defer></script>
-  <script src="examples/skill-matrix-frontend.js" defer></script>
-  <script src="examples/firmen-event.js" defer></script>
-  <script src="examples/lastenrad.js" defer></script>
-  <script src="examples/food-truck.js" defer></script>
-  <script src="examples/krimi.js" defer></script>
-  <script src="js/ui/dom.js" defer></script>
-  <script src="js/ui/core.js" defer></script>
-  <script src="js/ui/tabs.js" defer></script>
-  <script src="js/ui/actions.js" defer></script>
-  <script src="js/ui/render-matrix.js" defer></script>
-  <script src="js/ui/render-panels.js" defer></script>
-  <script src="js/ui/render-chart.js" defer></script>
-  <script src="js/ui/search.js" defer></script>
-  <script src="js/ui/notes.js" defer></script>
-  <script src="js/ui/constraints.js" defer></script>
-  <script src="js/ui/start.js" defer></script>
-  <script src="js/ui/lines.js" defer></script>
-  <script src="js/ui/dialogs.js" defer></script>
-  <script src="js/ui/main.js" defer></script>
+  <script type="module" src="./js/ui/main.js"></script>
 </head>
 <body>
   <header class="app-header">

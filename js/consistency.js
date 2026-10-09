@@ -2,13 +2,14 @@
  * Consistency – Verträglichkeiten zwischen Ausprägungen (Konsistenzprüfung nach Zwicky/Ritchey).
  * Ein Paar aus zwei Ausprägungen verschiedener Parameter ist „unverträglich“ (excluded) oder
  * „bedingt verträglich“ (conditional); alle übrigen Paare gelten als verträglich.
- * Reine Funktionen ohne DOM. Stellt den globalen Namensraum `Consistency` bereit.
+ * Reine Funktionen ohne DOM. Exportiert den Namensraum `Consistency`.
  *
  * Gespeichert wird `m.constraints` – je Paar ein Eintrag mit `a < b` (Zeichenkettenvergleich).
  */
-'use strict';
+import { Model } from './model.js';
+import { Util } from './util.js';
 
-const Consistency = (() => {
+export const Consistency = (() => {
   /** @type {MatrixConstraintType[]} */
   const TYPES = ['excluded', 'conditional'];
 
@@ -119,14 +120,22 @@ const Consistency = (() => {
    * @returns {bigint | null}
    */
   function countConsistent(m, limit = 20000) {
-    const P = m.parameters;
     const ex = exclusions(m);
-    const sig = `${limit}#${P.map(p => `${p.id}:${p.options.map(o => o.id).join(',')}`).join('|')}#${[...ex.keys()].sort().map(k => `${k}>${[.../** @type {Set<string>} */ (ex.get(k))].sort().join(',')}`).join(';')}`;
+    const sig = signature(m, ex, limit);
     if (countCache.sig === sig) return countCache.value;
-    const value = countUncached(P, ex, limit);
+    const value = countUncached(m.parameters, ex, limit);
     countCache = { sig, value };
     return value;
   }
+
+  /**
+   * Alles, wovon die Zählung abhängt (Ausprägungen und unverträgliche Paare) – gleiche
+   * Signatur, gleiches Ergebnis. @param {Matrix} m @param {Map<string, Set<string>>} ex @param {number} limit
+   */
+  const signature = (m, ex, limit) => `${limit}#${m.parameters.map(p => `${p.id}:${p.options.map(o => o.id).join(',')}`).join('|')}#${[...ex.keys()].sort().map(k => `${k}>${[.../** @type {Set<string>} */ (ex.get(k))].sort().join(',')}`).join(';')}`;
+
+  /** Signatur der Zählung (für Zwischenspeicher außerhalb, z. B. im Web Worker). @param {Matrix} m @param {number} [limit] */
+  const countSignature = (m, limit = 20000) => signature(m, exclusions(m), limit);
 
   /**
    * @param {MatrixParameter[]} P @param {Map<string, Set<string>>} ex @param {number} limit
@@ -355,5 +364,5 @@ const Consistency = (() => {
     return selections;
   }
 
-  return { TYPES, key, get, partners, countFor, conflicts, statusFor, countConsistent, optimize, randomCombination };
+  return { TYPES, key, get, partners, countFor, conflicts, statusFor, countConsistent, countSignature, optimize, randomCombination };
 })();

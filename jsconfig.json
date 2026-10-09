@@ -4,10 +4,13 @@
     "allowJs": true,
     "noEmit": true,
     "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "strict": true,
     "noImplicitAny": false,
     "skipLibCheck": true
   },
-  "include": ["js/**/*.js", "examples/**/*.js", "types.d.ts"]
+  "include": ["js/**/*.js", "types.d.ts"]
 }

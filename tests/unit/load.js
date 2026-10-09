@@ -1,36 +1,24 @@
 /*
- * Lädt die DOM-freien App-Skripte (klassische Browser-Skripte, kein Modul) in einen
- * isolierten V8-Kontext – genau wie der Browser sie nacheinander ausführt – und gibt
- * ihre Namensräume zurück.
+ * DOM-freie App-Module für die Unit-Tests (direkt als ES-Module geladen). Sprache siehe env.js.
  */
-import fs from 'node:fs';
-import path from 'node:path';
-import vm from 'node:vm';
-import { pathToFileURL } from 'node:url';
+import './env.js';
+import { Texts, Languages } from '../../js/texts.js';
+import { Util } from '../../js/util.js';
+import { Model } from '../../js/model.js';
+import { Consistency } from '../../js/consistency.js';
+import { Evaluation } from '../../js/evaluation.js';
+import { Ops } from '../../js/ops.js';
+import { IO } from '../../js/io.js';
+import { Zip } from '../../js/zip.js';
+import { Examples } from '../../js/examples.js';
 
-const FILES = ['js/i18n/de.js', 'js/i18n/en.js', 'js/texts.js', 'js/util.js', 'js/model.js', 'js/consistency.js', 'js/evaluation.js', 'js/ops.js', 'js/io.js', 'js/zip.js', 'js/examples.js'];
-/** Mitgelieferte Beispiele: alle in index.html eingebundenen Dateien unter examples/. */
-export const EXAMPLE_FILES = [...fs.readFileSync(path.resolve('index.html'), 'utf8')
-  .matchAll(/<script src="(examples\/[^"]+\.js)"/g)].map(m => m[1]);
-
-/**
- * @param {Record<string, any>} [globals] zusätzliche bzw. ersetzte globale Werte, z. B.
- *   `{ navigator: { language: 'en-US' } }` für Englisch oder `{ CompressionStream: undefined }`
- */
-export function loadApp(globals = {}) {
-  const context = vm.createContext({
-    TextEncoder, TextDecoder, btoa, atob, console,
-    Blob, Response, CompressionStream, DecompressionStream, Uint8Array, ArrayBuffer, DataView,
-    ...globals,
-  });
-  for (const file of [...FILES, ...EXAMPLE_FILES]) {
-    vm.runInContext(fs.readFileSync(path.resolve(file), 'utf8'), context, { filename: pathToFileURL(path.resolve(file)).href });
-  }
-  const app = vm.runInContext('({ Texts, Languages, Util, Model, Consistency, Evaluation, Ops, IO, Zip, Examples })', context);
+const app = {
+  Texts, Languages, Util, Model, Consistency, Evaluation, Ops, IO, Zip, Examples,
   /** Beispiel „Kaffeemaschine“ als frische Matrix (Grundlage vieler Tests). */
-  app.example = () => app.Examples.load('kaffeemaschine');
-  return app;
-}
+  example: () => Examples.loadFirst(),
+};
 
-/** Objekte aus dem fremden Kontext für deepStrictEqual vergleichbar machen. */
+export const loadApp = () => app;
+
+/** Tiefe Kopie als reine Daten (z. B. Map-freie Vergleiche mit deepStrictEqual). */
 export const plain = v => JSON.parse(JSON.stringify(v));

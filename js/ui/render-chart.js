@@ -4,7 +4,13 @@
  * Ohne Auswahl bei einem Parameter ist der Linienzug dort unterbrochen.
  * Hervorhebung (aktives Konzept, Darüberfahren) übernimmt `emphasizeConcepts()` in lines.js.
  */
-'use strict';
+import { Model } from '../model.js';
+import { Texts } from '../texts.js';
+import { setActiveConcept } from './actions.js';
+import { state } from './core.js';
+import { $, h, rebuild, replaceWith, shownColor } from './dom.js';
+import { emphasizeConcepts, hoverConcept } from './lines.js';
+import { categoryColor } from './render-matrix.js';
 
 const CHART = { colW: 132, rowH: 28, padX: 16, catH: 22, headH: 30, gap: 10, bottom: 12 };
 
@@ -37,7 +43,7 @@ function chartLabel(text, px, attrs, charW) {
 }
 
 /** @param {CompareContent} view */
-function buildCompareChart(view) {
+export function buildCompareChart(view) {
   const m = state;
   const root = $('#compareChart');
   const params = view.groups.flatMap(g => g.items.map(({ p }) => p));

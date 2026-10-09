@@ -2,11 +2,12 @@
  * Texts – Texte der aktiven Sprache. Die Texte selbst stehen je Sprache in js/i18n/
  * (de.js ist maßgeblich, en.js hat dieselbe Struktur). Gewählt wird die zuletzt im Menü
  * eingestellte Sprache, sonst die Browsersprache (Deutsch für „de…“, sonst Englisch).
- * Stellt die Namensräume `Texts` (aktive Sprache) und `Languages` bereit.
+ * Exportiert `Texts` (aktive Sprache) und `Languages`.
  */
-'use strict';
+import { TextsDe } from './i18n/de.js';
+import { TextsEn } from './i18n/en.js';
 
-const Languages = (() => {
+export const Languages = (() => {
   const STORAGE_KEY = 'morphologische-matrix:lang';
   /** @type {Record<string, typeof TextsDe>} */
   const packs = { de: TextsDe, en: TextsEn };
@@ -30,4 +31,4 @@ const Languages = (() => {
 })();
 
 /** Texte der aktiven Sprache. */
-const Texts = Languages.packs[Languages.detect()];
+export const Texts = Languages.packs[Languages.detect()];
