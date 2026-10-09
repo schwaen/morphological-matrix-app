@@ -13,7 +13,7 @@ import { fieldProps, mutate, prefs, revision, state } from './core.js';
 import { consistentCount } from './count.js';
 import { $, closeDialog, h, iconBtn, openDialog, placeNear } from './dom.js';
 import { IconButton } from './components.jsx';
-import { formatCount } from './render-panels.js';
+import { formatCount } from './render-panels.jsx';
 
 /** Ausprägung samt Parameter und Anzeigetexten zu einer ID. @param {string} oid */
 function optionRef(oid) {
@@ -58,24 +58,31 @@ export function pairLabel(c) {
   return `${a ? a.text : '?'} ${c.type === 'excluded' ? '✕' : '!'} ${b ? b.text : '?'}`;
 }
 
-/** Kleines Kennzeichen „⚠ n“ für Konzepte mit unverträglichen Paaren. @param {MatrixConcept} c */
-export function conflictPill(c) {
+/** Kleines Kennzeichen „⚠ n“ für Konzepte mit unverträglichen Paaren. @param {{ c: MatrixConcept }} props */
+export function ConflictPill({ c }) {
   const n = Consistency.conflicts(state, c).excluded.length;
-  return n ? h('span', { class: 'cons-pill excluded', title: Texts.cons.conceptConflicts(n) }, `⚠ ${n}`) : null;
+  return n ? <span class="cons-pill excluded" title={Texts.cons.conceptConflicts(n)}>{`⚠ ${n}`}</span> : null;
 }
 
-/** Kasten in der Zusammenfassung: Unverträglichkeiten und bedingte Paare des Konzepts. @param {MatrixConcept} c */
-export function conflictBox(c) {
+/** Kasten in der Zusammenfassung: Unverträglichkeiten und bedingte Paare des Konzepts. @param {{ c: MatrixConcept }} props */
+export function ConflictBox({ c }) {
   const { excluded, conditional } = Consistency.conflicts(state, c);
   if (!excluded.length && !conditional.length) return null;
   /** @param {MatrixConstraint} x */
-  const line = x => h('li', null,
-    h('span', null, optionWithParam(x.a)), ` ${x.type === 'excluded' ? '✕' : '+'} `, h('span', null, optionWithParam(x.b)),
-    x.note ? h('i', null, x.note) : null);
-  return h('div', { class: `cons-box${excluded.length ? '' : ' is-conditional'}`, role: 'note' },
-    excluded.length ? [h('strong', null, `⚠ ${Texts.cons.conflicts(excluded.length)}`), h('ul', null, excluded.map(line))] : null,
-    conditional.length ? h('div', { class: 'cons-box-cond' },
-      h('strong', null, `! ${Texts.cons.types.conditional}`), h('ul', null, conditional.map(line))) : null);
+  const line = x => (
+    <li key={Consistency.key(x.a, x.b)}>
+      <span>{optionWithParam(x.a)}</span>{` ${x.type === 'excluded' ? '✕' : '+'} `}<span>{optionWithParam(x.b)}</span>
+      {x.note ? <i>{x.note}</i> : null}
+    </li>
+  );
+  return (
+    <div class={`cons-box${excluded.length ? '' : ' is-conditional'}`} role="note">
+      {excluded.length ? <><strong>{`⚠ ${Texts.cons.conflicts(excluded.length)}`}</strong><ul>{excluded.map(line)}</ul></> : null}
+      {conditional.length ? (
+        <div class="cons-box-cond"><strong>{`! ${Texts.cons.types.conditional}`}</strong><ul>{conditional.map(line)}</ul></div>
+      ) : null}
+    </div>
+  );
 }
 
 /**

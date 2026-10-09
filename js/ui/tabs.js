@@ -11,7 +11,7 @@ import {
 } from './core.js';
 import { MENU_ACTIONS } from './dialogs.js';
 import { $, h, icon, placeNear, replaceWith, toast } from './dom.js';
-import { refreshLight, render } from './render-panels.js';
+import { refreshLight, render } from './render-panels.jsx';
 import { Util } from '../util.js';
 
 const activeTab = () => tabs.find(t => t.docId === docId);

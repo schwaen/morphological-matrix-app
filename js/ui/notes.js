@@ -7,7 +7,7 @@
 import { bindField, prefs, setPendingFocus } from './core.js';
 import { $, autosize, h, icon, iconBtn, placeNear, replaceWith } from './dom.js';
 import { renderMatrix } from './render-matrix.js';
-import { applyPendingFocus, refreshLight } from './render-panels.js';
+import { applyPendingFocus, refreshLight } from './render-panels.jsx';
 
 /** IDs (Ausprägung oder Parameter), deren leeres Notizfeld gerade geöffnet ist. */
 const openNotes = new Set();

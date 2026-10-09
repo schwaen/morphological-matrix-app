@@ -22,7 +22,7 @@ import { Model } from '../model.js';
 import { Store } from '../storage.js';
 import { Texts } from '../texts.js';
 import { toast } from './dom.js';
-import { refreshLight, render, updateHistoryButtons } from './render-panels.js';
+import { refreshLight, render, updateHistoryButtons } from './render-panels.jsx';
 import { Util } from '../util.js';
 
 /** Zähler für Änderungen an Matrix und Ansicht; Komponenten lesen ihn, um neu zu zeichnen. */

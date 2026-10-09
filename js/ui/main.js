@@ -17,8 +17,7 @@ import {
 import { $, $$, applyStaticTexts, autosize, closeDialog, darkScheme } from './dom.js';
 import { drawLines, scheduleLines } from './lines.js';
 import { initNotePop } from './notes.js';
-import { renderMatrix } from './render-matrix.js';
-import { buildCompareTable, compareContent, render, renderCompare } from './render-panels.js';
+import { initPanels, render, setCompareView } from './render-panels.jsx';
 import { initSearch } from './search.js';
 import { initStart } from './start.js';
 import { onExternalDocChange, tabById, toggleTabMenu } from './tabs.js';
@@ -41,14 +40,10 @@ function bindEvents() {
     btn.addEventListener('click', () => generateConcept(btn.dataset.generate || ''));
   });
   $$('[data-compare-view]').forEach(b => b.addEventListener('click', () => {
-    setPref('compareView', /** @type {'table' | 'chart'} */ (b.dataset.compareView));
     setPref('compareOpen', true);
-    renderCompare();
+    setCompareView('compareView', /** @type {'table' | 'chart'} */ (b.dataset.compareView));
   }));
-  $('#compareToggle').addEventListener('click', () => {
-    setPref('compareOpen', prefs.compareOpen === false);
-    renderCompare();
-  });
+  $('#compareToggle').addEventListener('click', () => setCompareView('compareOpen', prefs.compareOpen === false));
   $$('[data-lines]').forEach(btn => btn.addEventListener('click', () => {
     setPref('lines', /** @type {TabPrefs['lines']} */ (btn.dataset.lines));
     $$('[data-lines]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
@@ -150,18 +145,12 @@ function bindEvents() {
   // Beim Drucken alle Kategorien und den Vergleich vollständig ausgeben
   window.addEventListener('beforeprint', () => {
     setPrinting(true);
-    renderMatrix();
-    buildCompareTable(compareContent());
-    $('#compareTable').hidden = false;
-    $('#compareChart').hidden = true;
-    $('#compareBody').hidden = false;
+    render();
     drawLines();
   });
   window.addEventListener('afterprint', () => {
     setPrinting(false);
-    renderMatrix();
-    renderCompare();
-    scheduleLines();
+    render();
   });
 
   // Farbschema des Systems gewechselt: Konzeptfarben in der passenden Stufe neu zeichnen
@@ -188,6 +177,7 @@ function init() {
   bindEvents();
   initSearch();
   initNotePop();
+  initPanels();
   initConstraints();
   initStart();
   save(); // auch eine neu erzeugte Startmatrix sofort sichern (stabile IDs nach Neuladen)

@@ -14,7 +14,7 @@ import {
 import { $$, toast } from './dom.js';
 import { scheduleLines } from './lines.js';
 import { renderCategoryNav, renderMatrix } from './render-matrix.js';
-import { refreshLight, render } from './render-panels.js';
+import { refreshLight, render } from './render-panels.jsx';
 import { Util } from '../util.js';
 
 /** Auswahlwert „neue Kategorie anlegen“ im Kategorie-Auswahlfeld eines Parameters. */

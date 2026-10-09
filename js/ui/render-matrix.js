@@ -15,7 +15,7 @@ import { conflictText, constraintButton, constraintCount, statusText } from './c
 import { activeConcept, bindField, collapseKey, isCollapsed, money, prefs, setPendingFocus, state } from './core.js';
 import { $, focusField, h, icon, iconBtn, replaceWith, shownColor } from './dom.js';
 import { noteButton, noteField, noteMark, showNote } from './notes.js';
-import { refreshLight } from './render-panels.js';
+import { refreshLight } from './render-panels.jsx';
 import { markCurrentMatch, searchClass, searchResult } from './search.js';
 import { Util } from '../util.js';
 
