@@ -8,7 +8,7 @@ import { effect, signal } from '@preact/signals';
 import { Model } from '../model.js';
 import { Texts } from '../texts.js';
 import { isCollapsed, revision, setCollapsed, state } from './core.js';
-import { $ } from './dom.js';
+import { $ } from './dom.jsx';
 import { render } from './render-panels.jsx';
 
 const searchQuery = signal('');

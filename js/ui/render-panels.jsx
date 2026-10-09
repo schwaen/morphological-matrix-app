@@ -15,12 +15,11 @@ import {
   state, undoStack,
 } from './core.js';
 import { consistentCount } from './count.js';
-import { syncSettingsForm } from './dialogs.js';
-import { $, $$, autosizeAll, focusField, shownColor } from './dom.js';
+import { syncSettingsForm } from './dialogs.jsx';
+import { $, $$, autosizeAll, focusField, shownColor } from './dom.jsx';
 import { hoverConcept, scheduleLines } from './lines.js';
 import { CompareChart } from './render-chart.jsx';
 import { categoryColor } from './render-matrix.jsx';
-import { renderTabs } from './tabs.js';
 import { Util } from '../util.js';
 
 /**
@@ -30,8 +29,6 @@ import { Util } from '../util.js';
 export function render() {
   revision.value++;
   document.title = Texts.app.documentTitle(state.title);
-  // Tab-Leiste nicht neu zeichnen, während der Titel bearbeitet wird (Fokus bliebe sonst nicht erhalten)
-  if (!(document.activeElement && document.activeElement.id === 'title')) renderTabs();
   const desc = $('#description');
   if (document.activeElement !== desc) desc.value = state.description;
 
@@ -109,6 +106,7 @@ function Stats() {
 
 /** Anteil der widerspruchsfreien Kombinationen (gezählt im Web Worker; bis dahin der letzte Wert). */
 function ConsistentCount() {
+  revision.value; // liest auch das Signal der Zählung – ohne revision zeichnete es bei Änderungen nicht neu
   const { value: ok, pending } = consistentCount(state);
   const okText = ok === undefined ? '…' : ok == null ? Texts.cons.notCountable : formatCount(ok).text;
   return (

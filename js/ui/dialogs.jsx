@@ -9,9 +9,11 @@ import { Store } from '../storage.js';
 import { Languages, Texts } from '../texts.js';
 import { openConsDialog } from './constraints.jsx';
 import { closedTabs, docId, prefs, save, saveWorkspace, setClosedTabs, setMode, state } from './core.js';
-import { $, closeDialog, download, h, iconBtn, openDialog, toast } from './dom.js';
-import { activateTab, openInTab, openNewDoc, tabById } from './tabs.js';
+import { $, closeDialog, download, openDialog, toast } from './dom.jsx';
+import { activateTab, openInTab, openNewDoc, tabById } from './tabs.jsx';
 import { Util } from '../util.js';
+import { IconButton } from './components.jsx';
+import { render as mount } from 'preact';
 
 // ---------- Import / Export / Teilen ----------
 
@@ -74,41 +76,57 @@ function openLibrary() {
   openDialog($('#libraryDialog'));
 }
 
+/** „Meine Matrizen“ (neu zeichnen nach Änderungen, z. B. Löschen oder Wiederherstellen). */
 export function renderLibrary() {
+  mount(<Library />, $('#docList'));
+}
+
+function Library() {
   const docs = Store.listDocs();
   if (!docs.some(d => d.id === docId)) docs.unshift({ id: docId, savedAt: Date.now(), data: state });
-  const items = docs.map(doc => {
-    const current = doc.id === docId;
-    const open = !!tabById(doc.id);
-    const data = current ? state : doc.data;
-    const title = data.title || Texts.fallback.unnamedMatrix;
-    const P = data.parameters.length;
-    const C = data.concepts.length;
-    return h('li', { class: `doc${current ? ' is-current' : ''}${open ? ' is-open' : ''}` },
-      h('div', { class: 'doc-info' },
-        h('span', { class: 'doc-title' }, title,
-          open ? h('span', { class: 'badge' }, current ? Texts.library.currentTab : Texts.library.openTab) : null),
-        h('span', { class: 'doc-meta' }, Texts.library.meta(dateFormat.format(new Date(doc.savedAt)), P, C))),
-      h('div', { class: 'doc-actions' },
-        h('button', {
-          type: 'button', class: 'btn btn-small', disabled: current,
-          onclick: () => {
-            closeDialog($('#libraryDialog'));
-            if (open) { activateTab(doc.id); return; }
-            const fresh = Store.readDoc(doc.id);
-            if (!fresh) { toast(Texts.errors.docMissing); return; }
-            openInTab(fresh.id, fresh.data, Texts.toast.opened(fresh.data.title || Texts.fallback.unnamedMatrix));
-          },
-        }, open ? Texts.library.show : Texts.library.open),
-        iconBtn('trash', open ? Texts.library.deleteOpen : Texts.library.delete, () => {
-          if (!window.confirm(Texts.prompt.deleteMatrix(title))) return;
-          Store.removeDoc(doc.id);
-          setClosedTabs(closedTabs.filter(x => x !== doc.id));
-          saveWorkspace();
-          renderLibrary();
-        }, { danger: true, disabled: open })));
-  });
-  $('#docList').replaceChildren(...items);
+  return (
+    <>
+      {docs.map(doc => {
+        const current = doc.id === docId;
+        const open = !!tabById(doc.id);
+        const data = current ? state : doc.data;
+        const title = data.title || Texts.fallback.unnamedMatrix;
+        return (
+          <li key={doc.id} class={`doc${current ? ' is-current' : ''}${open ? ' is-open' : ''}`}>
+            <div class="doc-info">
+              <span class="doc-title">
+                {title}
+                {open ? <span class="badge">{current ? Texts.library.currentTab : Texts.library.openTab}</span> : null}
+              </span>
+              <span class="doc-meta">{Texts.library.meta(dateFormat.format(new Date(doc.savedAt)), data.parameters.length, data.concepts.length)}</span>
+            </div>
+            <div class="doc-actions">
+              <button
+                type="button" class="btn btn-small" disabled={current}
+                onClick={() => {
+                  closeDialog($('#libraryDialog'));
+                  if (open) { activateTab(doc.id); return; }
+                  const fresh = Store.readDoc(doc.id);
+                  if (!fresh) { toast(Texts.errors.docMissing); return; }
+                  openInTab(fresh.id, fresh.data, Texts.toast.opened(fresh.data.title || Texts.fallback.unnamedMatrix));
+                }}
+              >{open ? Texts.library.show : Texts.library.open}</button>
+              <IconButton
+                icon="trash" label={open ? Texts.library.deleteOpen : Texts.library.delete} danger disabled={open}
+                onClick={() => {
+                  if (!window.confirm(Texts.prompt.deleteMatrix(title))) return;
+                  Store.removeDoc(doc.id);
+                  setClosedTabs(closedTabs.filter(x => x !== doc.id));
+                  saveWorkspace();
+                  renderLibrary();
+                }}
+              />
+            </div>
+          </li>
+        );
+      })}
+    </>
+  );
 }
 
 // ---------- Beispiele ----------
@@ -117,10 +135,10 @@ export function renderLibrary() {
 async function openExamples() {
   const list = $('#exampleList');
   list.setAttribute('aria-busy', 'true');
-  list.replaceChildren(h('li', { class: 'doc-empty' }, Texts.examples.loading));
+  mount(<li class="doc-empty">{Texts.examples.loading}</li>, list);
   openDialog($('#examplesDialog'));
   try {
-    renderExamples(await Examples.all());
+    mount(<ExampleList examples={await Examples.all()} />, list);
   } catch (e) {
     closeDialog($('#examplesDialog'));
     toast(Texts.errors.fileInvalid(Util.errorMessage(e)));
@@ -129,23 +147,29 @@ async function openExamples() {
   }
 }
 
-/** @param {ExampleDef[]} examples */
-function renderExamples(examples) {
-  const items = examples.map(ex => {
-    const d = /** @type {any} */ (ex.data);
-    const count = v => (Array.isArray(v) ? v.length : 0);
-    return h('li', { class: 'doc' },
-      h('div', { class: 'doc-info' },
-        h('span', { class: 'doc-title' }, ex.name),
-        ex.description ? h('span', { class: 'doc-desc' }, ex.description) : null,
-        h('span', { class: 'doc-meta' }, Texts.examples.meta(count(d.parameters), count(d.categories), count(d.concepts)))),
-      h('div', { class: 'doc-actions' },
-        h('button', {
-          type: 'button', class: 'btn btn-small',
-          onclick: () => { closeDialog($('#examplesDialog')); openExample(ex); },
-        }, Texts.examples.open)));
-  });
-  $('#exampleList').replaceChildren(...(items.length ? items : [h('li', { class: 'doc-empty' }, Texts.examples.empty)]));
+/** @param {{ examples: ExampleDef[] }} props */
+function ExampleList({ examples }) {
+  if (!examples.length) return <li class="doc-empty">{Texts.examples.empty}</li>;
+  const count = (/** @type {unknown} */ v) => (Array.isArray(v) ? v.length : 0);
+  return (
+    <>
+      {examples.map(ex => {
+        const d = /** @type {any} */ (ex.data);
+        return (
+          <li key={ex.id} class="doc">
+            <div class="doc-info">
+              <span class="doc-title">{ex.name}</span>
+              {ex.description ? <span class="doc-desc">{ex.description}</span> : null}
+              <span class="doc-meta">{Texts.examples.meta(count(d.parameters), count(d.categories), count(d.concepts))}</span>
+            </div>
+            <div class="doc-actions">
+              <button type="button" class="btn btn-small" onClick={() => { closeDialog($('#examplesDialog')); openExample(ex); }}>{Texts.examples.open}</button>
+            </div>
+          </li>
+        );
+      })}
+    </>
+  );
 }
 
 /** Beispiel als neue Matrix in einem neuen Tab öffnen. @param {ExampleDef} ex */

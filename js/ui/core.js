@@ -13,15 +13,17 @@
  *  - Ansichtseinstellungen über `setPref()`; sie sind nicht Teil des Verlaufs.
  *
  * Neuzeichnen: Die Matrix ist ein gewöhnliches Objekt, das `Ops` direkt ändert. Das Signal
- * `revision` zählt jede Änderung; alle Komponenten lesen es und zeichnen dadurch neu (Preact
- * gleicht nur die Unterschiede im DOM ab, Fokus und Eingaben bleiben erhalten).
+ * `revision` zählt jede Änderung; Komponenten lesen es und zeichnen dadurch neu (Preact gleicht
+ * nur die Unterschiede im DOM ab, Fokus und Eingaben bleiben erhalten).
+ * Wichtig: Eine Komponente, die selbst ein Signal liest, zeichnet @preact/signals bei gleichen
+ * Props nicht mehr mit ihrer Elternkomponente neu – sie muss dann auch `revision` lesen.
  */
 import { signal } from '@preact/signals';
 import { Examples } from '../examples.js';
 import { Model } from '../model.js';
 import { Store } from '../storage.js';
 import { Texts } from '../texts.js';
-import { toast } from './dom.js';
+import { toast } from './dom.jsx';
 import { render, updateHistoryButtons } from './render-panels.jsx';
 import { Util } from '../util.js';
 
@@ -214,28 +216,6 @@ export function redo() {
   render();
 }
 
-/**
- * Bindet ein Textfeld an den Zustand, ohne beim Tippen neu zu rendern
- * (sonst ginge der Fokus verloren). Der Verlaufseintrag entsteht beim Verlassen.
- * @param {any} el
- * @param {(value: string) => void} apply
- * @param {() => void} [after] Aktualisierung nach jeder Eingabe (Standard: `render`)
- */
-export function bindField(el, apply, after = render) {
-  el.addEventListener('focus', () => { el._snap = snapshot(); });
-  el.addEventListener('input', () => {
-    if (el._snap == null) el._snap = snapshot();
-    apply(el.value);
-    scheduleSave();
-    after();
-  });
-  el.addEventListener('change', () => {
-    flushSave();
-    if (el._snap != null && el._snap !== snapshot()) pushHistory(el._snap);
-    el._snap = snapshot();
-  });
-}
-
 /** Stand vor der laufenden Eingabe je Feld (für den Verlaufseintrag beim Verlassen). @type {WeakMap<EventTarget, string>} */
 const fieldSnaps = new WeakMap();
 
@@ -263,6 +243,17 @@ export function fieldProps(apply, after = render) {
       fieldSnaps.set(el, snapshot());
     },
   };
+}
+
+/**
+ * Wie `fieldProps`, für ein Feld im statischen Gerüst von index.html (z. B. die Beschreibung).
+ * @param {HTMLElement} el @param {(value: string) => void} apply @param {() => void} [after]
+ */
+export function bindField(el, apply, after = render) {
+  const handlers = fieldProps(apply, after);
+  el.addEventListener('focus', handlers.onFocus);
+  el.addEventListener('input', handlers.onInput);
+  el.addEventListener('change', handlers.onChange);
 }
 
 /** Übernimmt den Stand, den ein anderer Browser-Tab für die aktive Matrix gespeichert hat. */

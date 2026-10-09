@@ -11,7 +11,7 @@ import {
   activeConcept, collapseKey, isCollapsed, mutate, prefs, save, setCollapsed, setMode, setPendingFocus,
   setPref, state,
 } from './core.js';
-import { toast } from './dom.js';
+import { toast } from './dom.jsx';
 import { render } from './render-panels.jsx';
 import { Util } from '../util.js';
 

@@ -13,14 +13,14 @@ import { bindField, flushSave, prefs, redo, save, saveWorkspace, setMode, setPre
 import {
   MENU_ACTIONS, exportBackup, exportJson, importJson, loadFromHash, renderLibrary, restoreBackup,
   switchLanguage, toggleMenu,
-} from './dialogs.js';
-import { $, $$, applyStaticTexts, autosize, closeDialog, darkScheme } from './dom.js';
+} from './dialogs.jsx';
+import { $, $$, applyStaticTexts, autosize, closeDialog, darkScheme } from './dom.jsx';
 import { drawLines, scheduleLines } from './lines.js';
 import { initNotePop } from './notes.jsx';
 import { initPanels, render, setCompareView } from './render-panels.jsx';
 import { initSearch } from './search.js';
-import { initStart } from './start.js';
-import { onExternalDocChange, tabById, toggleTabMenu } from './tabs.js';
+import { initStart } from './start.jsx';
+import { initTabs, onExternalDocChange, tabById, toggleTabMenu } from './tabs.jsx';
 import { initMatrix } from './render-matrix.jsx';
 
 function bindEvents() {
@@ -178,6 +178,7 @@ function init() {
   bindEvents();
   initSearch();
   initNotePop();
+  initTabs();
   initMatrix();
   initPanels();
   initConstraints();

@@ -11,7 +11,7 @@ import { Ops } from '../ops.js';
 import { Texts } from '../texts.js';
 import { fieldProps, mutate, prefs, revision, state } from './core.js';
 import { consistentCount } from './count.js';
-import { $, closeDialog, openDialog, placeNear } from './dom.js';
+import { $, closeDialog, openDialog, placeNear } from './dom.jsx';
 import { IconButton } from './components.jsx';
 import { formatCount } from './render-panels.jsx';
 

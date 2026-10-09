@@ -9,7 +9,7 @@ import { Model } from '../model.js';
 import { Texts } from '../texts.js';
 import { setActiveConcept } from './actions.js';
 import { revision, state } from './core.js';
-import { shownColor } from './dom.js';
+import { shownColor } from './dom.jsx';
 import { hovered, hoverConcept } from './lines.js';
 import { categoryColor } from './render-matrix.jsx';
 

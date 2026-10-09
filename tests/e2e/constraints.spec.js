@@ -103,6 +103,8 @@ test('Verträglichkeitsmatrix: Klick wählt, Doppelklick wechselt, Detailbereich
   await expect(page.locator('#consSummary')).toContainText('davon widerspruchsfrei: 1.932');
   await page.click('#consDone');
   await expect(page.locator('.concept .cons-pill')).toHaveCount(0);
+  // Die Kennzahl über der Matrix zählt neu (Web Worker)
+  await expect(page.locator('.stat-sub')).toHaveText('davon widerspruchsfrei: 1.932');
 
   // Gelöschte Ausprägungen nehmen ihre Paare mit
   await page.click('[data-mode=edit]');
@@ -110,6 +112,10 @@ test('Verträglichkeitsmatrix: Klick wählt, Doppelklick wechselt, Detailbereich
   await muskel.hover();
   await muskel.getByRole('button', { name: 'Ausprägung löschen' }).click();
   await expect.poll(async () => (await storedMatrix(page)).constraints.some(c => c.a === 'p5o4' || c.b === 'p5o4')).toBe(false);
+  // … und die Kennzahl folgt (eine von vier Energiequellen weniger: 3.072 → 2.304 Kombinationen)
+  await expect(page.locator('#stats')).toContainText('2.304');
+  await expect(page.locator('.stat-sub')).not.toHaveText('davon widerspruchsfrei: 1.932');
+  await expect(page.locator('.stat-sub')).toHaveText(/^davon widerspruchsfrei: [\d.]+$/);
 });
 
 test('Zufällig erzeugt nur verträgliche Kombinationen', async ({ page }) => {

@@ -6,7 +6,7 @@
  */
 import { signal } from '@preact/signals';
 import { isCollapsed, prefs, state } from './core.js';
-import { $, $$, shownColor } from './dom.js';
+import { $, $$, shownColor } from './dom.jsx';
 
 let linesFrame = 0;
 /** Konzept, über dem gerade der Mauszeiger steht (Hervorhebung, auch im Verlaufsdiagramm), sonst `null`. */

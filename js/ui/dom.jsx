@@ -1,11 +1,12 @@
 /*
- * DOM-Helfer der Oberfläche: Elemente erzeugen, Symbole, Dialoge, Hinweise, Downloads.
+ * Helfer für das statische Gerüst in index.html: Elemente finden, Dialoge, schwebende Elemente,
+ * Hinweise, Downloads, Textfeldhöhe, statische Texte und Konzeptfarben.
  * Einstieg der Oberfläche ist js/ui/main.js (eingebunden in index.html, gebündelt von Vite).
  */
 import { computePosition, flip, offset, shift as shiftInto } from '@floating-ui/dom';
+import { render as mount } from 'preact';
 import { Model } from '../model.js';
 import { Texts } from '../texts.js';
-import { ICONS } from './components.jsx';
 import { undo } from './core.js';
 
 
@@ -21,66 +22,6 @@ export const $ = (sel, root = document) => root.querySelector(sel);
  */
 export const $$ = (sel, root = document) => [.../** @type {NodeListOf<HTMLElement>} */ (root.querySelectorAll(sel))];
 
-/**
- * Element erzeugen. Attribute: `class`, `value`, `style` (Objekt, auch CSS-Variablen),
- * `dataset`, `on…` (Ereignisse); `null`/`false` werden ausgelassen – ebenso Kinder.
- * @param {string} tag
- * @param {Record<string, any> | null} [attrs]
- * @param {...any} children
- * @returns {any}
- */
-export function h(tag, attrs, ...children) {
-  const el = /** @type {any} */ (document.createElement(tag));
-  for (const [key, val] of Object.entries(attrs || {})) {
-    if (val == null || val === false) continue;
-    if (key === 'class') el.className = val;
-    else if (key === 'value') el.value = val;
-    else if (key === 'style') for (const [p, v] of Object.entries(val)) el.style.setProperty(p, v);
-    else if (key === 'dataset') Object.assign(el.dataset, val);
-    else if (key.startsWith('on')) el.addEventListener(key.slice(2), val);
-    else el.setAttribute(key, val === true ? '' : val);
-  }
-  for (const child of children.flat(Infinity)) {
-    if (child == null || child === false) continue;
-    el.append(child instanceof Node ? child : String(child));
-  }
-  return el;
-}
-
-/** @param {keyof typeof ICONS} name */
-export function icon(name) {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('aria-hidden', 'true');
-  const path = document.createElementNS(ns, 'path');
-  path.setAttribute('d', ICONS[name]);
-  svg.append(path);
-  return svg;
-}
-
-/**
- * @param {keyof typeof ICONS} name
- * @param {string} label
- * @param {(e: Event) => void} onclick
- * @param {{ disabled?: boolean, danger?: boolean, small?: boolean, active?: boolean }} [opts]
- */
-export function iconBtn(name, label, onclick, { disabled = false, danger = false, small = true, active = false } = {}) {
-  return h('button', {
-    type: 'button',
-    class: `icon-btn${small ? ' small' : ''}${danger ? ' danger' : ''}${active ? ' is-on' : ''}`,
-    title: label,
-    'aria-label': label,
-    disabled,
-    onclick,
-  }, icon(name));
-}
-
-/** Kinder ersetzen; leere Einträge (null/false) werden ausgelassen, statt als „null“ zu erscheinen. */
-export function replaceWith(el, ...children) {
-  el.replaceChildren(...children.flat(Infinity).filter(c => c != null && c !== false));
-}
-
 /** @param {any} dialog */
 export function openDialog(dialog) {
   if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
@@ -89,46 +30,6 @@ export function openDialog(dialog) {
 /** @param {any} dialog */
 export function closeDialog(dialog) {
   if (dialog.close) dialog.close(); else dialog.removeAttribute('open');
-}
-
-/**
- * Merkmal, um ein Bedienelement nach einem Neuaufbau wiederzufinden: `id`, `data-fid`,
- * `data-pair`, Klasse mit `data-cid` oder `aria-label` (in dieser Reihenfolge).
- * @param {Element} el @returns {string | null}
- */
-function focusKey(el) {
-  const { fid, pair, cid } = /** @type {HTMLElement} */ (el).dataset;
-  if (el.id) return `#${CSS.escape(el.id)}`;
-  if (fid) return `[data-fid="${CSS.escape(fid)}"]`;
-  if (pair) return `[data-pair="${CSS.escape(pair)}"]`;
-  if (cid && el.classList.length) return `.${CSS.escape(el.classList[0])}[data-cid="${CSS.escape(cid)}"]`;
-  const label = el.getAttribute('aria-label');
-  return label ? `[aria-label="${CSS.escape(label)}"]` : null;
-}
-
-/**
- * Inhalt eines Behälters ersetzen und dabei erhalten, was der Neuaufbau sonst verlöre: den Fokus
- * (samt Textauswahl in Eingabefeldern) und die Bildlaufpositionen der Elemente mit `data-scroll`.
- * @param {HTMLElement} container @param {...any} children wie bei `replaceWith`
- */
-export function rebuild(container, ...children) {
-  const active = /** @type {any} */ (document.activeElement);
-  const inside = active && active !== container && container.contains(active) ? active : null;
-  const key = inside ? focusKey(inside) : null;
-  const selection = inside && typeof inside.selectionStart === 'number' ? [inside.selectionStart, inside.selectionEnd] : null;
-  const scrolls = $$('[data-scroll]', container).map(el => [el.dataset.scroll, el.scrollTop, el.scrollLeft]);
-  replaceWith(container, ...children);
-  for (const [name, top, left] of scrolls) {
-    const el = $(`[data-scroll="${CSS.escape(String(name))}"]`, container);
-    if (el) { el.scrollTop = top; el.scrollLeft = left; }
-  }
-  const target = key ? $(key, container) : null;
-  if (target) {
-    target.focus({ preventScroll: true });
-    if (selection && typeof target.setSelectionRange === 'function') {
-      try { target.setSelectionRange(selection[0], selection[1]); } catch (e) { /* nicht unterstützt */ }
-    }
-  }
 }
 
 /**
@@ -151,7 +52,7 @@ export async function placeNear(el, anchor, { side = 'below', gap = 6, shift = 0
 }
 
 let toastTimer = 0;
-/** Kurzer Hinweis unten; optional mit „Rückgängig“. */
+/** Kurzer Hinweis unten; optional mit „Rückgängig“. @param {string} message @param {boolean} [withUndo] */
 export function toast(message, withUndo = false) {
   const el = $('#toast');
   clearTimeout(toastTimer);
@@ -159,20 +60,24 @@ export function toast(message, withUndo = false) {
   // dann in den Dialog, sonst läge sie hinter dessen abgedunkeltem Hintergrund.
   const host = $('dialog[open]') || document.body;
   if (el.parentElement !== host) host.append(el);
-  el.replaceChildren(h('span', null, message));
-  if (withUndo) {
-    el.append(h('button', { type: 'button', onclick: () => { undo(); el.hidden = true; } }, Texts.toast.undo));
-  }
+  mount(
+    <>
+      <span>{message}</span>
+      {withUndo ? <button type="button" onClick={() => { undo(); el.hidden = true; }}>{Texts.toast.undo}</button> : null}
+    </>,
+    el,
+  );
   el.hidden = false;
   toastTimer = setTimeout(() => { el.hidden = true; }, withUndo ? 6000 : 3500);
 }
 
-/** @param {string} filename @param {string} content @param {string} type */
 /** @param {string} filename @param {BlobPart} content @param {string} type */
 export function download(filename, content, type) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
-  const a = h('a', { href: url, download: filename });
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
   document.body.append(a);
   a.click();
   a.remove();

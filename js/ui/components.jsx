@@ -36,3 +36,23 @@ export function IconButton({ icon, label, onClick, disabled = false, danger = fa
     </button>
   );
 }
+
+/** Raster mit je einer gewählten Zelle pro Zeile (Ausprägung je Parameter), verbunden durch die Konzeptlinie. */
+const LOGO_CELLS = [[0, 0], [1, 2], [2, 1]];
+const LOGO_POS = [5.5, 13.3, 21.1];
+
+/** Logo der App (Kopfzeile, Start-Menü, Hilfe); Hintergrund in der Akzentfarbe (`currentColor`). */
+export function Logo() {
+  const cell = (/** @type {number} */ r, /** @type {number} */ c) => (
+    <rect key={`${r}:${c}`} x={LOGO_POS[c]} y={LOGO_POS[r]} width="5.6" height="5.6" rx="1.5" />
+  );
+  const chosen = (/** @type {number} */ r, /** @type {number} */ c) => LOGO_CELLS.some(([a, b]) => a === r && b === c);
+  return (
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="7" fill="currentColor" />
+      <g fill="#fff" opacity=".32">{[0, 1, 2].flatMap(r => [0, 1, 2].filter(c => !chosen(r, c)).map(c => cell(r, c)))}</g>
+      <g fill="#fff">{LOGO_CELLS.map(([r, c]) => cell(r, c))}</g>
+      <path d="M8.3 11.1C8.3 12.2 23.9 12.2 23.9 13.3M23.9 18.9C23.9 20 16.1 20 16.1 21.1" fill="none" stroke="#fb923c" stroke-width="1.6" stroke-linecap="round" />
+    </svg>
+  );
+}

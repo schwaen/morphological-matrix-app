@@ -16,7 +16,7 @@ import {
 import { Icon, IconButton } from './components.jsx';
 import { ConstraintButton, ConstraintCount, conflictText, statusText } from './constraints.jsx';
 import { activeConcept, collapseKey, fieldProps, isCollapsed, money, prefs, revision, setPendingFocus, state } from './core.js';
-import { $, focusField, shownColor } from './dom.js';
+import { $, focusField, shownColor } from './dom.jsx';
 import { scheduleLines } from './lines.js';
 import { NoteButton, NoteField, NoteMark, showNote } from './notes.jsx';
 import { searchClass, searchResult } from './search.js';
