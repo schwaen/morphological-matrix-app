@@ -7,18 +7,28 @@
  * der des Ziel-Tabs geladen – der übrige Code muss von Tabs nichts wissen.
  *
  * Regeln für Änderungen:
- *  - Strukturelle Änderungen laufen über `mutate()` (Verlaufseintrag, Speichern, komplettes Neuzeichnen).
- *  - Texteingaben laufen über `bindField()` (kein Neuzeichnen beim Tippen, verzögertes Speichern,
- *    Verlaufseintrag beim Verlassen).
+ *  - Strukturelle Änderungen laufen über `mutate()` (Verlaufseintrag, Speichern, Neuzeichnen).
+ *  - Texteingaben laufen über `fieldProps()` (verzögertes Speichern beim Tippen, Verlaufseintrag
+ *    beim Verlassen).
  *  - Ansichtseinstellungen über `setPref()`; sie sind nicht Teil des Verlaufs.
+ *
+ * Neuzeichnen: Die Matrix ist ein gewöhnliches Objekt, das `Ops` direkt ändert. Das Signal
+ * `revision` zählt jede Änderung; Komponenten lesen es und zeichnen dadurch neu (Preact gleicht
+ * nur die Unterschiede im DOM ab, Fokus und Eingaben bleiben erhalten).
+ * Wichtig: Eine Komponente, die selbst ein Signal liest, zeichnet @preact/signals bei gleichen
+ * Props nicht mehr mit ihrer Elternkomponente neu – sie muss dann auch `revision` lesen.
  */
+import { signal } from '@preact/signals';
 import { Examples } from '../examples.js';
 import { Model } from '../model.js';
 import { Store } from '../storage.js';
 import { Texts } from '../texts.js';
-import { toast } from './dom.js';
-import { refreshLight, render, updateHistoryButtons } from './render-panels.js';
+import { toast } from './dom.jsx';
+import { render, updateHistoryButtons } from './render-panels.jsx';
 import { Util } from '../util.js';
+
+/** Zähler für Änderungen an Matrix und Ansicht; Komponenten lesen ihn, um neu zu zeichnen. */
+export const revision = signal(0);
 
 const HISTORY_LIMIT = 200;
 /** @type {TabPrefs} */
@@ -206,26 +216,44 @@ export function redo() {
   render();
 }
 
+/** Stand vor der laufenden Eingabe je Feld (für den Verlaufseintrag beim Verlassen). @type {WeakMap<EventTarget, string>} */
+const fieldSnaps = new WeakMap();
+
 /**
- * Bindet ein Textfeld an den Zustand, ohne beim Tippen neu zu rendern
- * (sonst ginge der Fokus verloren). Der Verlaufseintrag entsteht beim Verlassen.
- * @param {any} el
+ * Ereignisse eines Eingabefelds, das den Zustand beim Tippen ändert (JSX: `{...fieldProps(…)}`).
+ * Gespeichert wird nach einer kurzen Pause, der Verlaufseintrag entsteht beim Verlassen.
  * @param {(value: string) => void} apply
- * @param {() => void} [after] Aktualisierung nach jeder Eingabe (Standard: `refreshLight`)
+ * @param {() => void} [after] nach jeder Eingabe (Standard: neu zeichnen)
  */
-export function bindField(el, apply, after = refreshLight) {
-  el.addEventListener('focus', () => { el._snap = snapshot(); });
-  el.addEventListener('input', () => {
-    if (el._snap == null) el._snap = snapshot();
-    apply(el.value);
-    scheduleSave();
-    after();
-  });
-  el.addEventListener('change', () => {
-    flushSave();
-    if (el._snap != null && el._snap !== snapshot()) pushHistory(el._snap);
-    el._snap = snapshot();
-  });
+export function fieldProps(apply, after = render) {
+  return {
+    onFocus: (/** @type {Event} */ e) => { fieldSnaps.set(/** @type {EventTarget} */ (e.currentTarget), snapshot()); },
+    onInput: (/** @type {Event} */ e) => {
+      const el = /** @type {HTMLInputElement} */ (e.currentTarget);
+      if (!fieldSnaps.has(el)) fieldSnaps.set(el, snapshot());
+      apply(el.value);
+      scheduleSave();
+      after();
+    },
+    onChange: (/** @type {Event} */ e) => {
+      const el = /** @type {EventTarget} */ (e.currentTarget);
+      flushSave();
+      const before = fieldSnaps.get(el);
+      if (before != null && before !== snapshot()) pushHistory(before);
+      fieldSnaps.set(el, snapshot());
+    },
+  };
+}
+
+/**
+ * Wie `fieldProps`, für ein Feld im statischen Gerüst von index.html (z. B. die Beschreibung).
+ * @param {HTMLElement} el @param {(value: string) => void} apply @param {() => void} [after]
+ */
+export function bindField(el, apply, after = render) {
+  const handlers = fieldProps(apply, after);
+  el.addEventListener('focus', handlers.onFocus);
+  el.addEventListener('input', handlers.onInput);
+  el.addEventListener('change', handlers.onChange);
 }
 
 /** Übernimmt den Stand, den ein anderer Browser-Tab für die aktive Matrix gespeichert hat. */

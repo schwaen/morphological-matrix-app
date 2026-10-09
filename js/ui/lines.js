@@ -4,12 +4,13 @@
  * Modus (prefs.lines): „all“ alle deutlich, „active“ nur das aktive Konzept deutlich (andere
  * dezent), „off“ keine. Beim Darüberfahren über ein Konzept wird dessen Linie hervorgehoben.
  */
+import { signal } from '@preact/signals';
 import { isCollapsed, prefs, state } from './core.js';
-import { $, $$, shownColor } from './dom.js';
+import { $, $$, shownColor } from './dom.jsx';
 
 let linesFrame = 0;
-/** Konzept, über dem gerade der Mauszeiger steht (Hervorhebung), sonst `null`. @type {string | null} */
-let hoveredConcept = null;
+/** Konzept, über dem gerade der Mauszeiger steht (Hervorhebung, auch im Verlaufsdiagramm), sonst `null`. */
+export const hovered = signal(/** @type {string | null} */ (null));
 /** Linien im nächsten Frame neu zeichnen (fasst mehrere Anforderungen zusammen). */
 export function scheduleLines() {
   cancelAnimationFrame(linesFrame);
@@ -71,33 +72,29 @@ export function drawLines() {
 
 /**
  * Deutlichkeit der Linien nach Modus, aktivem und hervorgehobenem Konzept setzen – ohne neu zu
- * zeichnen (auch für das Verlaufsdiagramm im Konzeptvergleich).
+ * zeichnen. (Das Verlaufsdiagramm im Konzeptvergleich liest `hovered` selbst.)
  */
-export function emphasizeConcepts() {
+function emphasizeConcepts() {
   const dimmed = prefs.lines === 'active' ? '.12' : '.55';
-  $$('#lines path, #compareChart [data-cid]').forEach(el => {
+  const hot = hovered.value;
+  $$('#lines path').forEach(el => {
     const cid = /** @type {HTMLElement} */ (/** @type {unknown} */ (el)).dataset.cid;
-    const strong = cid === state.activeConceptId || cid === hoveredConcept;
-    const faint = hoveredConcept != null && !strong;
+    const strong = cid === state.activeConceptId || cid === hot;
+    const faint = hot != null && !strong;
     el.classList.toggle('is-strong', strong);
-    if (el.closest('#lines')) {
-      el.setAttribute('stroke-width', strong ? '3' : '2');
-      el.setAttribute('opacity', strong ? '1' : (faint ? '.08' : dimmed));
-    } else {
-      el.classList.toggle('is-faint', faint);
-    }
+    el.setAttribute('stroke-width', strong ? '3' : '2');
+    el.setAttribute('opacity', strong ? '1' : (faint ? '.08' : dimmed));
   });
   // Aktives und hervorgehobenes Konzept nach oben (in dieser Reihenfolge)
-  for (const cid of [state.activeConceptId, hoveredConcept]) {
+  for (const cid of [state.activeConceptId, hot]) {
     if (!cid) continue;
-    $$(`#lines [data-cid="${CSS.escape(cid)}"], #compareChart g[data-cid="${CSS.escape(cid)}"]`)
-      .forEach(el => el.parentNode && el.parentNode.append(el));
+    $$(`#lines [data-cid="${CSS.escape(cid)}"]`).forEach(el => el.parentNode && el.parentNode.append(el));
   }
 }
 
 /** Konzept beim Darüberfahren hervorheben (`null` = keines). @param {string | null} cid */
 export function hoverConcept(cid) {
-  if (hoveredConcept === cid) return;
-  hoveredConcept = cid;
+  if (hovered.value === cid) return;
+  hovered.value = cid;
   emphasizeConcepts();
 }

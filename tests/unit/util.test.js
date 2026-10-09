@@ -1,7 +1,6 @@
-import { test } from 'node:test';
+import { afterEach, test, vi } from 'vitest';
 import assert from 'node:assert/strict';
 import { loadApp, plain } from './load.js';
-import { withGlobals } from './env.js';
 
 const { Util, Languages } = loadApp();
 
@@ -67,22 +66,26 @@ test('scaleBigInt zerlegt große Zahlen exakt in Tausenderstufen', () => {
 
 // Englische Formate prüft util-en.test.js (App dort mit englischer Oberfläche geladen)
 
-test('Sprachwahl: Browsersprache, ohne Browser Deutsch', async () => {
-  await withGlobals({ navigator: { language: 'en-US' } }, () => assert.equal(Languages.detect(), 'en'));
-  await withGlobals({ navigator: { language: 'de-AT' } }, () => assert.equal(Languages.detect(), 'de'));
-  await withGlobals({ navigator: undefined }, () => assert.equal(Languages.detect(), 'de'));
+// Globale Werte nach jedem Test zurücksetzen (auch die Sprache aus setup.js gilt dann wieder)
+afterEach(() => { vi.unstubAllGlobals(); vi.stubGlobal('navigator', { language: 'de-DE' }); });
+
+test('Sprachwahl: Browsersprache, ohne Browser Deutsch', () => {
+  vi.stubGlobal('navigator', { language: 'en-US' });
+  assert.equal(Languages.detect(), 'en');
+  vi.stubGlobal('navigator', { language: 'de-AT' });
+  assert.equal(Languages.detect(), 'de');
+  vi.stubGlobal('navigator', undefined);
+  assert.equal(Languages.detect(), 'de');
 });
 
-test('Sprachwahl: gespeicherte Sprache hat Vorrang vor der Browsersprache', async () => {
+test('Sprachwahl: gespeicherte Sprache hat Vorrang vor der Browsersprache', () => {
   const store = new Map();
-  const localStorage = { getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) };
-  await withGlobals({ navigator: { language: 'de-DE' }, localStorage }, () => {
-    Languages.choose('en');
-    assert.equal(store.get(Languages.STORAGE_KEY), 'en');
-    assert.equal(Languages.detect(), 'en');
-    store.set(Languages.STORAGE_KEY, 'xx'); // unbekannte Sprache wird ignoriert
-    assert.equal(Languages.detect(), 'de');
-  });
+  vi.stubGlobal('localStorage', { getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) });
+  Languages.choose('en');
+  assert.equal(store.get(Languages.STORAGE_KEY), 'en');
+  assert.equal(Languages.detect(), 'en');
+  store.set(Languages.STORAGE_KEY, 'xx'); // unbekannte Sprache wird ignoriert
+  assert.equal(Languages.detect(), 'de');
 });
 
 test('str: Texte unverändert, null/undefined als Ersatz, sonst als Text', () => {

@@ -2,25 +2,26 @@
  * Start der App: Ereignisse verdrahten, geteilte Links übernehmen, erstes Zeichnen.
  * Einstieg der App (in index.html als Modul eingebunden).
  */
+import { options } from 'preact';
 import { Store } from '../storage.js';
 import {
   addCategory, addConcept, addParameter, changeScale, changeSetting, clearActive, generateConcept,
   randomizeActive,
 } from './actions.js';
-import { initConstraints } from './constraints.js';
+import { initConstraints } from './constraints.jsx';
 import { bindField, flushSave, prefs, redo, save, saveWorkspace, setMode, setPref, setPrinting, state, undo } from './core.js';
 import {
   MENU_ACTIONS, exportBackup, exportJson, importJson, loadFromHash, renderLibrary, restoreBackup,
   switchLanguage, toggleMenu,
-} from './dialogs.js';
-import { $, $$, applyStaticTexts, autosize, closeDialog, darkScheme } from './dom.js';
+} from './dialogs.jsx';
+import { $, $$, applyStaticTexts, autosize, closeDialog, darkScheme } from './dom.jsx';
 import { drawLines, scheduleLines } from './lines.js';
-import { initNotePop } from './notes.js';
-import { renderMatrix } from './render-matrix.js';
-import { buildCompareTable, compareContent, render, renderCompare } from './render-panels.js';
+import { initNotePop } from './notes.jsx';
+import { initPanels, render, setCompareView } from './render-panels.jsx';
 import { initSearch } from './search.js';
-import { initStart } from './start.js';
-import { onExternalDocChange, tabById, toggleTabMenu } from './tabs.js';
+import { initStart } from './start.jsx';
+import { initTabs, onExternalDocChange, tabById, toggleTabMenu } from './tabs.jsx';
+import { initMatrix } from './render-matrix.jsx';
 
 function bindEvents() {
   const desc = $('#description');
@@ -40,14 +41,10 @@ function bindEvents() {
     btn.addEventListener('click', () => generateConcept(btn.dataset.generate || ''));
   });
   $$('[data-compare-view]').forEach(b => b.addEventListener('click', () => {
-    setPref('compareView', /** @type {'table' | 'chart'} */ (b.dataset.compareView));
     setPref('compareOpen', true);
-    renderCompare();
+    setCompareView('compareView', /** @type {'table' | 'chart'} */ (b.dataset.compareView));
   }));
-  $('#compareToggle').addEventListener('click', () => {
-    setPref('compareOpen', prefs.compareOpen === false);
-    renderCompare();
-  });
+  $('#compareToggle').addEventListener('click', () => setCompareView('compareOpen', prefs.compareOpen === false));
   $$('[data-lines]').forEach(btn => btn.addEventListener('click', () => {
     setPref('lines', /** @type {TabPrefs['lines']} */ (btn.dataset.lines));
     $$('[data-lines]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
@@ -149,18 +146,12 @@ function bindEvents() {
   // Beim Drucken alle Kategorien und den Vergleich vollständig ausgeben
   window.addEventListener('beforeprint', () => {
     setPrinting(true);
-    renderMatrix();
-    buildCompareTable(compareContent());
-    $('#compareTable').hidden = false;
-    $('#compareChart').hidden = true;
-    $('#compareBody').hidden = false;
+    render();
     drawLines();
   });
   window.addEventListener('afterprint', () => {
     setPrinting(false);
-    renderMatrix();
-    renderCompare();
-    scheduleLines();
+    render();
   });
 
   // Farbschema des Systems gewechselt: Konzeptfarben in der passenden Stufe neu zeichnen
@@ -178,11 +169,18 @@ function bindEvents() {
   });
 }
 
+// Komponenten sofort neu zeichnen statt gesammelt im nächsten Mikrotask: Code, der nach einer
+// Änderung das DOM braucht (Fokus setzen, Verbindungslinien messen), findet es so schon vor.
+options.debounceRendering = cb => cb();
+
 function init() {
   applyStaticTexts();
   bindEvents();
   initSearch();
   initNotePop();
+  initTabs();
+  initMatrix();
+  initPanels();
   initConstraints();
   initStart();
   save(); // auch eine neu erzeugte Startmatrix sofort sichern (stabile IDs nach Neuladen)

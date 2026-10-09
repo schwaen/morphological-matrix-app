@@ -1,14 +1,10 @@
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { loadApp, plain } from './load.js';
-import { withGlobals } from './env.js';
+import { strToU8, zipSync } from 'fflate';
 
 const { IO, Zip, Model, Texts, example: kaffeemaschine } = loadApp();
 const dec = new TextDecoder();
-
-test('ZIP: CRC-32 nach Standard', () => {
-  assert.equal(Zip.crc32(new TextEncoder().encode('123456789')), 0xcbf43926);
-});
 
 test('ZIP: Rundreise mit Umlauten im Namen und Inhalt', async () => {
   const files = [
@@ -32,8 +28,8 @@ test('ZIP: beschädigtes Archiv wird abgelehnt', async () => {
 const centralOffset = zip => new DataView(zip.buffer, zip.byteOffset).getUint32(zip.length - 22 + 16, true);
 const sample = [{ name: 'a.json', text: '{"a":1}' }, { name: 'b.txt', text: 'Bä'.repeat(50) }];
 
-test('ZIP: ohne Kompression (älterer Browser) gespeichert und überall lesbar', async () => {
-  const zip = await withGlobals({ CompressionStream: undefined }, () => Zip.create(sample));
+test('ZIP: unkomprimiert gespeicherte Archive (z. B. von anderen Programmen) sind lesbar', async () => {
+  const zip = zipSync(Object.fromEntries(sample.map(f => [f.name, [strToU8(f.text), { level: 0 }]])));
   assert.equal(new DataView(zip.buffer).getUint16(8, true), 0); // Verfahren „gespeichert“
   const back = await Zip.read(zip);
   assert.deepEqual(plain(back.map(e => ({ name: e.name, text: dec.decode(e.data) }))), sample);
@@ -63,9 +59,6 @@ test('ZIP: unbekanntes Kompressionsverfahren wird abgelehnt', async () => {
   const odd = zip.slice();
   new DataView(odd.buffer).setUint16(centralOffset(zip) + 10, 99, true);
   await assert.rejects(Zip.read(odd), new RegExp(Texts.errors.zipMethod));
-  // Komprimiertes Archiv in einem Browser ohne DecompressionStream
-  await withGlobals({ DecompressionStream: undefined },
-    () => assert.rejects(Zip.read(zip), new RegExp(Texts.errors.zipMethod)));
 });
 
 const doc = (id, title, savedAt = 1000) => {

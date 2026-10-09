@@ -1,7 +1,6 @@
 /*
- * DOM-freie App-Module für die Unit-Tests (direkt als ES-Module geladen). Sprache siehe env.js.
+ * DOM-freie App-Module für die Unit-Tests (Vitest). Sprache siehe setup.js.
  */
-import './env.js';
 import { Texts, Languages } from '../../js/texts.js';
 import { Util } from '../../js/util.js';
 import { Model } from '../../js/model.js';

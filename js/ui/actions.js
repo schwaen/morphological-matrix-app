@@ -11,10 +11,8 @@ import {
   activeConcept, collapseKey, isCollapsed, mutate, prefs, save, setCollapsed, setMode, setPendingFocus,
   setPref, state,
 } from './core.js';
-import { $$, toast } from './dom.js';
-import { scheduleLines } from './lines.js';
-import { renderCategoryNav, renderMatrix } from './render-matrix.js';
-import { refreshLight, render } from './render-panels.js';
+import { toast } from './dom.jsx';
+import { render } from './render-panels.jsx';
 import { Util } from '../util.js';
 
 /** Auswahlwert „neue Kategorie anlegen“ im Kategorie-Auswahlfeld eines Parameters. */
@@ -86,7 +84,7 @@ export function deleteCategory(cid) {
 export function setParameterCategory(pid, cid) {
   if (cid === NEW_CATEGORY) {
     const name = window.prompt(Texts.prompt.newCategory, Texts.fallback.category(state.categories.length + 1));
-    if (name == null) { renderMatrix(); return; } // Auswahlfeld zurücksetzen
+    if (name == null) return; // abgebrochen (das Auswahlfeld setzt sich selbst zurück)
     const k = { id: Util.uid(), name: name.trim(), color: Model.nextCategoryColor(state.categories) };
     mutate(m => {
       Ops.addCategory(m, k);
@@ -101,16 +99,12 @@ export function setParameterCategory(pid, cid) {
 /** @param {string | null} cid */
 export function toggleCategory(cid) {
   setCollapsed(cid, !isCollapsed(cid));
-  renderMatrix();
-  renderCategoryNav();
-  scheduleLines();
+  render();
 }
 
 export function setAllCollapsed(value) {
   for (const g of Model.categoryGroups(state)) setCollapsed(g.cat ? g.cat.id : null, value);
-  renderMatrix();
-  renderCategoryNav();
-  scheduleLines();
+  render();
 }
 
 /** Kategorie aufklappen und dorthin scrollen. @param {string | null} cid */
@@ -148,16 +142,6 @@ export function setActiveConcept(cid) {
   state.activeConceptId = cid;
   save();
   render();
-}
-
-/** Wie `setActiveConcept`, aber ohne die Konzeptliste (und damit das fokussierte Feld) neu zu erzeugen. */
-export function setActiveConceptLight(cid) {
-  if (state.activeConceptId === cid) return;
-  state.activeConceptId = cid;
-  save();
-  $$('.concept').forEach(li => li.classList.toggle('is-active', li.dataset.cid === cid));
-  renderMatrix();
-  refreshLight();
 }
 
 export function randomizeActive() {

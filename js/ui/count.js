@@ -1,12 +1,13 @@
 /*
  * Zahl der widerspruchsfreien Kombinationen für die Anzeige – gezählt im Web Worker
- * (js/count-worker.js). Bis das Ergebnis da ist, gilt der zuletzt bekannte Wert; ist es
- * angekommen, werden die angemeldeten Anzeigen aktualisiert.
+ * (js/count-worker.js). Bis das Ergebnis da ist, gilt der zuletzt bekannte Wert. Das Ergebnis
+ * ist ein Signal: Komponenten, die es anzeigen, zeichnen neu, sobald es ankommt.
  */
+import { signal } from '@preact/signals';
 import { Consistency } from '../consistency.js';
 
-/** @type {{ sig: string, value: bigint | null | undefined }} Zuletzt gezähltes Ergebnis */
-let known = { sig: '', value: undefined };
+/** Zuletzt gezähltes Ergebnis. */
+const known = signal(/** @type {{ sig: string, value: bigint | null | undefined }} */ ({ sig: '', value: undefined }));
 /** Signatur und Nummer der laufenden Anfrage */
 let asked = { sig: '', id: 0 };
 /** @type {Set<() => void>} */
@@ -20,7 +21,7 @@ function startWorker() {
     worker = new Worker(new URL('../count-worker.js', import.meta.url), { type: 'module' });
     worker.onmessage = (/** @type {MessageEvent<{ id: number, value: bigint | null }>} */ e) => {
       if (e.data.id !== asked.id) return; // veraltete Antwort
-      known = { sig: asked.sig, value: e.data.value };
+      known.value = { sig: asked.sig, value: e.data.value };
       listeners.forEach(fn => fn());
     };
   } catch (e) {
@@ -36,12 +37,14 @@ function startWorker() {
  */
 export function consistentCount(m) {
   const sig = Consistency.countSignature(m);
-  if (sig === known.sig) return { value: known.value, pending: false };
+  const last = known.value;
+  if (sig === last.sig) return { value: last.value, pending: false };
   const w = startWorker();
   if (!w) {
     // Ohne Worker wie früher direkt zählen
-    known = { sig, value: Consistency.countConsistent(m) };
-    return { value: known.value, pending: false };
+    const value = Consistency.countConsistent(m);
+    known.value = { sig, value };
+    return { value, pending: false };
   }
   if (sig !== asked.sig) {
     asked = { sig, id: asked.id + 1 };
@@ -49,7 +52,7 @@ export function consistentCount(m) {
     const matrix = { parameters: m.parameters.map(p => ({ id: p.id, options: p.options.map(o => ({ id: o.id })) })), constraints: m.constraints };
     w.postMessage({ id: asked.id, matrix });
   }
-  return { value: known.value, pending: true };
+  return { value: last.value, pending: true };
 }
 
 /** Anzeige anmelden, die nach jedem neuen Ergebnis aktualisiert wird. @param {() => void} fn */
