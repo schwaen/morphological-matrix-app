@@ -6,6 +6,7 @@
  *
  * Invariante: `m.parameters` bleibt nach Kategorien gruppiert sortiert (siehe `Model.resort`).
  */
+import { Attributes } from './attributes.js';
 import { Consistency } from './consistency.js';
 import { Model } from './model.js';
 import { Texts } from './texts.js';
@@ -258,7 +259,60 @@ export const Ops = (() => {
     }
   }
 
+  // ---------- Eigene Merkmale ----------
+
+  /** Merkmal anhängen. @param {Matrix} m @param {MatrixAttribute} a */
+  function addAttribute(m, a) {
+    m.settings.attributes.push(a);
+  }
+
+  /** Merkmal samt seiner Werte löschen. @param {Matrix} m @param {string} aid */
+  function deleteAttribute(m, aid) {
+    m.settings.attributes = m.settings.attributes.filter(a => a.id !== aid);
+    for (const p of m.parameters) for (const o of p.options) delete o.values[aid];
+  }
+
+  /** @param {Matrix} m @param {number} index @param {number} delta */
+  const moveAttribute = (m, index, delta) => move(m.settings.attributes, index, delta);
+
+  /**
+   * Form eines Merkmals ändern: Zusammenfassung, Grenze, Einheit, Stufen passend zurücksetzen;
+   * Werte übernehmen, soweit sie passen (Zahl ↔ Zahl, alles → Text), sonst verwerfen.
+   * @param {Matrix} m @param {string} aid @param {AttributeType} type
+   */
+  function setAttributeType(m, aid, type) {
+    const a = m.settings.attributes.find(x => x.id === aid);
+    if (!a || a.type === type) return;
+    const before = { ...a };
+    const fresh = Attributes.newAttribute(type);
+    a.type = type;
+    if (!Attributes.AGGREGATES[type].includes(a.aggregate)) a.aggregate = fresh.aggregate;
+    if (!Attributes.isNumeric(type)) a.unit = '';
+    a.decimals = type === 'decimal' ? (before.decimals || 1) : 0;
+    a.levels = type === 'choice' ? (before.levels.length ? before.levels : fresh.levels) : [];
+    a.limit = a.limit && Attributes.isNumeric(type) && Attributes.isNumeric(before.type) ? a.limit : null;
+    for (const p of m.parameters) {
+      for (const o of p.options) {
+        const v = o.values[aid];
+        if (v === undefined) continue;
+        const next = Attributes.convertValue(before, type, v);
+        if (next === undefined) delete o.values[aid];
+        else o.values[aid] = next;
+      }
+    }
+  }
+
+  /** Stufe löschen; Werte mit dieser Stufe und eine Grenze ab ihr entfallen. @param {Matrix} m @param {string} aid @param {string} levelId */
+  function deleteLevel(m, aid, levelId) {
+    const a = m.settings.attributes.find(x => x.id === aid);
+    if (!a) return;
+    a.levels = a.levels.filter(l => l.id !== levelId);
+    if (a.limit && a.limit.op === 'level' && a.limit.value === levelId) a.limit = null;
+    for (const p of m.parameters) for (const o of p.options) if (o.values[aid] === levelId) delete o.values[aid];
+  }
+
   return {
+    addAttribute, deleteAttribute, moveAttribute, setAttributeType, deleteLevel,
     addParameter, moveParameter, deleteParameter,
     addOption, moveOption, deleteOption, togglePriority,
     addCategory, moveCategory, deleteCategory, setParameterCategory,

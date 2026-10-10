@@ -8,7 +8,7 @@ Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON
 
 ```jsonc
 {
-  "version": 6,
+  "version": 7,
   "title": "Beispiel: Kaffeemaschine",
   "description": "Gesamtfunktion: …",
   "settings": {
@@ -16,7 +16,23 @@ Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON
     "utility": false,        // Nutzwert je Ausprägung erfassen
     "currency": "EUR",       // EUR | USD | CHF | GBP
     "utilityMax": 10,        // Nutzwert-Skala: 5 | 10 | 100
-    "moscow": false          // Priorität (MoSCoW) je Ausprägung erfassen
+    "moscow": false,         // Priorität (MoSCoW) je Ausprägung erfassen
+    "attributes": [          // eigene Merkmale (optional): beschreibend, nicht Teil des Nutzwerts
+      {
+        "id": "gew",
+        "name": "Gewicht",     // leer = „Merkmal n“
+        "description": "",     // Beschreibung (optional)
+        "source": "",          // Messverfahren / Quelle (optional)
+        "type": "decimal",     // "int" | "decimal" | "choice" (Stufen) | "bool" (Ja/Nein) | "text"
+        "unit": "kg",          // nur Zahlen, sonst ""
+        "decimals": 1,         // Nachkommastellen: Dezimalzahl 1–3, sonst 0
+        "levels": [],          // nur Auswahl: [{ "id": "l1", "name": "Idee" }, …] in aufsteigender Rangfolge
+        "aggregate": "sum",    // je Konzept – Zahlen: "sum" | "max" | "min" | "avg" | "none";
+                               // Auswahl: "max" (höchste Stufe) | "min"; Ja/Nein: "count"; Text: "list"
+        "limit": { "op": "above", "value": 4 }  // null = keine Grenze; Zahlen: "above" | "below" mit value;
+                               // Auswahl: { "op": "level", "value": "<Stufen-ID>" }; Ja/Nein: { "op": "allYes" }
+      }
+    ]
   },
   "categories": [            // optional, Reihenfolge = Anzeige
     { "id": "k1", "name": "Brühsystem", "color": "#4f46e5" }
@@ -30,8 +46,10 @@ Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON
       "categoryId": "k1",    // null = ohne Kategorie
       "options": [
         // cost/score/priority: null = nicht erfasst; priority: "must" | "should" | "could" | "wont";
-        // note: Notiz zur Ausprägung (optional, leer = keine)
-        { "id": "o1", "text": "Durchlauferhitzer", "cost": 18, "score": 6, "priority": "must", "note": "" }
+        // note: Notiz zur Ausprägung (optional, leer = keine);
+        // values: Wert je Merkmal (ID aus settings.attributes), fehlend = nicht erfasst; Zahl, Stufen-ID,
+        // true/false oder Text je nach Form (optional)
+        { "id": "o1", "text": "Durchlauferhitzer", "cost": 18, "score": 6, "priority": "must", "note": "", "values": { "gew": 0.4 } }
       ]
     }
   ],
@@ -84,6 +102,7 @@ Beim Wiederherstellen (`IO.parseBackup`, `IO.planRestore`) werden vorhandene Mat
 - Auswahlen, die auf nicht vorhandene Ausprägungen zeigen, und Zuordnungen zu unbekannten Kategorien werden entfernt.
 - Negative Gewichte werden verworfen; ungültige Farben durch Standardfarben ersetzt; unbekannte Prioritäten werden zu `null`.
 - Fehlende Notizen (`note`) werden zu `""` – in Dateien und Beispielen dürfen sie daher fehlen.
+- Eigene Merkmale: doppelte IDs werden ersetzt, unbekannte Formen zu `"text"`; Einheit, Nachkommastellen und Stufen gelten nur für die passende Form. Eine nicht passende Zusammenfassung wird zur Vorgabe der Form (erste in der Liste oben), eine nicht passende oder unvollständige Grenze zu `null`. Werte zu unbekannten Merkmalen und Werte, die nicht zur Form passen, entfallen (Ganzzahl-Merkmale behalten Nachkommastellen; die Oberfläche markiert sie als ungültig). Fehlen `attributes` bzw. `values`, gelten leere Listen – in Dateien dürfen sie fehlen.
 - Fehlender oder unbekannter Konzept-Status wird zu `"draft"`, ein fehlender Grund (`statusNote`) zu `""` – auch diese Felder dürfen in Dateien fehlen.
 - Verträglichkeiten: Paare mit unbekannten Ausprägungen, aus demselben Parameter, mit unbekannter Art oder doppelt werden verworfen; `a` und `b` werden so geordnet, dass `a < b`. Beim Löschen einer Ausprägung oder eines Parameters entfallen die zugehörigen Paare.
 
@@ -97,6 +116,7 @@ Beim Wiederherstellen (`IO.parseBackup`, `IO.planRestore`) werden vorhandene Mat
 | 4 | Notizen: `note` je Ausprägung (Notiz), Parameter (Beschreibung) und Konzept (Begründung) | keine Umwandlung nötig; die neue Version verhindert, dass ältere App-Versionen Notizen verwerfen |
 | 5 | Verträglichkeiten zwischen Ausprägungen: `constraints` | keine Umwandlung nötig; die neue Version verhindert, dass ältere App-Versionen Verträglichkeiten verwerfen |
 | 6 | Status je Konzept: `status`, `statusNote` | keine Umwandlung nötig (fehlt der Status, gilt „Entwurf“); die neue Version verhindert, dass ältere App-Versionen den Status verwerfen |
+| 7 | Eigene Merkmale: `settings.attributes`, `values` je Ausprägung | keine Umwandlung nötig; die neue Version verhindert, dass ältere App-Versionen die Merkmale verwerfen |
 
 ## Eine neue Version einführen
 

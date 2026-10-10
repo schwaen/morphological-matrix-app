@@ -7,13 +7,17 @@ const { Model, Examples, Consistency, Evaluation } = loadApp();
 const examples = await Examples.all();
 
 /**
- * Notizen, Status und Verträglichkeiten sind in Dateien optional (fehlend = leer bzw. „Entwurf“);
+ * Notizen, Status, Verträglichkeiten und eigene Merkmale sind in Dateien optional (fehlend = leer bzw. „Entwurf“);
  * für den Vergleich mit `normalize` ergänzen.
  */
 function withEmptyNotes(data) {
   const d = plain(data);
   const fill = x => { if (x.note === undefined) x.note = ''; };
-  d.parameters.forEach(p => { fill(p); p.options.forEach(fill); });
+  d.parameters.forEach(p => {
+    fill(p);
+    p.options.forEach(o => { fill(o); if (o.values === undefined) o.values = {}; });
+  });
+  if (d.settings.attributes === undefined) d.settings.attributes = [];
   d.concepts.forEach(c => {
     fill(c);
     if (c.status === undefined) c.status = 'draft';
