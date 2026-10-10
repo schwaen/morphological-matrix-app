@@ -13,6 +13,7 @@ export const Store = (() => {
   const TAB_DOC_KEY = 'morphologische-matrix:tab-doc';
   const PREFS_KEY = 'morphologische-matrix:prefs';
   const WORKSPACE_KEY = 'morphologische-matrix:workspace';
+  const EXPORT_KEY = 'morphologische-matrix:export';
 
   /** @typedef {'localStorage' | 'sessionStorage'} Area */
 
@@ -133,8 +134,29 @@ export const Store = (() => {
     if (!tabOnly) set('localStorage', PREFS_KEY, json);
   }
 
+  /**
+   * Zuletzt gewählte Export-Einstellungen dieses Browsers: Format und Inhalt des Berichts.
+   * Fehlende oder ungültige Werte (Format kein Text, Teil kein Wahrheitswert) gelten wie vorgegeben;
+   * ob das Format bekannt ist, prüft der Aufrufer.
+   * @param {{ format: string, parts: Record<string, boolean> }} defaults
+   * @returns {{ format: string, parts: Record<string, boolean> }}
+   */
+  function loadExportPrefs(defaults) {
+    const parts = { ...defaults.parts };
+    try {
+      const stored = JSON.parse(get('localStorage', EXPORT_KEY) || '{}') || {};
+      for (const k of Object.keys(parts)) if (typeof stored.parts?.[k] === 'boolean') parts[k] = stored.parts[k];
+      return { format: typeof stored.format === 'string' ? stored.format : defaults.format, parts };
+    } catch (e) {
+      return { format: defaults.format, parts };
+    }
+  }
+
+  /** @param {{ format: string, parts: Record<string, boolean> }} value */
+  const saveExportPrefs = value => set('localStorage', EXPORT_KEY, JSON.stringify(value));
+
   return {
     readDoc, writeDoc, removeDoc, docIdFromKey, listDocs, migrateLegacy,
-    legacyTabDocId, loadWorkspace, saveWorkspace, loadPrefs, savePrefs,
+    legacyTabDocId, loadWorkspace, saveWorkspace, loadPrefs, savePrefs, loadExportPrefs, saveExportPrefs,
   };
 })();

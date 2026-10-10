@@ -14,7 +14,7 @@ export const IO = (() => {
 
   const L = Texts.csv;
 
-  /** @param {Matrix} m @param {'json' | 'csv'} ext */
+  /** @param {Matrix} m @param {'json' | 'csv' | 'html' | 'md'} ext */
   const fileName = (m, ext) => `${Util.slugify(m.title)}.${ext}`;
 
   /** @param {Matrix} m */

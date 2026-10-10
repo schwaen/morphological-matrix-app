@@ -188,3 +188,17 @@ interface AppTab {
   scrollY?: number;
   external?: boolean;
 }
+
+/** Bestandteile des Berichts (js/report.js, Dialog „Exportieren“) */
+type ReportParts = {
+  facts: boolean;
+  concepts: boolean;
+  /** verworfene Konzepte weglassen (in Konzepten, Vergleich, Diagramm und Matrix) */
+  hideDropped: boolean;
+  compare: boolean;
+  evaluation: boolean;
+  /** Kosten/Nutzen-Diagramm (nur HTML, nur mit Kosten und Nutzwert) */
+  chart: boolean;
+  matrix: boolean;
+  constraints: boolean;
+};

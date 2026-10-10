@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { test, expect, menu, downloadText, setTitle } from './fixtures.js';
+import { test, expect, menu, downloadText, setTitle, exportFile } from './fixtures.js';
 
 test('JSON-Export und -Import ergeben dieselbe Matrix', async ({ page }) => {
   const exported = await downloadText(page, 'export-json');
@@ -27,7 +27,7 @@ test('Import einer Datei aus einer neueren App-Version wird abgelehnt', async ({
 });
 
 test('CSV-Export enthält Matrix und Konzepte (Excel-kompatibel)', async ({ page }) => {
-  const { name, text } = await downloadText(page, 'export-csv');
+  const { name, text } = await exportFile(page, 'csv');
   expect(name).toBe('beispiel-kaffeemaschine.csv');
   expect(text.charCodeAt(0)).toBe(0xfeff);
   expect(text).toContain('"Kategorie";"Parameter";"Ausprägung 1"');

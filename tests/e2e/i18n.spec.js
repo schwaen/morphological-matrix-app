@@ -1,4 +1,4 @@
-import { test, expect, setEvaluation, downloadText, APP_URL } from './fixtures.js';
+import { test, expect, setEvaluation, APP_URL, exportFile } from './fixtures.js';
 
 /** Sprache über das Menü „Datei“ wechseln (die Seite lädt dabei neu). */
 async function chooseLanguage(page, lang) {
@@ -58,7 +58,7 @@ test('Englisch: Zahlen, Währung, Prozent, Eingabe und CSV im US-Format', async 
   await page.click('[data-mode=select]');
   await expect(page.locator('.opt-cell.pick', { hasText: 'Durchlauferhitzer' })).toContainText('€1,234.50');
 
-  const csv = await downloadText(page, 'export-csv');
+  const csv = await exportFile(page, 'csv');
   expect(csv.text).toContain('"Title","Beispiel: Kaffeemaschine"');
   expect(csv.text).toMatch(/"Kompakt-Espresso",.*,7\.25,/);
 });

@@ -1,4 +1,4 @@
-import { test, expect, downloadText } from './fixtures.js';
+import { test, expect, exportFile } from './fixtures.js';
 
 const bands = page => page.locator('.cat-band');
 const paramCells = page => page.locator('.param-cell');
@@ -73,7 +73,7 @@ test('Parameter lassen sich nur innerhalb der Kategorie verschieben', async ({ p
 
 test('Vergleich und CSV sind nach Kategorien gegliedert; Druck klappt alles aus', async ({ page }) => {
   await expect(page.locator('#compareTable tr.cat-row')).toHaveCount(2);
-  const { text } = await downloadText(page, 'export-csv');
+  const { text } = await exportFile(page, 'csv');
   expect(text).toContain('"Nutzung & Betrieb";"Bedienung"');
 
   await page.getByRole('button', { name: 'Alle einklappen' }).click();

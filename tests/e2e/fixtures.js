@@ -56,6 +56,14 @@ export async function setEvaluation(page, { costs, utility, scale, moscow } = {}
   await page.click('#settingsDone');
 }
 
+/** Datei über „Datei → Exportieren …“ im gewählten Format (html, md, csv) herunterladen. */
+export async function exportFile(page, format) {
+  await menu(page, 'export');
+  await page.locator(`#exportDialog input[name="exportFormat"][value="${format}"]`).check();
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#exportRun')]);
+  return { name: dl.suggestedFilename(), text: fs.readFileSync(await dl.path(), 'utf8'), path: await dl.path() };
+}
+
 export async function downloadText(page, action) {
   await page.click('#menuBtn');
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click(`[data-action="${action}"]`)]);

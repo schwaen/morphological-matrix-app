@@ -11,9 +11,10 @@ import { IO } from '../../js/io.js';
 import { Zip } from '../../js/zip.js';
 import { Examples } from '../../js/examples.js';
 import { Store } from '../../js/storage.js';
+import { Report } from '../../js/report.js';
 
 const app = {
-  Texts, Languages, Util, Model, Consistency, Evaluation, Ops, IO, Zip, Examples, Store,
+  Texts, Languages, Util, Model, Consistency, Evaluation, Ops, IO, Zip, Examples, Store, Report,
   /** Beispiel „Kaffeemaschine“ als frische Matrix (Grundlage vieler Tests). */
   example: () => Examples.loadFirst(),
 };

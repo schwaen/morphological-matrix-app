@@ -8,7 +8,8 @@ import { Model } from '../model.js';
 import { Store } from '../storage.js';
 import { Languages, Texts } from '../texts.js';
 import { openConsDialog } from './constraints.jsx';
-import { closedTabs, docId, prefs, save, saveWorkspace, setClosedTabs, setMode, state } from './core.js';
+import { closedTabs, docId, save, saveWorkspace, setClosedTabs, setMode, state } from './core.js';
+import { openExport } from './export.jsx';
 import { $, closeDialog, download, openDialog, toast } from './dom.jsx';
 import { activateTab, openInTab, openNewDoc, tabById } from './tabs.jsx';
 import { Util } from '../util.js';
@@ -19,10 +20,6 @@ import { render as mount } from 'preact';
 
 export function exportJson() {
   download(IO.fileName(state, 'json'), IO.toJson(state), 'application/json');
-}
-
-function exportCsv() {
-  download(IO.fileName(state, 'csv'), IO.toCsv(state), 'text/csv;charset=utf-8');
 }
 
 /** @param {File} file */
@@ -60,11 +57,6 @@ export function loadFromHash() {
     toast(Texts.errors.shareInvalid);
   }
   history.replaceState(null, '', location.pathname + location.search);
-}
-
-function printMatrix() {
-  if (prefs.mode !== 'select') setMode('select');
-  requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
 }
 
 // ---------- Bibliothek ----------
@@ -280,7 +272,6 @@ export const MENU_ACTIONS = {
   constraints: openConsDialog,
   'export-json': exportJson,
   'import-json': () => $('#importFile').click(),
-  'export-csv': exportCsv,
+  export: openExport,
   share: shareLink,
-  print: printMatrix,
 };
