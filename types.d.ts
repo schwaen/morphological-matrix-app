@@ -14,6 +14,65 @@ interface MatrixOption {
   priority: MatrixPriority | null;
   /** Notiz (Freitext, optional leer) */
   note: string;
+  /** Werte der eigenen Merkmale (`settings.attributes`), Merkmal-ID → Wert; fehlt = nicht erfasst */
+  values: Record<string, AttributeValue>;
+}
+
+/** Wert eines Merkmals: Zahl, Stufen-ID (Auswahl), Ja/Nein oder Text */
+type AttributeValue = number | string | boolean;
+
+/** Form eines Merkmals: Ganzzahl, Dezimalzahl, Auswahl aus Stufen, Ja/Nein, Text */
+type AttributeType = 'int' | 'decimal' | 'choice' | 'bool' | 'text';
+
+/** Zusammenfassung je Konzept; bei Auswahl `max` = höchste, `min` = niedrigste Stufe */
+type AttributeAggregate = 'sum' | 'min' | 'max' | 'avg' | 'none' | 'count' | 'list';
+
+/** Grenze, ab der der Vergleich warnt (Zahl über/unter einem Wert, ab einer Stufe, nicht alle Ja) */
+type AttributeLimit =
+  | { op: 'above' | 'below', value: number }
+  | { op: 'level', value: string }
+  | { op: 'allYes' };
+
+/** Stufe eines Auswahl-Merkmals (Reihenfolge = Rangfolge) */
+interface AttributeLevel {
+  id: string;
+  name: string;
+}
+
+/** Eigenes Merkmal der Ausprägungen – beschreibend, geht nicht in den Nutzwert ein */
+interface MatrixAttribute {
+  id: string;
+  /** leer = „Merkmal n“ */
+  name: string;
+  description: string;
+  /** Messverfahren bzw. Quelle der Werte */
+  source: string;
+  type: AttributeType;
+  /** Einheit (nur Zahlen, sonst leer) */
+  unit: string;
+  /** Nachkommastellen (Dezimalzahl 1–3, sonst 0) */
+  decimals: number;
+  /** Stufen (nur Auswahl, sonst leer) */
+  levels: AttributeLevel[];
+  aggregate: AttributeAggregate;
+  /** `null` = keine Grenze */
+  limit: AttributeLimit | null;
+}
+
+/** Zusammenfassung eines Merkmals für ein Konzept (`Attributes.summarize`) */
+interface AttributeSummary {
+  /** Parameter, in denen mindestens eine Ausprägung einen Wert hat */
+  relevant: number;
+  /** davon nicht gewählt oder ohne Wert */
+  missing: number;
+  /** gewählte Ausprägungen mit Wert */
+  filled: number;
+  /** Anzeige (leer = kein Wert) */
+  text: string;
+  /** Sortierwert, `null` = keiner */
+  sort: number | null;
+  /** Grenze überschritten */
+  warn: boolean;
 }
 
 /** MoSCoW: Must have, Should have, Could have, Won't have */
@@ -73,6 +132,8 @@ interface MatrixSettings {
   utilityMax: 5 | 10 | 100;
   /** Priorität (MoSCoW) je Ausprägung erfassen */
   moscow: boolean;
+  /** Eigene Merkmale der Ausprägungen (beschreibend, nicht Teil des Nutzwerts) */
+  attributes: MatrixAttribute[];
 }
 
 interface Matrix {
@@ -114,7 +175,7 @@ interface TabPrefs {
   /** Konzeptvergleich: nur Parameter zeigen, bei denen sich die Konzepte unterscheiden */
   compareDiff?: boolean;
   /** Konzeptvergleich: Reihenfolge der Konzepte (`order` = wie in der Liste) */
-  compareSort?: 'order' | 'utility' | 'cost' | 'priceValue';
+  compareSort?: 'order' | 'utility' | 'cost' | 'priceValue' | `attr:${string}:${'asc' | 'desc'}`;
   /** Konzeptvergleich: Konzepte mit unverträglichem Paar ausblenden */
   compareHideConflicts?: boolean;
   /** Konzeptvergleich: verworfene Konzepte ausblenden */

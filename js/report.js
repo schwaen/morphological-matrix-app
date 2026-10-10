@@ -1,9 +1,10 @@
 /*
  * Report – Bericht einer Matrix als eigenständige HTML-Datei oder als Markdown (ohne DOM).
  * Reihenfolge: Kopf (Problemstellung, Kennzahlen), Lösungskonzepte, Konzeptvergleich,
- * Kosten/Nutzen-Diagramm (nur HTML), Matrix mit Notizen, Verträglichkeiten. Welche Teile
+ * Kosten/Nutzen-Diagramm (nur HTML), Matrix mit Notizen, eigene Merkmale, Verträglichkeiten. Welche Teile
  * enthalten sind, bestimmt `ReportParts`; Texte in der aktiven Sprache.
  */
+import { Attributes } from './attributes.js';
 import { Consistency } from './consistency.js';
 import { Evaluation } from './evaluation.js';
 import { Model } from './model.js';
@@ -75,8 +76,40 @@ export const Report = (() => {
       out.push([Texts.compare.priceValue, f.priceValue.value == null ? '–' : `${ctx.money(f.priceValue.value)} ${Texts.report.perPoint}`]);
     }
     if (ctx.moscow && f.priority) out.push([Texts.compare.priority, priorityText(f.priority)]);
+    for (const x of attributeFigures(m, f.concept)) if (x.text) out.push([x.name, x.text + (x.warn ? ` ${x.warn}` : '')]);
     return out;
   }
+  /**
+   * Eigene Merkmale eines Konzepts: Zusammenfassung mit „*“ bei fehlenden Werten, Warnung bei
+   * überschrittener Grenze. @param {Matrix} m @param {MatrixConcept} c
+   */
+  const attributeFigures = (m, c) => m.settings.attributes.map((a, i) => {
+    const sum = Attributes.summarize(m, a, c);
+    const star = sum.missing > 0 && sum.text && a.type !== 'text' && a.type !== 'bool' && a.aggregate !== 'none';
+    return {
+      name: Attributes.label(a, i),
+      label: Texts.attributes.compareRow(Attributes.label(a, i), Attributes.aggregateLabel(a)),
+      text: sum.text + (star ? ' *' : ''),
+      warn: sum.warn ? `⚠ ${Attributes.limitText(a)}` : '',
+    };
+  });
+  /**
+   * Werte der eigenen Merkmale einer Ausprägung („0,6 kg · 42 dB · Spülmaschinenfest: Ja“).
+   * @param {Matrix} m @param {MatrixOption} o
+   */
+  const attributeValues = (m, o) => m.settings.attributes.map((a, i) => {
+    const text = Attributes.formatValue(a, o.values[a.id]);
+    if (!text) return '';
+    return a.type === 'bool' || a.type === 'text' ? `${Attributes.label(a, i)}: ${text}` : text;
+  }).filter(Boolean).join(' · ');
+  /** Beschreibung eines Merkmals für den Abschnitt „Eigene Merkmale“. @param {MatrixAttribute} a */
+  const attributeInfo = a => [
+    Texts.attributes.types[a.type] + (a.unit.trim() ? ` (${a.unit.trim()})` : ''),
+    `${Texts.attributes.aggregate}: ${Attributes.aggregateLabel(a)}`,
+    a.limit ? `⚠ ${Attributes.limitText(a)}` : '',
+    a.description.trim(),
+    a.source.trim() ? `${Texts.attributes.source}: ${a.source.trim()}` : '',
+  ].filter(Boolean).join(' · ');
   /** @param {Record<MatrixPriority | 'none', number>} counts */
   const priorityText = counts => [
     ...Model.PRIORITIES.filter(l => counts[l]).map(l => `${counts[l]} × ${Texts.moscow.levels[l].short}`),
@@ -94,11 +127,12 @@ export const Report = (() => {
     const r = Model.findOption(m, oid);
     return r ? (r.o.text.trim() || Texts.fallback.emptyOption(r.oi + 1)) : '?';
   };
-  /** Kennzahlen einer Ausprägung („18,00 € · NW 6 · M“). @param {ReturnType<typeof prepare>} ctx @param {MatrixOption} o */
-  const optionMetrics = (ctx, o) => [
+  /** Kennzahlen einer Ausprägung („18,00 € · NW 6 · M · 0,4 kg“). @param {ReturnType<typeof prepare>} ctx @param {Matrix} m @param {MatrixOption} o */
+  const optionMetrics = (ctx, m, o) => [
     ctx.costs && o.cost != null ? ctx.money(o.cost) : '',
     ctx.utility && o.score != null ? Texts.matrix.utilityShort(Util.formatNumber(o.score)) : '',
     ctx.moscow && o.priority ? Texts.moscow.levels[o.priority].short : '',
+    attributeValues(m, o),
   ].filter(Boolean).join(' · ');
   const dateText = (/** @type {Date} */ d) => new Intl.DateTimeFormat(Texts.meta.locale, { dateStyle: 'long' }).format(d);
 
@@ -203,6 +237,14 @@ footer { margin-top:40px; color:var(--muted); font-size:.78rem; }
       if (ctx.utility) out.push(figureRow(Texts.compare.utility(m.settings.utilityMax), f => (f.utility && f.utility.value != null ? { text: Util.formatNumber(f.utility.value) + (f.utility.missing ? ' *' : ''), best: f.utility.best } : null)));
       if (ctx.costs && ctx.utility) out.push(figureRow(Texts.compare.priceValue, f => (f.priceValue && f.priceValue.value != null ? { text: ctx.money(f.priceValue.value), best: f.priceValue.best } : null)));
       if (ctx.moscow) out.push(figureRow(Texts.compare.priority, f => (f.priority ? { text: priorityText(f.priority), best: false } : null)));
+      const attrs = new Map(ctx.rows.map(f => [f.concept.id, attributeFigures(m, f.concept)]));
+      m.settings.attributes.forEach((a, i) => {
+        const label = /** @type {ReturnType<typeof attributeFigures>} */ (attrs.get(ctx.rows[0].concept.id))[i].label;
+        out.push(`<tr><th>${esc(label)}</th>${ctx.rows.map(f => {
+          const x = /** @type {ReturnType<typeof attributeFigures>} */ (attrs.get(f.concept.id))[i];
+          return `<td class="num${x.text ? '' : ' none'}">${esc(x.text || '–')}${x.warn ? ` <span class="cond">${esc(x.warn)}</span>` : ''}</td>`;
+        }).join('')}</tr>`);
+      });
       out.push('</tbody></table></div>');
     }
 
@@ -221,7 +263,7 @@ footer { margin-top:40px; color:var(--muted); font-size:.78rem; }
         for (const { p, pi } of g.items) {
           const cells = p.options.map((o, oi) => {
             const by = shown.filter(c => c.selections[p.id] === o.id);
-            const metrics = optionMetrics(ctx, o);
+            const metrics = optionMetrics(ctx, m, o);
             return `<td${by.length ? ` title="${esc(Texts.report.chosenBy(by.map(Model.nameOrUnnamed).join(', ')))}"` : ''}>${by.map(dot).join('')}${esc(o.text.trim() || Texts.fallback.emptyOption(oi + 1))}`
               + `${metrics ? `<span class="metrics">${esc(metrics)}</span>` : ''}${o.note.trim() ? `<span class="note">${esc(o.note)}</span>` : ''}</td>`;
           });
@@ -230,6 +272,10 @@ footer { margin-top:40px; color:var(--muted); font-size:.78rem; }
         }
       }
       out.push('</tbody></table></div>');
+    }
+
+    if (parts.matrix && m.settings.attributes.length) {
+      out.push(`<h2>${esc(Texts.attributes.heading)}</h2><dl>${m.settings.attributes.map((a, i) => `<dt>${esc(Attributes.label(a, i))}</dt><dd>${esc(attributeInfo(a))}</dd>`).join('')}</dl>`);
     }
 
     if (parts.constraints && m.constraints.length) {
@@ -337,6 +383,10 @@ footer { margin-top:40px; color:var(--muted); font-size:.78rem; }
       if (ctx.utility) body.push([Texts.compare.utility(m.settings.utilityMax), ...ctx.rows.map(f => (f.utility && f.utility.value != null ? best(Util.formatNumber(f.utility.value) + (f.utility.missing ? ' *' : ''), f.utility.best) : '–'))]);
       if (ctx.costs && ctx.utility) body.push([Texts.compare.priceValue, ...ctx.rows.map(f => (f.priceValue && f.priceValue.value != null ? best(ctx.money(f.priceValue.value), f.priceValue.best) : '–'))]);
       if (ctx.moscow) body.push([Texts.compare.priority, ...ctx.rows.map(f => (f.priority ? priorityText(f.priority) : '–'))]);
+      const attrs = ctx.rows.map(f => attributeFigures(m, f.concept));
+      m.settings.attributes.forEach((a, i) => {
+        body.push([attrs[0][i].label, ...attrs.map(list => (list[i].text ? `${list[i].text}${list[i].warn ? ` ${list[i].warn}` : ''}` : '–'))]);
+      });
       table([Texts.compare.parameter, ...ctx.rows.map(f => Model.nameOrUnnamed(f.concept))], body);
     }
     if (parts.matrix && m.parameters.length) {
@@ -351,7 +401,7 @@ footer { margin-top:40px; color:var(--muted); font-size:.78rem; }
           const text = o.text.trim() || Texts.fallback.emptyOption(oi + 1);
           if (o.note.trim()) notes.push(`- **${mdText(text)}** (${mdText(Model.parameterLabel(p, pi))}): ${mdText(o.note).replace(/\r?\n/g, ' ')}`);
           const by = shown.filter(c => c.selections[p.id] === o.id).map(Model.nameOrUnnamed);
-          const metrics = optionMetrics(ctx, o);
+          const metrics = optionMetrics(ctx, m, o);
           return [text, metrics && `(${metrics})`, by.length && `– ${Texts.report.chosenBy(by.join(', '))}`].filter(Boolean).join(' ');
         });
         while (cells.length < cols) cells.push('');
@@ -359,6 +409,9 @@ footer { margin-top:40px; color:var(--muted); font-size:.78rem; }
       }));
       table([Texts.compare.parameter, ...Array.from({ length: cols }, (_, i) => `${Texts.report.option} ${i + 1}`)], body);
       if (notes.length) out.push(`### ${Texts.report.sections.notes}`, '', ...notes, '');
+    }
+    if (parts.matrix && m.settings.attributes.length) {
+      out.push(`## ${Texts.attributes.heading}`, '', ...m.settings.attributes.map((a, i) => `- **${mdText(Attributes.label(a, i))}:** ${mdText(attributeInfo(a)).replace(/\r?\n/g, ' ')}`), '');
     }
     if (parts.constraints && m.constraints.length) {
       out.push(`## ${Texts.report.sections.constraints}`, '');

@@ -3,7 +3,8 @@
  * Kategorie-Navigation über der Matrix.
  */
 import { Fragment, render as mount } from 'preact';
-import { useLayoutEffect, useState } from 'preact/hooks';
+import { useLayoutEffect } from 'preact/hooks';
+import { Attributes } from '../attributes.js';
 import { Consistency } from '../consistency.js';
 import { Evaluation } from '../evaluation.js';
 import { Model } from '../model.js';
@@ -14,10 +15,12 @@ import {
   toggleSelection,
 } from './actions.js';
 import { Icon, IconButton } from './components.jsx';
+import { OptionAttributes } from './attributes.jsx';
 import { ConstraintButton, ConstraintCount, conflictText, statusText } from './constraints.jsx';
 import { activeConcept, collapseKey, fieldProps, isCollapsed, money, prefs, setPendingFocus, state, useMatrix } from './core.js';
 import { restCounts } from './count.js';
 import { $, focusField, shownColor } from './dom.jsx';
+import { NumberField } from './fields.jsx';
 import { scheduleLines } from './lines.js';
 import { NoteButton, NoteField, NoteMark, showNote } from './notes.jsx';
 import { searchClass, searchResult } from './search.js';
@@ -225,6 +228,7 @@ function OptionEdit({ p, pi, o, oi, ctx }) {
           ) : null}
         </div>
       ) : null}
+      <OptionAttributes o={o} optLabel={optLabel} />
       {moscow ? <PriorityPicker p={p} o={o} optLabel={optLabel} /> : null}
     </div>
   );
@@ -306,6 +310,7 @@ function OptionPick({ p, o, oi, ctx, rest }) {
   const st = isActive ? null : status.get(o.id) || null;
   const cons = conflict.length ? conflictText(o.id, conflict) : (st ? statusText(st) : null);
   const metrics = optionMetricsText(o);
+  const attrs = Attributes.shortText(state.settings.attributes, o);
   const text = o.text.trim() || Texts.fallback.emptyOption(oi + 1);
   const cls = `opt-cell pick${isActive ? ' is-active' : ''}${o.text.trim() ? '' : ' is-empty'}`
     + `${state.settings.moscow && o.priority === 'wont' ? ' is-wont' : ''}${conflict.length ? ' is-conflict' : ''}`
@@ -327,6 +332,7 @@ function OptionPick({ p, o, oi, ctx, rest }) {
       <span class="opt-label">
         <span>{text}</span>
         {metrics || (state.settings.moscow && o.priority) ? <span class="opt-metrics-view"><PriorityBadge o={o} />{metrics}</span> : null}
+        {attrs ? <span class="opt-attrs-view">{attrs}</span> : null}
       </span>
       {o.note ? <NoteMark /> : null}
       {conflict.length ? <span class="cons-badge" aria-hidden="true">{Texts.cons.conflictBadge}</span> : null}
@@ -353,33 +359,6 @@ function optionMetricsText(o) {
 function weightPercent(p) {
   const share = Evaluation.weightShare(state, p);
   return share == null ? '–' : Util.formatPercent(share);
-}
-
-/**
- * Eingabefeld für Zahlen; speichert beim Tippen, formatiert beim Verlassen. Während der Eingabe
- * bleibt der getippte Text stehen (z. B. „1,“), auch wenn er noch keine gültige Zahl ist.
- * @param {{ value: number | null, label: string, placeholder?: string,
- *           apply: (n: number | null) => void, validate?: (n: number) => boolean }} props
- */
-function NumberField({ value, label, placeholder, apply, validate }) {
-  const [draft, setDraft] = useState(/** @type {string | null} */ (null));
-  const text = draft ?? Util.numberToInput(value);
-  const n = Util.parseNumber(text);
-  const bad = Number.isNaN(n) || (n != null && !!validate && !validate(n));
-  const field = fieldProps(v => {
-    const parsed = Util.parseNumber(v);
-    apply(Number.isNaN(parsed) ? null : parsed);
-  });
-  return (
-    <input
-      type="text" inputMode="decimal" class="num-input" value={text}
-      placeholder={placeholder} aria-label={label} title={label} aria-invalid={bad || undefined}
-      {...field}
-      onInput={e => { setDraft(/** @type {HTMLInputElement} */ (e.currentTarget).value); field.onInput(e); }}
-      onBlur={() => setDraft(null)}
-      onKeyDown={e => { if (e.key === 'Enter') /** @type {HTMLElement} */ (e.currentTarget).blur(); }}
-    />
-  );
 }
 
 // ---------- Kategorien ----------

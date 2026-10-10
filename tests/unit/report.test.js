@@ -33,7 +33,7 @@ test('HTML-Bericht: Kopf, Reihenfolge der Abschnitte, Konzepte mit Status, Kennz
   assert.match(html, /<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"[^>]*role="img"/);
   assert.match(html, /Muskelkraft verträgt sich nicht/); // Grund zum Status
   assert.match(html, /Heizt in ca\. 30 s auf/); // Notiz einer Ausprägung
-  assert.match(html, /Erstellt mit der App „Morphologische Matrix“ · Datenformat 6/);
+  assert.match(html, /Erstellt mit der App „Morphologische Matrix“ · Datenformat 7/);
 });
 
 test('HTML-Bericht: Teile abwählbar, verworfene Konzepte weglassen, Inhalte maskiert', () => {
@@ -60,7 +60,7 @@ test('Markdown-Bericht: Überschriften, Tabellen, Notizen und maskierte Sonderze
   assert.match(md, /^Teuer \\\| aber \\\*gut\\\*$/m);
   assert.match(md, /^\| Parameter \| Kompakt-Espresso \| Outdoor \| Smart Home \|$/m);
   assert.match(md, /^\| Gesamtkosten \| \*\*54,00\s€\*\* \| 57,00\s€ \| 133,00\s€ \|$/m);
-  assert.match(md, /^\| Brühsystem › Wassererwärmung \| Durchlauferhitzer \(18,00\s€ · NW 6\) \|/m);
+  assert.match(md, /^\| Brühsystem › Wassererwärmung \| Durchlauferhitzer \(18,00\s€ · NW 6 · 0,4 kg\) \|/m);
   assert.match(md, /^- \*\*Thermoblock\*\* \(Wassererwärmung\): Heizt in ca\. 30 s auf/m);
   assert.match(md, /^\| Induktion \(Wassererwärmung\) \| Muskelkraft \(Energieversorgung\) \| ✕ Unverträglich \|/m);
   assert.doesNotMatch(md, /<svg/);

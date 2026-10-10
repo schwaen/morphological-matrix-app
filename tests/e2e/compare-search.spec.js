@@ -6,7 +6,7 @@ const headers = page => page.locator('#compareTable thead th').evaluateAll(els =
   th.querySelector('.status-chip')?.remove();
   return th.textContent.trim();
 }));
-const paramRows = page => page.locator('#compareTable tbody tr:not(.cat-row):not(.note-row):not(.cons-row) th');
+const paramRows = page => page.locator('#compareTable tbody tr:not(.cat-row):not(.note-row):not(.cons-row):not(.attr-head-row):not(.attr-row) th');
 
 test('Konzeptvergleich: nur Unterschiede zeigen', async ({ page }) => {
   await expect(paramRows(page)).toHaveCount(6);
@@ -33,10 +33,13 @@ test('Konzeptvergleich: nur Unterschiede zeigen', async ({ page }) => {
 });
 
 test('Konzeptvergleich: Sortierung nach Kennzahlen mit Rang', async ({ page }) => {
-  await expect(page.locator('#compareSort')).toHaveCount(0); // ohne Bewertung keine Sortierung
+  // Ohne Bewertung nur nach den eigenen Merkmalen des Beispiels
+  await expect(page.locator('#compareSort option')).toHaveText([
+    'Reihenfolge der Liste', 'Gewicht (niedrigstes zuerst)', 'Gewicht (höchstes zuerst)', 'Lautstärke (niedrigstes zuerst)', 'Lautstärke (höchstes zuerst)']);
   await setEvaluation(page, { costs: true, utility: true });
   await expect(page.locator('#compareSort option')).toHaveText([
-    'Reihenfolge der Liste', 'Nutzwert (höchster zuerst)', 'Gesamtkosten (niedrigste zuerst)', 'Preis-Leistung (beste zuerst)']);
+    'Reihenfolge der Liste', 'Nutzwert (höchster zuerst)', 'Gesamtkosten (niedrigste zuerst)', 'Preis-Leistung (beste zuerst)',
+    'Gewicht (niedrigstes zuerst)', 'Gewicht (höchstes zuerst)', 'Lautstärke (niedrigstes zuerst)', 'Lautstärke (höchstes zuerst)']);
   expect(await headers(page)).toEqual(['Kompakt-Espresso', 'Outdoor', 'Smart Home']);
 
   await page.selectOption('#compareSort', 'utility');
@@ -65,11 +68,11 @@ test('Suche: Treffer markieren, springen, eingeklappte Kategorien öffnen, Esc l
   await page.keyboard.press('Enter');
   await expect(page.locator('#searchCount')).toHaveText('1 / 2');
   await expect(page.locator('.cat-band').first()).not.toHaveClass(/is-collapsed/);
-  await expect(page.locator('.opt-cell.is-current-match')).toHaveText('Vibrationspumpe');
+  await expect(page.locator('.opt-cell.is-current-match .opt-label > span').first()).toHaveText('Vibrationspumpe');
   await expect(page.locator('.opt-cell.is-match')).toHaveCount(2);
   await expect(page.locator('.param-cell.is-dim')).toHaveCount(2); // übrige Parameter der Kategorie
   await page.keyboard.press('Enter');
-  await expect(page.locator('.opt-cell.is-current-match')).toHaveText('Rotationspumpe');
+  await expect(page.locator('.opt-cell.is-current-match .opt-label > span').first()).toHaveText('Rotationspumpe');
   await page.keyboard.press('Shift+Enter');
   await expect(page.locator('#searchCount')).toHaveText('1 / 2');
 
