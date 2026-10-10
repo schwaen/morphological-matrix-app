@@ -159,6 +159,16 @@
   <div class="menu-list start-menu" id="startMenu" role="menu" data-i18n-attr="aria-label:ui.startTitle" hidden></div>
   <div class="menu-list tab-menu" id="tabMenu" role="menu" data-i18n-attr="aria-label:tabs.add" hidden></div>
   <div class="note-pop" id="notePop" role="tooltip" hidden></div>
+  <dialog class="dialog ls-dialog" id="solutionsDialog" aria-labelledby="solutionsHeading">
+    <div class="dialog-head">
+      <h2 id="solutionsHeading" data-i18n="solutions.heading"></h2>
+      <button type="button" class="icon-btn" id="solutionsClose" data-i18n-attr="aria-label:ui.close;title:ui.close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div id="solutionsBody"></div>
+  </dialog>
+
   <dialog class="dialog attr-dialog" id="attrDialog" aria-labelledby="attrHeading">
     <div class="dialog-head">
       <h2 id="attrHeading" data-i18n="attributes.tableHeading"></h2>

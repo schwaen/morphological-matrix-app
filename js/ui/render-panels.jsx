@@ -16,6 +16,7 @@ import { consistentCount, restCounts } from './count.js';
 import { $, shownColor } from './dom.jsx';
 import { hoverConcept } from './lines.js';
 import { categoryColor } from './render-matrix.jsx';
+import { openSolutions } from './solutions.jsx';
 import { StatusChip } from './status.jsx';
 import { Util } from '../util.js';
 
@@ -61,6 +62,8 @@ function Stats() {
       <Stat value={Util.formatInteger(P)} label={Texts.stats.parameters} />
       <Stat value={Util.formatInteger(O)} label={Texts.stats.options(O)} />
       <Stat value={count.text} label={Texts.stats.combinations(combos === 1n)} title={count.title}>
+        {/* Spaltenrichtung umgekehrt: zuerst genannt steht ganz unten */}
+        {P ? <button type="button" class="stat-link" id="solutionsLink" title={Texts.solutions.openTitle} onClick={openSolutions}>{Texts.solutions.open}</button> : null}
         {state.constraints.some(x => x.type === 'excluded') ? <ConsistentCount /> : null}
       </Stat>
       <Stat value={Util.formatInteger(C)} label={Texts.stats.concepts(C)}>

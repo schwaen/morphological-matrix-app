@@ -1,0 +1,70 @@
+/* Lösungsraum: Dialog mit allen widerspruchsfreien Kombinationen */
+@layer areas {
+  .stat-link {
+    align-self: flex-start; margin-top: 2px; padding: 0; border: 0; background: none;
+    color: var(--accent); font: inherit; font-size: .75rem; font-weight: 650; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .dialog.ls-dialog { width: min(1460px, calc(100vw - 24px)); max-width: none; }
+  .ls-bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 8px 0; font-size: .85rem; }
+  .ls-lbl { color: var(--muted); font-size: .8rem; font-weight: 400; }
+  .ls-chip {
+    display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 10px;
+    border: 1px solid var(--accent); border-radius: 999px; background: var(--accent-soft); font-size: .8rem;
+  }
+  .ls-chip b { font-weight: 650; }
+  .ls-chip button { padding: 0 5px; border: 0; background: none; color: var(--muted); font-size: .95rem; line-height: 1; cursor: pointer; }
+  .ls-chip button:hover { color: var(--danger); }
+  .ls-pick, .ls-add, .ls-sort select, .ls-num input {
+    padding: 4px 8px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface);
+    color: var(--text); font: inherit; font-size: .82rem;
+  }
+  .ls-pick, .ls-add { border-style: dashed; border-radius: 999px; color: var(--muted); cursor: pointer; }
+  .ls-add:hover, .ls-pick:hover { color: var(--text); border-color: var(--accent); }
+  .ls-num { display: inline-flex; align-items: center; gap: 6px; }
+  .ls-num input { width: 84px; text-align: right; }
+  .ls-count { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 4px 0 8px; font-size: .84rem; color: var(--muted); }
+  .ls-count b { color: var(--text); }
+  .ls-sort { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+  .ls-pending { color: var(--accent); }
+  .ls-warn { margin: 0 0 8px; padding: 6px 10px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-size: .82rem; }
+  .ls-wrap { overflow: auto; max-height: min(58vh, 620px); border: 1px solid var(--border); border-radius: 10px; }
+  .ls-wrap[aria-busy] .ls-table { opacity: .6; }
+  .ls-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+  .ls-table th, .ls-table td { padding: 5px 7px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+  .ls-table thead th:not(.num) { max-width: 136px; overflow: hidden; text-overflow: ellipsis; }
+  .ls-table thead th {
+    position: sticky; top: 0; z-index: 1; background: var(--surface-2);
+    font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); vertical-align: bottom;
+  }
+  .ls-table thead th.sorted { color: var(--accent); }
+  .ls-cat { display: block; height: 3px; margin-bottom: 4px; border-radius: 2px; }
+  .ls-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .ls-table td.rank { width: 1%; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ls-cell { padding: 2px 3px !important; }
+  .ls-cell button {
+    width: 100%; max-width: 128px; padding: 3px 4px; border: 1px solid transparent; border-radius: 5px; background: none;
+    color: inherit; font: inherit; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ls-cell button:hover { border-color: var(--accent); }
+  .ls-cell.same button { color: var(--muted); opacity: .6; }
+  .ls-cell.is-fixed button { background: var(--accent-soft); opacity: 1; }
+  .ls-table tbody tr:hover td { background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+  .ls-warn-cell { color: var(--warn); font-weight: 650; }
+  /* Übernehmen-Spalte bleibt am rechten Rand sichtbar, auch wenn die Tabelle seitlich scrollt */
+  .ls-table td.act { position: sticky; right: 0; width: 1%; background: var(--surface); }
+  .ls-table thead th:last-child { position: sticky; right: 0; z-index: 2; }
+  .ls-take {
+    padding: 2px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface);
+    color: var(--text); font: inherit; font-size: .76rem; cursor: pointer; opacity: 0;
+  }
+  .ls-table tbody tr:hover .ls-take, .ls-take:focus-visible { opacity: 1; border-color: var(--accent); color: var(--accent); font-weight: 650; }
+  .ls-exists { display: inline-flex; align-items: center; gap: 5px; font-size: .76rem; color: var(--muted); }
+  .ls-exists i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+  .ls-empty { margin: 0; padding: 16px; color: var(--muted); font-size: .85rem; }
+  .ls-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; padding-top: 10px; font-size: .82rem; color: var(--muted); }
+}
+@layer areas {
+  /* Ohne Maus (Touch) ist „＋ Konzept“ immer sichtbar */
+  @media (hover: none) { .ls-take { opacity: 1; } }
+}

@@ -18,6 +18,7 @@ import {
 import { $ } from './dom.jsx';
 import { CompareChart } from './render-chart.jsx';
 import { AttributesEditor } from './attributes.jsx';
+import { openSolutions } from './solutions.jsx';
 import { CompareScatter } from './render-scatter.jsx';
 import { compareContent, CompareTable, CompareTools } from './render-panels.jsx';
 
@@ -69,7 +70,11 @@ function BelowMatrix() {
             <Icon name="ban" /><span>{Texts.ui.constraintsButton}</span>
           </button>
         </>
-      ) : null}
+      ) : (
+        <button type="button" class="btn btn-dashed" id="solutionsBtn" title={Texts.solutions.openTitle} onClick={openSolutions}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10" /></svg><span>{Texts.solutions.button}</span>
+        </button>
+      )}
       <p class="hint" id="hint">
         {editing ? Texts.hint.edit : (c ? Texts.hint.select(Model.nameOrUnnamed(c)) : Texts.hint.noConcept)}
         {/* Restzahlen gibt es nur mit unverträglichen Paaren (siehe restCounts) */}
