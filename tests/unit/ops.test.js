@@ -11,7 +11,7 @@ function simple() {
   const m = Model.blankState();
   m.parameters = ['A', 'B', 'C'].map(n => ({
     id: n, name: n, weight: null, categoryId: null,
-    options: [1, 2, 3].map(i => ({ id: `${n}${i}`, text: `${n.toLowerCase()}${i}`, cost: null, score: null, priority: null })),
+    options: [1, 2, 3].map(i => ({ id: `${n}${i}`, text: `${n.toLowerCase()}${i}`, cost: null, scores: {}, priority: null })),
   }));
   m.concepts = [
     { id: 'k1', name: 'Eins', color: '#000000', selections: { A: 'A1', B: 'B2' } },
@@ -154,14 +154,14 @@ test('Konzepte: zufällig belegen (ohne leere Parameter) und leeren', () => {
 
 test('Nutzwert-Skala: mit und ohne Umrechnung', () => {
   const m = simple();
-  m.parameters[0].options[0].score = 7;
-  m.parameters[0].options[1].score = 3.33;
+  m.parameters[0].options[0].scores.nw = 7;
+  m.parameters[0].options[1].scores.nw = 3.33;
   Ops.changeScale(m, 5, false);
   assert.equal(m.settings.utilityMax, 5);
-  assert.equal(m.parameters[0].options[0].score, 7);
+  assert.equal(m.parameters[0].options[0].scores.nw, 7);
   Ops.changeScale(m, 100, true);
   assert.equal(m.settings.utilityMax, 100);
-  assert.deepEqual(plain(m.parameters[0].options.map(o => o.score)), [140, 66.6, null]);
+  assert.deepEqual(plain(m.parameters[0].options.map(o => o.scores.nw ?? null)), [140, 66.6, null]);
 });
 
 test('addCategory und addConcept hängen an; neues Konzept wird aktiv', () => {

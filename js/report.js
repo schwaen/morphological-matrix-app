@@ -94,12 +94,39 @@ export const Report = (() => {
     const r = Model.findOption(m, oid);
     return r ? (r.o.text.trim() || Texts.fallback.emptyOption(r.oi + 1)) : '?';
   };
-  /** Kennzahlen einer Ausprägung („18,00 € · NW 6 · M“). @param {ReturnType<typeof prepare>} ctx @param {MatrixOption} o */
-  const optionMetrics = (ctx, o) => [
-    ctx.costs && o.cost != null ? ctx.money(o.cost) : '',
-    ctx.utility && o.score != null ? Texts.matrix.utilityShort(Util.formatNumber(o.score)) : '',
-    ctx.moscow && o.priority ? Texts.moscow.levels[o.priority].short : '',
-  ].filter(Boolean).join(' · ');
+  /**
+   * Kennzahlen einer Ausprägung („18,00 € · NW 6 · M“); der Nutzwert ist bei mehreren Kriterien
+   * ihr gewichtetes Mittel. @param {ReturnType<typeof prepare>} ctx @param {Matrix} m @param {MatrixOption} o
+   */
+  const optionMetrics = (ctx, m, o) => {
+    const score = ctx.utility ? Evaluation.optionScore(m, o).value : null;
+    return [
+      ctx.costs && o.cost != null ? ctx.money(o.cost) : '',
+      score != null ? Texts.matrix.utilityShort(Util.formatNumber(score)) : '',
+      ctx.moscow && o.priority ? Texts.moscow.levels[o.priority].short : '',
+    ].filter(Boolean).join(' · ');
+  };
+  /**
+   * Zeilen „Nutzwert je Kriterium“ für den Vergleich (nur bei mehreren Kriterien).
+   * @param {Matrix} m @param {ReturnType<typeof prepare>} ctx
+   * @returns {Array<{ label: string, cell: (f: ConceptFigures) => { text: string, best: boolean } | null }>}
+   */
+  function criteriaRows(m, ctx) {
+    if (!ctx.utility || m.settings.criteria.length < 2) return [];
+    const per = new Map(ctx.rows.map(f => [f.concept.id, Evaluation.conceptCriteria(m, f.concept)]));
+    return Evaluation.criterionShares(m).map(({ c, share }, k) => {
+      const values = ctx.rows.map(f => /** @type {NonNullable<ReturnType<typeof per.get>>} */ (per.get(f.concept.id))[k].value).filter(v => v != null);
+      const top = values.length > 1 ? Math.max(.../** @type {number[]} */ (values)) : null;
+      return {
+        label: Texts.criteria.compareRow(Model.criterionLabel(c), Util.formatPercent(share)),
+        cell: f => {
+          const x = /** @type {NonNullable<ReturnType<typeof per.get>>} */ (per.get(f.concept.id))[k];
+          return x.value == null ? null : { text: Util.formatNumber(x.value) + (x.missing ? ' *' : ''), best: x.value === top };
+        },
+      };
+    });
+  }
+
   const dateText = (/** @type {Date} */ d) => new Intl.DateTimeFormat(Texts.meta.locale, { dateStyle: 'long' }).format(d);
 
   // ---------- HTML ----------
@@ -201,6 +228,7 @@ footer { margin-top:40px; color:var(--muted); font-size:.78rem; }
         `<tr><th>${esc(label)}</th>${ctx.rows.map(f => { const x = cell(f); return `<td class="num${x && x.best ? ' best' : ''}">${esc(x ? x.text : '–')}</td>`; }).join('')}</tr>`;
       if (ctx.costs) out.push(figureRow(Texts.compare.totalCost, f => (f.cost ? { text: ctx.money(f.cost.total) + (f.cost.missing ? ' *' : ''), best: f.cost.best } : null)));
       if (ctx.utility) out.push(figureRow(Texts.compare.utility(m.settings.utilityMax), f => (f.utility && f.utility.value != null ? { text: Util.formatNumber(f.utility.value) + (f.utility.missing ? ' *' : ''), best: f.utility.best } : null)));
+      for (const row of criteriaRows(m, ctx)) out.push(figureRow(row.label, f => row.cell(f)));
       if (ctx.costs && ctx.utility) out.push(figureRow(Texts.compare.priceValue, f => (f.priceValue && f.priceValue.value != null ? { text: ctx.money(f.priceValue.value), best: f.priceValue.best } : null)));
       if (ctx.moscow) out.push(figureRow(Texts.compare.priority, f => (f.priority ? { text: priorityText(f.priority), best: false } : null)));
       out.push('</tbody></table></div>');
@@ -221,7 +249,7 @@ footer { margin-top:40px; color:var(--muted); font-size:.78rem; }
         for (const { p, pi } of g.items) {
           const cells = p.options.map((o, oi) => {
             const by = shown.filter(c => c.selections[p.id] === o.id);
-            const metrics = optionMetrics(ctx, o);
+            const metrics = optionMetrics(ctx, m, o);
             return `<td${by.length ? ` title="${esc(Texts.report.chosenBy(by.map(Model.nameOrUnnamed).join(', ')))}"` : ''}>${by.map(dot).join('')}${esc(o.text.trim() || Texts.fallback.emptyOption(oi + 1))}`
               + `${metrics ? `<span class="metrics">${esc(metrics)}</span>` : ''}${o.note.trim() ? `<span class="note">${esc(o.note)}</span>` : ''}</td>`;
           });
@@ -335,6 +363,7 @@ footer { margin-top:40px; color:var(--muted); font-size:.78rem; }
       const best = (/** @type {string} */ s, /** @type {boolean} */ b) => (b ? `**${s}**` : s);
       if (ctx.costs) body.push([Texts.compare.totalCost, ...ctx.rows.map(f => (f.cost ? best(ctx.money(f.cost.total) + (f.cost.missing ? ' *' : ''), f.cost.best) : '–'))]);
       if (ctx.utility) body.push([Texts.compare.utility(m.settings.utilityMax), ...ctx.rows.map(f => (f.utility && f.utility.value != null ? best(Util.formatNumber(f.utility.value) + (f.utility.missing ? ' *' : ''), f.utility.best) : '–'))]);
+      for (const row of criteriaRows(m, ctx)) body.push([row.label, ...ctx.rows.map(f => { const x = row.cell(f); return x ? best(x.text, x.best) : '–'; })]);
       if (ctx.costs && ctx.utility) body.push([Texts.compare.priceValue, ...ctx.rows.map(f => (f.priceValue && f.priceValue.value != null ? best(ctx.money(f.priceValue.value), f.priceValue.best) : '–'))]);
       if (ctx.moscow) body.push([Texts.compare.priority, ...ctx.rows.map(f => (f.priority ? priorityText(f.priority) : '–'))]);
       table([Texts.compare.parameter, ...ctx.rows.map(f => Model.nameOrUnnamed(f.concept))], body);
@@ -351,7 +380,7 @@ footer { margin-top:40px; color:var(--muted); font-size:.78rem; }
           const text = o.text.trim() || Texts.fallback.emptyOption(oi + 1);
           if (o.note.trim()) notes.push(`- **${mdText(text)}** (${mdText(Model.parameterLabel(p, pi))}): ${mdText(o.note).replace(/\r?\n/g, ' ')}`);
           const by = shown.filter(c => c.selections[p.id] === o.id).map(Model.nameOrUnnamed);
-          const metrics = optionMetrics(ctx, o);
+          const metrics = optionMetrics(ctx, m, o);
           return [text, metrics && `(${metrics})`, by.length && `– ${Texts.report.chosenBy(by.join(', '))}`].filter(Boolean).join(' ');
         });
         while (cells.length < cols) cells.push('');

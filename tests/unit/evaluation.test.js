@@ -105,7 +105,7 @@ function randomMatrix(rand) {
     weight: rand() < 0.3 ? null : Math.round(rand() * 5),
     options: Array.from({ length: 1 + Math.floor(rand() * 4) }, (_, j) => ({
       id: `p${i}o${j}`, text: `O${j}`,
-      cost: Math.round(rand() * 100), score: Math.round(rand() * 10),
+      cost: Math.round(rand() * 100), scores: { nw: Math.round(rand() * 10) },
     })),
   }));
   return m;
@@ -147,8 +147,8 @@ test('Beste Preis-Leistung ist auf 300 Zufallsmatrizen optimal (Dinkelbach vs. D
 test('Gleichstand: höchster Nutzwert wählt die günstigere Ausprägung', () => {
   const m = example();
   const p = m.parameters[0];
-  p.options[0].score = 9; p.options[0].cost = 50;
-  p.options[3].score = 9; p.options[3].cost = 40;
+  p.options[0].scores.nw = 9; p.options[0].cost = 50;
+  p.options[3].scores.nw = 9; p.options[3].cost = 40;
   const { selections } = Evaluation.GENERATORS['max-utility'].build(m);
   assert.equal(selections[p.id], p.options[3].id);
 });
@@ -200,8 +200,8 @@ test('MoSCoW-Pfade: Gleichstand – MVP günstigste, Standard/Premium höchster 
   Object.assign(m.settings, { moscow: true, costs: true, utility: true });
   const p = m.parameters[0];
   p.options.forEach(o => { o.priority = null; });
-  p.options[0].priority = 'must'; p.options[0].cost = 30; p.options[0].score = 9;
-  p.options[1].priority = 'must'; p.options[1].cost = 10; p.options[1].score = 2;
+  p.options[0].priority = 'must'; p.options[0].cost = 30; p.options[0].scores.nw = 9;
+  p.options[1].priority = 'must'; p.options[1].cost = 10; p.options[1].scores.nw = 2;
   assert.equal(Evaluation.GENERATORS['moscow-must'].build(m).selections[p.id], p.options[1].id);
   p.options[0].priority = 'should'; p.options[1].priority = 'should';
   assert.equal(Evaluation.GENERATORS['moscow-should'].build(m).selections[p.id], p.options[0].id);
@@ -290,14 +290,14 @@ test('Beste Preis-Leistung: Fehlerfälle', () => {
   assert.equal(build(noWeight).error, E.zeroWeights);
   // Alle Nutzwerte 0
   const noScore = example();
-  for (const p of noScore.parameters) for (const o of p.options) o.score = 0;
+  for (const p of noScore.parameters) for (const o of p.options) o.scores.nw = 0;
   assert.equal(build(noScore).error, E.allScoresZero);
 });
 
 test('Preis-Leistung eines Konzepts mit Nutzwert 0 ist nicht berechenbar', () => {
   const m = example();
   const c = m.concepts[0];
-  for (const p of m.parameters) for (const o of p.options) o.score = 0;
+  for (const p of m.parameters) for (const o of p.options) o.scores.nw = 0;
   assert.deepEqual(plain(Evaluation.priceValue(m, c)), { value: null, reason: Texts.evaluation.zeroUtility });
 });
 
@@ -334,4 +334,52 @@ test('Pareto-Front: übertroffene, gleichwertige und unvollständig bewertete Ko
   // Mehrere übertreffen: das mit dem höchsten Nutzwert, bei Gleichstand das günstigere
   assert.equal(p.get('teuer').dominatedBy.id, 'premium');
   assert.equal(p.has('ohne'), false); // ohne Nutzwert nicht darstellbar
+});
+
+/** Beispiel mit vier Kriterien (Geschmack 35, Komfort 25, Nachhaltigkeit 20, Wartung 20). */
+function withCriteria() {
+  const m = example();
+  m.settings.criteria = [
+    { id: 'g', name: 'Geschmack', weight: 35 }, { id: 'k', name: 'Komfort', weight: 25 },
+    { id: 'n', name: 'Nachhaltigkeit', weight: 20 }, { id: 'w', name: 'Wartung', weight: 20 },
+  ];
+  const values = [[6, 8, 6, 7], [7, 5, 4, 5], [8, 8, 7, 7], [9, 9, 6, 6]];
+  for (const p of m.parameters) {
+    p.options.forEach((o, i) => { const v = values[i % values.length]; o.scores = { g: v[0], k: v[1], n: v[2], w: v[3] }; });
+  }
+  return m;
+}
+
+test('Kriterien: Nutzwert einer Ausprägung ist das gewichtete Mittel; teilweise bewertet zählt fehlend als 0', () => {
+  const m = withCriteria();
+  const o = m.parameters[0].options[2]; // 8, 8, 7, 7
+  assert.equal(round(Evaluation.optionScore(m, o).value), 7.6);
+  assert.equal(Evaluation.optionScore(m, o).complete, true);
+  o.scores = { g: 7, w: 5 };
+  assert.deepEqual(plain({ ...Evaluation.optionScore(m, o), value: round(Evaluation.optionScore(m, o).value) }), { value: 3.45, rated: 2, total: 4, complete: false });
+  o.scores = {};
+  assert.equal(Evaluation.optionScore(m, o).value, null);
+  // Kriterium mit Gewicht 0 muss nicht bewertet sein
+  m.settings.criteria[3].weight = 0;
+  o.scores = { g: 7, k: 5, n: 4 };
+  assert.equal(Evaluation.optionScore(m, o).complete, true);
+  // Alle Gewichte 0: alle Kriterien zählen gleich
+  m.settings.criteria.forEach(c => { c.weight = 0; });
+  assert.deepEqual(plain(Evaluation.criterionShares(m).map(x => x.share)), [0.25, 0.25, 0.25, 0.25]);
+});
+
+test('Kriterien: Gesamtnutzwert = gewichtete Summe der Werte je Kriterium; Generatoren bleiben exakt', () => {
+  const m = withCriteria();
+  for (const c of m.concepts) {
+    const total = Evaluation.conceptUtility(m, c).value;
+    const parts = Evaluation.conceptCriteria(m, c);
+    assert.equal(round(parts.reduce((s, x) => s + x.share * x.value, 0), 9), round(total, 9));
+  }
+  // „Höchster Nutzwert“ wählt je Parameter die Ausprägung mit dem höchsten gewichteten Mittel
+  const r = Evaluation.GENERATORS['max-utility'].build({ ...m, constraints: [] });
+  for (const p of m.parameters) {
+    const best = Math.max(...p.options.map(o => Evaluation.scoreOf(m, o)));
+    const chosen = p.options.find(o => o.id === r.selections[p.id]);
+    assert.equal(Evaluation.scoreOf(m, chosen), best, p.name);
+  }
 });

@@ -209,7 +209,7 @@ export function changeSetting(key, value) {
 export function changeScale(max) {
   const oldMax = state.settings.utilityMax;
   if (max === oldMax) return;
-  const hasScores = state.parameters.some(p => p.options.some(o => o.score != null));
+  const hasScores = state.parameters.some(p => p.options.some(o => Object.keys(o.scores).length > 0));
   const rescale = hasScores && window.confirm(Texts.prompt.rescale(oldMax, max));
   mutate(m => Ops.changeScale(m, max, rescale));
 }

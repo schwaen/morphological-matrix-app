@@ -36,7 +36,7 @@ export const Model = (() => {
    * Beschreibung: docs/DATENFORMAT.md. Bei inkompatiblen Änderungen erhöhen und in
    * MIGRATIONS eine Umwandlung von der Vorgängerversion ergänzen.
    */
-  const SCHEMA_VERSION = 6;
+  const SCHEMA_VERSION = 7;
 
   /**
    * Umwandlungen von Version n auf n + 1. Sie erhalten die Rohdaten und liefern Rohdaten;
@@ -65,6 +65,23 @@ export const Model = (() => {
     // 5 → 6: Status je Konzept (`status`, `statusNote`). Keine Umwandlung nötig (fehlt der
     // Status, gilt „Entwurf“) – die neue Version verhindert, dass ältere App-Versionen ihn verwerfen.
     5: data => data,
+    // 6 → 7: Nutzwert nach Kriterien. Der bisherige Wert `score` je Ausprägung wird zum Wert des
+    // einzigen Kriteriums „Nutzwert“ (`settings.criteria`, `scores` je Ausprägung).
+    6: data => ({
+      ...data,
+      settings: { ...(data.settings || {}), criteria: [{ id: DEFAULT_CRITERION, name: '', weight: 100 }] },
+      parameters: data.parameters.map(/** @param {any} p */ p => (p && Array.isArray(p.options)
+        ? {
+          ...p,
+          options: p.options.map(/** @param {any} o */ o => {
+            if (!o || typeof o !== 'object') return o;
+            const { score, ...rest } = o;
+            const n = num(score);
+            return { ...rest, scores: n == null ? {} : { [DEFAULT_CRITERION]: n } };
+          }),
+        }
+        : p)),
+    }),
   };
 
   /**
@@ -85,14 +102,38 @@ export const Model = (() => {
     return result;
   }
 
+  /** ID des Kriteriums „Nutzwert“ bei einer neuen bzw. aus Version 6 übernommenen Matrix. */
+  const DEFAULT_CRITERION = 'nw';
+
+  /** @returns {MatrixCriterion} */
+  const defaultCriterion = () => ({ id: DEFAULT_CRITERION, name: '', weight: 100 });
+
+  /**
+   * Kriterien prüfen: eindeutige IDs, Gewicht ≥ 0 (sonst 100), mindestens eines.
+   * @param {unknown} raw @returns {MatrixCriterion[]}
+   */
+  function normalizeCriteria(raw) {
+    const seen = new Set();
+    /** @type {MatrixCriterion[]} */
+    const list = [];
+    for (const c of Array.isArray(raw) ? raw : []) {
+      let cid = str(c && c.id);
+      if (!cid || seen.has(cid)) cid = uid();
+      seen.add(cid);
+      const w = num(c && c.weight);
+      list.push({ id: cid, name: str(c && c.name), weight: w != null && w >= 0 ? w : 100 });
+    }
+    return list.length ? list : [defaultCriterion()];
+  }
+
   /** @returns {MatrixSettings} */
   function defaultSettings() {
-    return { costs: false, utility: false, currency: 'EUR', utilityMax: 10, moscow: false };
+    return { costs: false, utility: false, currency: 'EUR', utilityMax: 10, moscow: false, criteria: [defaultCriterion()] };
   }
 
   /** @returns {MatrixOption} */
   function newOption() {
-    return { id: uid(), text: '', cost: null, score: null, priority: null, note: '' };
+    return { id: uid(), text: '', cost: null, scores: {}, priority: null, note: '' };
   }
 
   /** @param {string | null} [categoryId] @returns {MatrixParameter} */
@@ -163,6 +204,17 @@ export const Model = (() => {
     }
     data = migrate(data);
     // Rohdaten (any) werden hier geprüft und in typisierte Objekte überführt
+    const criteria = normalizeCriteria(data.settings && data.settings.criteria);
+    /** Werte je bekanntem Kriterium. @param {any} raw @returns {Record<string, number>} */
+    const scoresOf = raw => {
+      /** @type {Record<string, number>} */
+      const out = {};
+      for (const c of criteria) {
+        const n = num(raw && raw[c.id]);
+        if (n != null) out[c.id] = n;
+      }
+      return out;
+    };
     const seen = new Set();
     /** @param {unknown} v */
     const id = v => {
@@ -182,7 +234,7 @@ export const Model = (() => {
         categoryId: str(p && p.categoryId) || null,
         options: (Array.isArray(p && p.options) ? p.options : []).map(/** @param {any} o */ o =>
           ({
-            id: id(o && o.id), text: str(o && o.text), cost: num(o && o.cost), score: num(o && o.score),
+            id: id(o && o.id), text: str(o && o.text), cost: num(o && o.cost), scores: scoresOf(o && o.scores),
             priority: PRIORITIES.includes(o && o.priority) ? o.priority : null,
             note: str(o && o.note),
           })),
@@ -204,6 +256,7 @@ export const Model = (() => {
       currency: CURRENCIES.includes(src.currency) ? src.currency : 'EUR',
       utilityMax: SCALES.includes(src.utilityMax) ? src.utilityMax : 10,
       moscow: src.moscow === true,
+      criteria,
     };
     /** @type {MatrixConcept[]} */
     const concepts = (Array.isArray(data.concepts) ? data.concepts : []).map(/** @param {any} c @param {number} i */ (c, i) => {
@@ -398,6 +451,8 @@ export const Model = (() => {
   const categoryLabel = k => (k ? k.name || Texts.fallback.unnamed : Texts.fallback.noCategory);
   /** @param {{ name: string } | null | undefined} x */
   const nameOrUnnamed = x => (x && x.name) || Texts.fallback.unnamed;
+  /** Name eines Kriteriums (leer = „Nutzwert“). @param {MatrixCriterion} c */
+  const criterionLabel = c => c.name.trim() || Texts.fallback.criterion;
 
   return {
     COLORS, COLORS_DARK, CATEGORY_COLORS, CURRENCIES, SCALES, PRIORITIES, CONCEPT_STATUSES, NO_CATEGORY, SCHEMA_VERSION, migrate,
@@ -405,6 +460,6 @@ export const Model = (() => {
     blankState, normalize, sortedByCategory, resort,
     categoryById, categoryGroups, canMoveParameter, selectedOption, optionText, sameSelections,
     differingParameters, search, optionIndex, findOption,
-    parameterLabel, categoryLabel, nameOrUnnamed,
+    parameterLabel, categoryLabel, nameOrUnnamed, criterionLabel, DEFAULT_CRITERION,
   };
 })();

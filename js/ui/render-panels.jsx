@@ -303,6 +303,34 @@ export function CompareTools({ setView }) {
 /** Klassen einer Kennzahl-Zelle: unvollständig und/oder bester Wert. @param {any} incomplete @param {any} best */
 const metricClass = (incomplete, best) => [incomplete ? 'incomplete' : '', best ? 'best' : ''].join(' ').trim() || undefined;
 
+/**
+ * Zeilen „Nutzwert je Kriterium“ für den Fuß des Vergleichs.
+ * @param {Matrix} m @param {ConceptFigures[]} report
+ */
+function criteriaRows(m, report) {
+  const per = report.map(f => Evaluation.conceptCriteria(m, f.concept));
+  const max = m.settings.utilityMax;
+  return m.settings.criteria.map((c, k) => {
+    const values = per.map(list => list[k].value);
+    const best = values.filter(v => v != null).length > 1 ? Math.max(.../** @type {number[]} */ (values.filter(v => v != null))) : null;
+    return (
+      <tr key={`crit:${c.id}`} class="crit-row">
+        <th scope="row">{Texts.criteria.compareRow(Model.criterionLabel(c), Util.formatPercent(per[0] ? per[0][k].share : 0))}</th>
+        {report.map(({ concept }, i) => {
+          const v = values[i];
+          const incomplete = per[i][k].missing > 0;
+          return (
+            <td key={concept.id} data-dropped={concept.status === 'dropped' || undefined} class={`${incomplete ? 'incomplete ' : ''}${v != null && v === best ? 'crit-best' : ''}`.trim() || undefined}>
+              {v == null ? '–' : Util.formatNumber(v) + (incomplete ? ' *' : '')}
+              {v == null ? null : <span class="crit-bar" aria-hidden="true"><i style={{ width: `${(v / max) * 100}%` }} /></span>}
+            </td>
+          );
+        })}
+      </tr>
+    );
+  });
+}
+
 /** Konzeptvergleich als Tabelle: Parameter als Zeilen, Konzepte als Spalten, Kennzahlen im Fuß. */
 export function CompareTable() {
   const m = useMatrix();
@@ -354,6 +382,8 @@ export function CompareTable() {
         {utility.value == null ? '–' : Util.formatNumber(utility.value) + (utility.missing ? ' *' : '')}
       </td>
     )),
+    // Mehrere Kriterien: Nutzwert aufgeschlüsselt (Wert mit Balken, bester je Kriterium hervorgehoben)
+    ...(m.settings.utility && m.settings.criteria.length > 1 ? criteriaRows(m, report) : []),
     row('value', (
       <th scope="row" title={Texts.compare.priceValueTitle}>
         {Texts.compare.priceValue}<small class="th-note">{Texts.compare.priceValueNote}</small>

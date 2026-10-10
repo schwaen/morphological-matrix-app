@@ -17,6 +17,7 @@ import {
 } from './core.js';
 import { $ } from './dom.jsx';
 import { CompareChart } from './render-chart.jsx';
+import { CriteriaEditor } from './criteria.jsx';
 import { CompareScatter } from './render-scatter.jsx';
 import { compareContent, CompareTable, CompareTools } from './render-panels.jsx';
 
@@ -232,6 +233,7 @@ function SettingsForm() {
             {Model.SCALES.map(n => <option key={n} value={String(n)}>{Texts.ui.scales[n]}</option>)}
           </select>
         </label>
+        {s.utility ? <CriteriaEditor /> : null}
       </div>
       <div class="setting">
         <label class="check setting-toggle">

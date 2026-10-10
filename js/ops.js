@@ -253,13 +253,28 @@ export const Ops = (() => {
     if (!rescale || max === oldMax) return;
     for (const p of m.parameters) {
       for (const o of p.options) {
-        if (o.score != null) o.score = Math.round((o.score / oldMax) * max * 100) / 100;
+        for (const [cid, s] of Object.entries(o.scores)) o.scores[cid] = Math.round((s / oldMax) * max * 100) / 100;
       }
     }
   }
 
+  /** Kriterium anhängen. @param {Matrix} m @param {MatrixCriterion} criterion */
+  function addCriterion(m, criterion) {
+    m.settings.criteria.push(criterion);
+  }
+
+  /**
+   * Kriterium samt seiner Werte löschen; das letzte bleibt (es gibt immer mindestens eines).
+   * @param {Matrix} m @param {string} cid
+   */
+  function deleteCriterion(m, cid) {
+    if (m.settings.criteria.length < 2) return;
+    m.settings.criteria = m.settings.criteria.filter(c => c.id !== cid);
+    for (const p of m.parameters) for (const o of p.options) delete o.scores[cid];
+  }
+
   return {
-    addParameter, moveParameter, deleteParameter,
+    addParameter, moveParameter, deleteParameter, addCriterion, deleteCriterion,
     addOption, moveOption, deleteOption, togglePriority,
     addCategory, moveCategory, deleteCategory, setParameterCategory,
     setConstraint,

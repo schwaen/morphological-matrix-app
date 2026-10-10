@@ -18,7 +18,7 @@ function bruteForce(m) {
     const p = m.parameters[i];
     for (const o of p.options) {
       chosen.push(o.id);
-      rec(i + 1, C + o.cost, U + (p.weight ?? 1) * o.score);
+      rec(i + 1, C + o.cost, U + (p.weight ?? 1) * o.scores.nw); // ein Kriterium „Nutzwert“
       chosen.pop();
     }
   };

@@ -97,3 +97,14 @@ test('Teilen-Link: Rundreise und ungültige Daten', () => {
   assert.equal(IO.decodeShareHash(''), null);
   assert.throws(() => IO.decodeShareHash('#m=AAAA'));
 });
+
+test('CSV mit mehreren Kriterien: Spalte je Kriterium bei Ausprägungen und Konzepten', () => {
+  const m = kaffeemaschine();
+  m.settings.utility = true;
+  m.settings.criteria = [{ id: 'g', name: 'Geschmack', weight: 3 }, { id: 'k', name: '', weight: 1 }];
+  m.parameters[0].options[0].scores = { g: 8, k: 4 };
+  const csv = IO.toCsv(m);
+  assert.match(csv, /"Ausprägung";"Geschmack \(0–10\)";"Nutzwert \(0–10\)";"Nutzwert \(0–10\)"/);
+  assert.match(csv, /"Durchlauferhitzer";8;4;7;/); // 0,75 × 8 + 0,25 × 4
+  assert.match(csv, /;"Nutzwert";"Geschmack \(0–10\)";"Nutzwert \(0–10\)"/);
+});

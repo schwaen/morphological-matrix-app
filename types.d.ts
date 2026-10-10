@@ -8,8 +8,8 @@ interface MatrixOption {
   text: string;
   /** Kosten in der Währung der Matrix, `null` = nicht erfasst */
   cost: number | null;
-  /** Nutzwert (Erfüllungsgrad) auf der Skala `settings.utilityMax`, `null` = nicht erfasst */
-  score: number | null;
+  /** Erfüllungsgrad je Kriterium (`settings.criteria`) auf der Skala `settings.utilityMax`; fehlt = nicht bewertet */
+  scores: Record<string, number>;
   /** Priorität nach MoSCoW, `null` = nicht festgelegt */
   priority: MatrixPriority | null;
   /** Notiz (Freitext, optional leer) */
@@ -73,6 +73,16 @@ interface MatrixSettings {
   utilityMax: 5 | 10 | 100;
   /** Priorität (MoSCoW) je Ausprägung erfassen */
   moscow: boolean;
+  /** Kriterien des Nutzwerts (mindestens eines); der Nutzwert einer Ausprägung ist ihr gewichtetes Mittel */
+  criteria: MatrixCriterion[];
+}
+
+/** Kriterium der Nutzwertanalyse; `weight` ist relativ (wird auf 100 % umgerechnet) */
+interface MatrixCriterion {
+  id: string;
+  /** leer = „Nutzwert“ */
+  name: string;
+  weight: number;
 }
 
 interface Matrix {

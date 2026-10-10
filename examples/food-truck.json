@@ -3,10 +3,10 @@
   "name": "Food-Truck gründen",
   "description": "Gründung eines Food-Trucks: Küche, Fahrzeug, Betrieb und Marke zu Geschäftsmodellen kombinieren. Mit Startinvestition, Nutzwert, Prioritäten (MoSCoW) für die Pfade MVP, Standard und Premium sowie Verträglichkeiten – ein Konzept zeigt absichtlich Konflikte.",
   "data": {
-    "version": 6,
+    "version": 7,
     "title": "Beispiel: Food-Truck gründen",
     "description": "Gründung eines Food-Trucks. Kosten = Startinvestition in Euro für den jeweiligen Baustein, Nutzwert = erwarteter Beitrag zum Geschäftserfolg von 0 bis 10. Die Prioritäten (MoSCoW) beschreiben den Ausbaupfad vom kleinen Einstieg (Must) bis zur Wunschausstattung (Could).",
-    "settings": { "costs": true, "utility": true, "currency": "EUR", "utilityMax": 10, "moscow": true },
+    "settings": { "costs": true, "utility": true, "currency": "EUR", "utilityMax": 10, "moscow": true, "criteria": [{ "id": "nw", "name": "", "weight": 100 }] },
     "categories": [
       { "id": "k1", "name": "Konzept", "color": "#4f46e5" },
       { "id": "k2", "name": "Fahrzeug & Technik", "color": "#0891b2" },
@@ -21,11 +21,11 @@
         "weight": 3,
         "categoryId": "k1",
         "options": [
-          { "id": "p1o1", "text": "Smash-Burger & Pommes", "cost": 6000, "score": 7, "priority": "must", "note": "Bekannt und beliebt, aber viel Konkurrenz; Fritteuse braucht Abluft und Fettabscheider." },
-          { "id": "p1o2", "text": "Neapolitanische Pizza", "cost": 14000, "score": 8, "priority": "could", "note": "Holzofen erreicht rund 450 °C; schwer und brandschutzrelevant." },
-          { "id": "p1o3", "text": "Vegane Bowls", "cost": 4000, "score": 7, "priority": "should" },
-          { "id": "p1o4", "text": "Tacos & Burritos", "cost": 4500, "score": 8, "priority": "should" },
-          { "id": "p1o5", "text": "Crêpes & Kaffee", "cost": 3500, "score": 5, "priority": "could" }
+          { "id": "p1o1", "text": "Smash-Burger & Pommes", "cost": 6000, "scores": { "nw": 7 }, "priority": "must", "note": "Bekannt und beliebt, aber viel Konkurrenz; Fritteuse braucht Abluft und Fettabscheider." },
+          { "id": "p1o2", "text": "Neapolitanische Pizza", "cost": 14000, "scores": { "nw": 8 }, "priority": "could", "note": "Holzofen erreicht rund 450 °C; schwer und brandschutzrelevant." },
+          { "id": "p1o3", "text": "Vegane Bowls", "cost": 4000, "scores": { "nw": 7 }, "priority": "should" },
+          { "id": "p1o4", "text": "Tacos & Burritos", "cost": 4500, "scores": { "nw": 8 }, "priority": "should" },
+          { "id": "p1o5", "text": "Crêpes & Kaffee", "cost": 3500, "scores": { "nw": 5 }, "priority": "could" }
         ]
       },
       {
@@ -34,10 +34,10 @@
         "weight": 2,
         "categoryId": "k1",
         "options": [
-          { "id": "p2o1", "text": "Hausgemachte Saucen", "cost": 500, "score": 6, "priority": "must" },
-          { "id": "p2o2", "text": "Zutaten vom Hof aus der Region", "cost": 1500, "score": 8, "priority": "should", "note": "Höherer Wareneinsatz, dafür eine starke Geschichte fürs Marketing." },
-          { "id": "p2o3", "text": "Wechselndes Wochengericht", "cost": 300, "score": 5, "priority": "could" },
-          { "id": "p2o4", "text": "Live-Cooking als Show", "cost": 2000, "score": 7, "priority": "could" }
+          { "id": "p2o1", "text": "Hausgemachte Saucen", "cost": 500, "scores": { "nw": 6 }, "priority": "must" },
+          { "id": "p2o2", "text": "Zutaten vom Hof aus der Region", "cost": 1500, "scores": { "nw": 8 }, "priority": "should", "note": "Höherer Wareneinsatz, dafür eine starke Geschichte fürs Marketing." },
+          { "id": "p2o3", "text": "Wechselndes Wochengericht", "cost": 300, "scores": { "nw": 5 }, "priority": "could" },
+          { "id": "p2o4", "text": "Live-Cooking als Show", "cost": 2000, "scores": { "nw": 7 }, "priority": "could" }
         ]
       },
       {
@@ -47,9 +47,9 @@
         "weight": 2,
         "categoryId": "k1",
         "options": [
-          { "id": "p3o1", "text": "Günstig (unter 8 €)", "cost": 0, "score": 5, "priority": "should" },
-          { "id": "p3o2", "text": "Mittel (8–12 €)", "cost": 0, "score": 7, "priority": "must" },
-          { "id": "p3o3", "text": "Premium (über 12 €)", "cost": 0, "score": 6, "priority": "could" }
+          { "id": "p3o1", "text": "Günstig (unter 8 €)", "cost": 0, "scores": { "nw": 5 }, "priority": "should" },
+          { "id": "p3o2", "text": "Mittel (8–12 €)", "cost": 0, "scores": { "nw": 7 }, "priority": "must" },
+          { "id": "p3o3", "text": "Premium (über 12 €)", "cost": 0, "scores": { "nw": 6 }, "priority": "could" }
         ]
       },
       {
@@ -58,11 +58,11 @@
         "weight": 3,
         "categoryId": "k2",
         "options": [
-          { "id": "p4o1", "text": "Verkaufsanhänger", "cost": 18000, "score": 5, "priority": "must", "note": "Kein eigener Motor: Zugfahrzeug nötig, dafür günstig und ohne Kfz-Wartung." },
-          { "id": "p4o2", "text": "Gebrauchter Kastenwagen, umgebaut", "cost": 30000, "score": 6, "priority": "should" },
-          { "id": "p4o3", "text": "Neuer Food-Truck nach Maß", "cost": 85000, "score": 9, "priority": "could" },
-          { "id": "p4o4", "text": "Lastenrad-Küche", "cost": 9000, "score": 4, "priority": "could", "note": "Emissionsfrei und innenstadttauglich, aber kaum Lager- und Arbeitsfläche." },
-          { "id": "p4o5", "text": "Oldtimer-Transporter", "cost": 55000, "score": 8, "priority": "wont", "note": "Fotogen und Kult, aber teuer in Kauf und Unterhalt." }
+          { "id": "p4o1", "text": "Verkaufsanhänger", "cost": 18000, "scores": { "nw": 5 }, "priority": "must", "note": "Kein eigener Motor: Zugfahrzeug nötig, dafür günstig und ohne Kfz-Wartung." },
+          { "id": "p4o2", "text": "Gebrauchter Kastenwagen, umgebaut", "cost": 30000, "scores": { "nw": 6 }, "priority": "should" },
+          { "id": "p4o3", "text": "Neuer Food-Truck nach Maß", "cost": 85000, "scores": { "nw": 9 }, "priority": "could" },
+          { "id": "p4o4", "text": "Lastenrad-Küche", "cost": 9000, "scores": { "nw": 4 }, "priority": "could", "note": "Emissionsfrei und innenstadttauglich, aber kaum Lager- und Arbeitsfläche." },
+          { "id": "p4o5", "text": "Oldtimer-Transporter", "cost": 55000, "scores": { "nw": 8 }, "priority": "wont", "note": "Fotogen und Kult, aber teuer in Kauf und Unterhalt." }
         ]
       },
       {
@@ -71,11 +71,11 @@
         "weight": 2,
         "categoryId": "k2",
         "options": [
-          { "id": "p5o1", "text": "Gas", "cost": 1500, "score": 6, "priority": "must" },
-          { "id": "p5o2", "text": "Benzin-Generator", "cost": 2000, "score": 3, "priority": "wont", "note": "Laut und riecht; auf vielen Märkten nicht erlaubt." },
-          { "id": "p5o3", "text": "Starkstrom vom Stellplatz", "cost": 800, "score": 7, "priority": "should" },
-          { "id": "p5o4", "text": "Akku und Solardach", "cost": 12000, "score": 8, "priority": "could" },
-          { "id": "p5o5", "text": "Holzfeuer", "cost": 1000, "score": 6, "priority": "could" }
+          { "id": "p5o1", "text": "Gas", "cost": 1500, "scores": { "nw": 6 }, "priority": "must" },
+          { "id": "p5o2", "text": "Benzin-Generator", "cost": 2000, "scores": { "nw": 3 }, "priority": "wont", "note": "Laut und riecht; auf vielen Märkten nicht erlaubt." },
+          { "id": "p5o3", "text": "Starkstrom vom Stellplatz", "cost": 800, "scores": { "nw": 7 }, "priority": "should" },
+          { "id": "p5o4", "text": "Akku und Solardach", "cost": 12000, "scores": { "nw": 8 }, "priority": "could" },
+          { "id": "p5o5", "text": "Holzfeuer", "cost": 1000, "scores": { "nw": 6 }, "priority": "could" }
         ]
       },
       {
@@ -84,9 +84,9 @@
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p6o1", "text": "Kühlboxen", "cost": 300, "score": 3, "priority": "must" },
-          { "id": "p6o2", "text": "Kompressor-Kühlschrank", "cost": 2500, "score": 7, "priority": "should" },
-          { "id": "p6o3", "text": "Kühlzelle im eigenen Lager", "cost": 8000, "score": 8, "priority": "could" }
+          { "id": "p6o1", "text": "Kühlboxen", "cost": 300, "scores": { "nw": 3 }, "priority": "must" },
+          { "id": "p6o2", "text": "Kompressor-Kühlschrank", "cost": 2500, "scores": { "nw": 7 }, "priority": "should" },
+          { "id": "p6o3", "text": "Kühlzelle im eigenen Lager", "cost": 8000, "scores": { "nw": 8 }, "priority": "could" }
         ]
       },
       {
@@ -96,10 +96,10 @@
         "weight": 3,
         "categoryId": "k3",
         "options": [
-          { "id": "p7o1", "text": "Wochenmärkte", "cost": 600, "score": 6, "priority": "must" },
-          { "id": "p7o2", "text": "Gewerbegebiete zur Mittagszeit", "cost": 300, "score": 7, "priority": "should" },
-          { "id": "p7o3", "text": "Festivals & Events", "cost": 2500, "score": 8, "priority": "should", "note": "Hoher Umsatz an wenigen Tagen, aber Standgebühr oft als Umsatzbeteiligung." },
-          { "id": "p7o4", "text": "Fester Stellplatz (Pacht)", "cost": 6000, "score": 7, "priority": "could" }
+          { "id": "p7o1", "text": "Wochenmärkte", "cost": 600, "scores": { "nw": 6 }, "priority": "must" },
+          { "id": "p7o2", "text": "Gewerbegebiete zur Mittagszeit", "cost": 300, "scores": { "nw": 7 }, "priority": "should" },
+          { "id": "p7o3", "text": "Festivals & Events", "cost": 2500, "scores": { "nw": 8 }, "priority": "should", "note": "Hoher Umsatz an wenigen Tagen, aber Standgebühr oft als Umsatzbeteiligung." },
+          { "id": "p7o4", "text": "Fester Stellplatz (Pacht)", "cost": 6000, "scores": { "nw": 7 }, "priority": "could" }
         ]
       },
       {
@@ -108,9 +108,9 @@
         "weight": 1,
         "categoryId": "k3",
         "options": [
-          { "id": "p8o1", "text": "Mittags (11–15 Uhr)", "cost": 0, "score": 7, "priority": "must" },
-          { "id": "p8o2", "text": "Abends (17–22 Uhr)", "cost": 0, "score": 6, "priority": "should" },
-          { "id": "p8o3", "text": "Nur am Wochenende", "cost": 0, "score": 5, "priority": "could" }
+          { "id": "p8o1", "text": "Mittags (11–15 Uhr)", "cost": 0, "scores": { "nw": 7 }, "priority": "must" },
+          { "id": "p8o2", "text": "Abends (17–22 Uhr)", "cost": 0, "scores": { "nw": 6 }, "priority": "should" },
+          { "id": "p8o3", "text": "Nur am Wochenende", "cost": 0, "scores": { "nw": 5 }, "priority": "could" }
         ]
       },
       {
@@ -119,9 +119,9 @@
         "weight": 2,
         "categoryId": "k3",
         "options": [
-          { "id": "p9o1", "text": "Nur bar", "cost": 0, "score": 3, "priority": "wont" },
-          { "id": "p9o2", "text": "Bar und Karte", "cost": 400, "score": 8, "priority": "must" },
-          { "id": "p9o3", "text": "Vorbestellung per App", "cost": 3000, "score": 7, "priority": "could" }
+          { "id": "p9o1", "text": "Nur bar", "cost": 0, "scores": { "nw": 3 }, "priority": "wont" },
+          { "id": "p9o2", "text": "Bar und Karte", "cost": 400, "scores": { "nw": 8 }, "priority": "must" },
+          { "id": "p9o3", "text": "Vorbestellung per App", "cost": 3000, "scores": { "nw": 7 }, "priority": "could" }
         ]
       },
       {
@@ -131,9 +131,9 @@
         "weight": 2,
         "categoryId": "k3",
         "options": [
-          { "id": "p10o1", "text": "Allein", "cost": 0, "score": 4, "priority": "must" },
-          { "id": "p10o2", "text": "Zu zweit", "cost": 200, "score": 7, "priority": "should" },
-          { "id": "p10o3", "text": "Kernteam mit Aushilfen", "cost": 1500, "score": 8, "priority": "could" }
+          { "id": "p10o1", "text": "Allein", "cost": 0, "scores": { "nw": 4 }, "priority": "must" },
+          { "id": "p10o2", "text": "Zu zweit", "cost": 200, "scores": { "nw": 7 }, "priority": "should" },
+          { "id": "p10o3", "text": "Kernteam mit Aushilfen", "cost": 1500, "scores": { "nw": 8 }, "priority": "could" }
         ]
       },
       {
@@ -142,9 +142,9 @@
         "weight": 1,
         "categoryId": "k4",
         "options": [
-          { "id": "p11o1", "text": "Selbst gestaltet", "cost": 200, "score": 3, "priority": "must" },
-          { "id": "p11o2", "text": "Design-Agentur und Folierung", "cost": 6000, "score": 8, "priority": "should" },
-          { "id": "p11o3", "text": "Retro-Stil mit Kreidetafeln", "cost": 1200, "score": 6, "priority": "could" }
+          { "id": "p11o1", "text": "Selbst gestaltet", "cost": 200, "scores": { "nw": 3 }, "priority": "must" },
+          { "id": "p11o2", "text": "Design-Agentur und Folierung", "cost": 6000, "scores": { "nw": 8 }, "priority": "should" },
+          { "id": "p11o3", "text": "Retro-Stil mit Kreidetafeln", "cost": 1200, "scores": { "nw": 6 }, "priority": "could" }
         ]
       },
       {
@@ -153,9 +153,9 @@
         "weight": 2,
         "categoryId": "k4",
         "options": [
-          { "id": "p12o1", "text": "Instagram & TikTok", "cost": 0, "score": 7, "priority": "must" },
-          { "id": "p12o2", "text": "Website mit Standortkarte", "cost": 1500, "score": 6, "priority": "should" },
-          { "id": "p12o3", "text": "Lieferplattformen", "cost": 500, "score": 5, "priority": "could" }
+          { "id": "p12o1", "text": "Instagram & TikTok", "cost": 0, "scores": { "nw": 7 }, "priority": "must" },
+          { "id": "p12o2", "text": "Website mit Standortkarte", "cost": 1500, "scores": { "nw": 6 }, "priority": "should" },
+          { "id": "p12o3", "text": "Lieferplattformen", "cost": 500, "scores": { "nw": 5 }, "priority": "could" }
         ]
       },
       {
@@ -164,10 +164,10 @@
         "weight": 2,
         "categoryId": "k4",
         "options": [
-          { "id": "p13o1", "text": "Keins", "cost": 0, "score": 2, "priority": "must" },
-          { "id": "p13o2", "text": "Catering für Firmen", "cost": 3000, "score": 8, "priority": "should" },
-          { "id": "p13o3", "text": "Hochzeiten & private Feiern", "cost": 2000, "score": 7, "priority": "could" },
-          { "id": "p13o4", "text": "Kochkurse", "cost": 1000, "score": 5, "priority": "wont" }
+          { "id": "p13o1", "text": "Keins", "cost": 0, "scores": { "nw": 2 }, "priority": "must" },
+          { "id": "p13o2", "text": "Catering für Firmen", "cost": 3000, "scores": { "nw": 8 }, "priority": "should" },
+          { "id": "p13o3", "text": "Hochzeiten & private Feiern", "cost": 2000, "scores": { "nw": 7 }, "priority": "could" },
+          { "id": "p13o4", "text": "Kochkurse", "cost": 1000, "scores": { "nw": 5 }, "priority": "wont" }
         ]
       }
     ],

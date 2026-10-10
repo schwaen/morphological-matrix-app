@@ -46,6 +46,9 @@ export const IO = (() => {
       ...m.parameters.map(p => [...catCell(p), cell(p.name), ...p.options.map(o => cell(o.text))]),
     ];
     const { costs, utility, currency, utilityMax, moscow } = m.settings;
+    // Bei mehreren Kriterien zusätzlich je Kriterium eine Spalte (Ausprägungen und Konzepte)
+    const criteria = utility && m.settings.criteria.length > 1 ? m.settings.criteria : [];
+    const criterionHeads = criteria.map(c => cell(L.criterionScore(Model.criterionLabel(c), utilityMax)));
     /** @param {MatrixOption} o */
     const prio = o => (o.priority ? Texts.moscow.levels[o.priority].label : '');
     const paramNotes = m.parameters.some(p => p.note);
@@ -56,6 +59,7 @@ export const IO = (() => {
         ...(utility ? [cell(L.weight)] : []),
         cell(L.optionSingle),
         ...(costs ? [cell(L.cost(currency))] : []),
+        ...criterionHeads,
         ...(utility ? [cell(L.utility(utilityMax))] : []),
         ...(moscow ? [cell(L.priority)] : []),
         ...(optionNotes ? [cell(L.note)] : [])]);
@@ -66,7 +70,8 @@ export const IO = (() => {
             ...(utility ? [csvNum(weightOf(p))] : []),
             cell(o.text),
             ...(costs ? [csvNum(o.cost)] : []),
-            ...(utility ? [csvNum(o.score)] : []),
+            ...criteria.map(c => csvNum(o.scores[c.id] ?? null)),
+            ...(utility ? [csvNum(Evaluation.optionScore(m, o).value)] : []),
             ...(moscow ? [cell(prio(o))] : []),
             ...(optionNotes ? [cell(o.note)] : [])]);
         }
@@ -97,6 +102,7 @@ export const IO = (() => {
       lines.push([], [cell(L.concept), ...m.parameters.map(p => cell(p.name)),
         ...(costs ? [cell(L.totalCost(currency))] : []),
         ...(utility ? [cell(L.utilityTotal)] : []),
+        ...criterionHeads,
         ...(costs && utility ? [cell(L.priceValue(currency))] : []),
         ...(withConstraints ? [cell(L.conflicts)] : []),
         ...(conceptNotes ? [cell(L.conceptNote)] : []),
@@ -105,6 +111,7 @@ export const IO = (() => {
         lines.push([cell(c.name), ...m.parameters.map(p => cell(optionText(p, c.selections[p.id]) || '')),
           ...(cost ? [csvNum(cost.total)] : []),
           ...(util ? [csvNum(util.value)] : []),
+          ...(criteria.length ? Evaluation.conceptCriteria(m, c).map(x => csvNum(x.value)) : []),
           ...(priceValue ? [csvNum(priceValue.value)] : []),
           ...(withConstraints ? [cell(clashes(c))] : []),
           ...(conceptNotes ? [cell(c.note)] : []),

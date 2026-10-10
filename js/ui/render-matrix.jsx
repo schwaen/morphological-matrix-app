@@ -3,7 +3,7 @@
  * Kategorie-Navigation über der Matrix.
  */
 import { Fragment, render as mount } from 'preact';
-import { useLayoutEffect, useState } from 'preact/hooks';
+import { useLayoutEffect } from 'preact/hooks';
 import { Consistency } from '../consistency.js';
 import { Evaluation } from '../evaluation.js';
 import { Model } from '../model.js';
@@ -18,6 +18,8 @@ import { ConstraintButton, ConstraintCount, conflictText, statusText } from './c
 import { activeConcept, collapseKey, fieldProps, isCollapsed, money, prefs, setPendingFocus, state, useMatrix } from './core.js';
 import { restCounts } from './count.js';
 import { $, focusField, shownColor } from './dom.jsx';
+import { NumberField } from './fields.jsx';
+import { multiCriteria, ScoreButton } from './criteria.jsx';
 import { scheduleLines } from './lines.js';
 import { NoteButton, NoteField, NoteMark, showNote } from './notes.jsx';
 import { searchClass, searchResult } from './search.js';
@@ -165,6 +167,8 @@ function ParameterView({ p, pi, ctx }) {
 function OptionEdit({ p, pi, o, oi, ctx }) {
   const optLabel = o.text.trim() || Texts.fallback.option(oi + 1);
   const { costs, utility, currency, utilityMax, moscow } = state.settings;
+  // Mit einem Kriterium bleibt es beim Zahlenfeld in der Zelle
+  const criterion = state.settings.criteria[0];
   return (
     <div class={`opt-cell edit${searchClass(ctx.found, p.id, o.id)}`} data-oid={o.id}>
       <div class="opt-main">
@@ -214,12 +218,15 @@ function OptionEdit({ p, pi, o, oi, ctx }) {
               <NumberField value={o.cost} placeholder={Texts.matrix.costPlaceholder} label={Texts.matrix.costOf(optLabel)} apply={n => { o.cost = n; }} />
             </label>
           ) : null}
-          {utility ? (
+          {utility && multiCriteria(state) ? (
+            // Mehrere Kriterien: Gesamtwert als Knopf, bewertet wird im Popover (eigene Zeile)
+            <div class="metric-field metric-score"><ScoreButton o={o} optLabel={optLabel} /></div>
+          ) : utility ? (
             <label class="metric-field">
               <span class="metric-unit" title={Texts.matrix.utilityUnitTitle}>{Texts.matrix.utilityUnit}</span>
               <NumberField
-                value={o.score} placeholder={`0–${utilityMax}`} label={Texts.matrix.utilityOf(optLabel, utilityMax)}
-                apply={n => { o.score = n; }} validate={n => n >= 0 && n <= utilityMax}
+                value={o.scores[criterion.id] ?? null} placeholder={`0–${utilityMax}`} label={Texts.matrix.utilityOf(optLabel, utilityMax)}
+                apply={n => { if (n == null) delete o.scores[criterion.id]; else o.scores[criterion.id] = n; }} validate={n => n >= 0 && n <= utilityMax}
               />
             </label>
           ) : null}
@@ -345,7 +352,8 @@ function OptionPick({ p, o, oi, ctx, rest }) {
 function optionMetricsText(o) {
   const parts = [];
   if (state.settings.costs && o.cost != null) parts.push(money(o.cost));
-  if (state.settings.utility && o.score != null) parts.push(Texts.matrix.utilityShort(Util.formatNumber(o.score)));
+  const score = state.settings.utility ? Evaluation.optionScore(state, o).value : null;
+  if (score != null) parts.push(Texts.matrix.utilityShort(Util.formatNumber(score)));
   return parts.join(' · ');
 }
 
@@ -353,33 +361,6 @@ function optionMetricsText(o) {
 function weightPercent(p) {
   const share = Evaluation.weightShare(state, p);
   return share == null ? '–' : Util.formatPercent(share);
-}
-
-/**
- * Eingabefeld für Zahlen; speichert beim Tippen, formatiert beim Verlassen. Während der Eingabe
- * bleibt der getippte Text stehen (z. B. „1,“), auch wenn er noch keine gültige Zahl ist.
- * @param {{ value: number | null, label: string, placeholder?: string,
- *           apply: (n: number | null) => void, validate?: (n: number) => boolean }} props
- */
-function NumberField({ value, label, placeholder, apply, validate }) {
-  const [draft, setDraft] = useState(/** @type {string | null} */ (null));
-  const text = draft ?? Util.numberToInput(value);
-  const n = Util.parseNumber(text);
-  const bad = Number.isNaN(n) || (n != null && !!validate && !validate(n));
-  const field = fieldProps(v => {
-    const parsed = Util.parseNumber(v);
-    apply(Number.isNaN(parsed) ? null : parsed);
-  });
-  return (
-    <input
-      type="text" inputMode="decimal" class="num-input" value={text}
-      placeholder={placeholder} aria-label={label} title={label} aria-invalid={bad || undefined}
-      {...field}
-      onInput={e => { setDraft(/** @type {HTMLInputElement} */ (e.currentTarget).value); field.onInput(e); }}
-      onBlur={() => setDraft(null)}
-      onKeyDown={e => { if (e.key === 'Enter') /** @type {HTMLElement} */ (e.currentTarget).blur(); }}
-    />
-  );
 }
 
 // ---------- Kategorien ----------

@@ -21,6 +21,67 @@ export const Evaluation = (() => {
   const isEnabled = m => m.settings.costs || m.settings.utility;
 
   /**
+   * Anteil je Kriterium am Nutzwert (Summe 1); sind alle Gewichte 0, zählen alle gleich.
+   * @param {Matrix} m @returns {Array<{ c: MatrixCriterion, share: number }>}
+   */
+  function criterionShares(m) {
+    const list = m.settings.criteria;
+    const sum = list.reduce((s, c) => s + c.weight, 0);
+    return list.map(c => ({ c, share: sum > 0 ? c.weight / sum : 1 / list.length }));
+  }
+
+  /**
+   * Nutzwert einer Ausprägung: gewichtetes Mittel ihrer Werte je Kriterium; unbewertete
+   * Kriterien zählen mit 0. `value` ist `null`, solange kein Kriterium bewertet ist; `complete`,
+   * wenn alle Kriterien mit Gewicht bewertet sind.
+   * @param {Matrix} m @param {MatrixOption} o
+   * @returns {{ value: number | null, rated: number, total: number, complete: boolean }}
+   */
+  function optionScore(m, o) {
+    let value = 0;
+    let rated = 0;
+    let complete = true;
+    for (const { c, share } of criterionShares(m)) {
+      const s = o.scores[c.id];
+      if (s == null) {
+        if (share > 0) complete = false;
+        continue;
+      }
+      rated++;
+      value += share * clampScore(m, s);
+    }
+    return { value: rated ? value : null, rated, total: m.settings.criteria.length, complete: rated > 0 && complete };
+  }
+
+  /** Nutzwert einer Ausprägung als Zahl (unbewertet = 0) – für Optimierung und Generatoren. @param {Matrix} m @param {MatrixOption} o */
+  const scoreOf = (m, o) => optionScore(m, o).value ?? 0;
+
+  /**
+   * Nutzwert eines Konzepts je Kriterium: Σ (Gewicht × Erfüllungsgrad) / Σ Gewichte über die
+   * Parameter, wie der Gesamtnutzwert, aber für ein Kriterium. Der Gesamtnutzwert ist die nach
+   * Kriterien gewichtete Summe dieser Werte.
+   * @param {Matrix} m @param {MatrixConcept} c
+   * @returns {Array<{ criterion: MatrixCriterion, share: number, value: number | null, missing: number }>}
+   */
+  function conceptCriteria(m, c) {
+    const sumW = totalWeight(m);
+    return criterionShares(m).map(({ c: criterion, share }) => {
+      let sum = 0;
+      let missing = 0;
+      for (const p of m.parameters) {
+        const o = selectedOption(p, c);
+        const s = o ? o.scores[criterion.id] : undefined;
+        if (s == null) {
+          if (weightOf(p) > 0) missing++;
+          continue;
+        }
+        sum += weightOf(p) * clampScore(m, s);
+      }
+      return { criterion, share, value: sumW > 0 ? sum / sumW : null, missing };
+    });
+  }
+
+  /**
    * Summe der Kosten aller gewählten Ausprägungen; `missing` zählt fehlende Angaben.
    * @param {Matrix} m @param {MatrixConcept} c
    * @returns {{ total: number, missing: number }}
@@ -48,11 +109,12 @@ export const Evaluation = (() => {
     let missing = 0;
     for (const p of m.parameters) {
       const o = selectedOption(p, c);
-      if (!o || o.score == null) {
+      const s = o ? optionScore(m, o) : null;
+      if (!s || !s.complete) {
         if (weightOf(p) > 0) missing++;
-        continue;
+        if (!s || s.value == null) continue;
       }
-      sum += weightOf(p) * clampScore(m, o.score);
+      sum += weightOf(p) * /** @type {number} */ (s.value);
     }
     return { value: sumW > 0 ? sum / sumW : null, missing };
   }
@@ -189,14 +251,14 @@ export const Evaluation = (() => {
   }
 
   /** @param {MatrixOption} o */
-  const hasScore = o => o.score != null;
+  const hasScore = o => Object.keys(o.scores).length > 0;
   /** @param {MatrixOption} o */
   const hasCost = o => o.cost != null;
   // Nebenkriterien bei Gleichstand (nur wenn die jeweilige Bewertung aktiv ist)
   /** @param {Matrix} m @param {MatrixOption} o */
   const tieCost = (m, o) => (m.settings.costs && o.cost != null ? o.cost : Infinity);
   /** @param {Matrix} m @param {MatrixOption} o */
-  const tieScore = (m, o) => (m.settings.utility && o.score != null ? -clampScore(m, o.score) : Infinity);
+  const tieScore = (m, o) => (m.settings.utility && hasScore(o) ? -scoreOf(m, o) : Infinity);
 
   /**
    * @typedef {{ selections?: Record<string, string>, skipped?: number, error?: string }} BuildResult
@@ -244,9 +306,9 @@ export const Evaluation = (() => {
       return { error: Texts.evaluation.needsAllValues };
     }
     if (W <= 0) return { error: Texts.evaluation.zeroWeights };
-    // Kandidaten haben Kosten und Nutzwert (`?? 0` nur für die Typprüfung)
+    // Kandidaten haben Kosten und Nutzwert
     /** @param {MatrixParameter} p @param {MatrixOption} o */
-    const util = (p, o) => (weightOf(p) * clampScore(m, o.score ?? 0)) / W;
+    const util = (p, o) => (weightOf(p) * scoreOf(m, o)) / W;
     /**
      * Teilproblem min Σ objective; bei Gleichstand höherer Nutzwert. Mit Unverträglichkeiten
      * exakt per Verzweigen und Begrenzen (Parameter ohne verträgliche Wahl bleiben leer).
@@ -291,16 +353,16 @@ export const Evaluation = (() => {
    * @type {Record<string, { label: string, missing: string, available: (m: Matrix) => boolean, build: (m: Matrix) => BuildResult }>}
    */
   const GENERATORS = {
-    // Die Filter (hasScore/hasCost) stellen sicher, dass der Wert vorhanden ist (`?? 0` nur für die Typprüfung).
+    // Die Filter (hasScore/hasCost) stellen sicher, dass der Wert vorhanden ist (`?? 0` bei den Kosten nur für die Typprüfung).
     'max-utility': {
       ...Texts.evaluation.generators['max-utility'],
       available: m => m.settings.utility,
-      build: separable(hasScore, (m, o) => [-clampScore(m, o.score ?? 0), tieCost(m, o)]),
+      build: separable(hasScore, (m, o) => [-scoreOf(m, o), tieCost(m, o)]),
     },
     'min-utility': {
       ...Texts.evaluation.generators['min-utility'],
       available: m => m.settings.utility,
-      build: separable(hasScore, (m, o) => [clampScore(m, o.score ?? 0), tieCost(m, o)]),
+      build: separable(hasScore, (m, o) => [scoreOf(m, o), tieCost(m, o)]),
     },
     'min-cost': {
       ...Texts.evaluation.generators['min-cost'],
@@ -369,7 +431,7 @@ export const Evaluation = (() => {
   }
 
   return {
-    weightOf, totalWeight, clampScore, isEnabled, weightShare,
+    weightOf, totalWeight, clampScore, isEnabled, weightShare, criterionShares, optionScore, scoreOf, conceptCriteria,
     conceptCost, conceptUtility, priceValue, priorityProfile, conceptReport, rankConcepts, RANKINGS, pareto,
     GENERATORS,
   };

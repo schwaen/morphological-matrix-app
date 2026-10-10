@@ -2,13 +2,13 @@
 
 Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON-Export, Teilen-Links (`#m=…`, Base64url-kodiertes JSON) und die mitgelieferten Beispiele (`data` in `examples/*.json`, siehe [`examples/README.md`](../examples/README.md)). Typdefinitionen für die Entwicklung stehen in [`types.d.ts`](../types.d.ts).
 
-**Aktuelle Version: 6** (`Model.SCHEMA_VERSION` in `js/model.js`)
+**Aktuelle Version: 7** (`Model.SCHEMA_VERSION` in `js/model.js`)
 
 ## Aufbau
 
 ```jsonc
 {
-  "version": 6,
+  "version": 7,
   "title": "Beispiel: Kaffeemaschine",
   "description": "Gesamtfunktion: …",
   "settings": {
@@ -16,7 +16,10 @@ Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON
     "utility": false,        // Nutzwert je Ausprägung erfassen
     "currency": "EUR",       // EUR | USD | CHF | GBP
     "utilityMax": 10,        // Nutzwert-Skala: 5 | 10 | 100
-    "moscow": false          // Priorität (MoSCoW) je Ausprägung erfassen
+    "moscow": false,         // Priorität (MoSCoW) je Ausprägung erfassen
+    "criteria": [            // Kriterien des Nutzwerts (mindestens eines); Gewicht relativ, wird auf 100 % umgerechnet
+      { "id": "nw", "name": "", "weight": 100 }   // name leer = „Nutzwert“
+    ]
   },
   "categories": [            // optional, Reihenfolge = Anzeige
     { "id": "k1", "name": "Brühsystem", "color": "#4f46e5" }
@@ -29,9 +32,10 @@ Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON
       "weight": 3,           // Gewichtung für den Nutzwert, null = 1
       "categoryId": "k1",    // null = ohne Kategorie
       "options": [
-        // cost/score/priority: null = nicht erfasst; priority: "must" | "should" | "could" | "wont";
+        // cost/priority: null = nicht erfasst; priority: "must" | "should" | "could" | "wont";
+        // scores: Erfüllungsgrad je Kriterium (ID aus settings.criteria), fehlend = nicht bewertet;
         // note: Notiz zur Ausprägung (optional, leer = keine)
-        { "id": "o1", "text": "Durchlauferhitzer", "cost": 18, "score": 6, "priority": "must", "note": "" }
+        { "id": "o1", "text": "Durchlauferhitzer", "cost": 18, "scores": { "nw": 6 }, "priority": "must", "note": "" }
       ]
     }
   ],
@@ -84,6 +88,7 @@ Beim Wiederherstellen (`IO.parseBackup`, `IO.planRestore`) werden vorhandene Mat
 - Auswahlen, die auf nicht vorhandene Ausprägungen zeigen, und Zuordnungen zu unbekannten Kategorien werden entfernt.
 - Negative Gewichte werden verworfen; ungültige Farben durch Standardfarben ersetzt; unbekannte Prioritäten werden zu `null`.
 - Fehlende Notizen (`note`) werden zu `""` – in Dateien und Beispielen dürfen sie daher fehlen.
+- Kriterien: doppelte IDs werden ersetzt, ungültige Gewichte zu 100; ohne Kriterium gilt eines („Nutzwert“). Werte zu unbekannten Kriterien und nicht numerische Werte entfallen.
 - Fehlender oder unbekannter Konzept-Status wird zu `"draft"`, ein fehlender Grund (`statusNote`) zu `""` – auch diese Felder dürfen in Dateien fehlen.
 - Verträglichkeiten: Paare mit unbekannten Ausprägungen, aus demselben Parameter, mit unbekannter Art oder doppelt werden verworfen; `a` und `b` werden so geordnet, dass `a < b`. Beim Löschen einer Ausprägung oder eines Parameters entfallen die zugehörigen Paare.
 
@@ -97,6 +102,7 @@ Beim Wiederherstellen (`IO.parseBackup`, `IO.planRestore`) werden vorhandene Mat
 | 4 | Notizen: `note` je Ausprägung (Notiz), Parameter (Beschreibung) und Konzept (Begründung) | keine Umwandlung nötig; die neue Version verhindert, dass ältere App-Versionen Notizen verwerfen |
 | 5 | Verträglichkeiten zwischen Ausprägungen: `constraints` | keine Umwandlung nötig; die neue Version verhindert, dass ältere App-Versionen Verträglichkeiten verwerfen |
 | 6 | Status je Konzept: `status`, `statusNote` | keine Umwandlung nötig (fehlt der Status, gilt „Entwurf“); die neue Version verhindert, dass ältere App-Versionen den Status verwerfen |
+| 7 | Nutzwert nach Kriterien: `settings.criteria`, `scores` je Ausprägung statt `score` | `score` wird zum Wert des einzigen Kriteriums „Nutzwert“ (`id: "nw"`) |
 
 ## Eine neue Version einführen
 

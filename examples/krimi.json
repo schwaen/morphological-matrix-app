@@ -3,10 +3,10 @@
   "name": "Krimi plotten",
   "description": "Kreatives Schreiben: Schauplatz, Figuren, Tat und Dramaturgie zu Krimi-Plots kombinieren. Ganz ohne Zahlen – Verträglichkeiten sichern die Logik der Geschichte (keine KI im Mittelalter), Notizen sammeln Ideen, „Zufällig“ wird zum Plot-Generator.",
   "data": {
-    "version": 6,
+    "version": 7,
     "title": "Beispiel: Krimi plotten",
     "description": "Baukasten für einen Kriminalroman. Unverträgliche Paare verhindern Logikfehler, bedingte Paare geben Hinweise fürs Schreiben. Tipp: Im Modus „Kombinieren“ eine zufällige Kombination erzeugen und daraus einen Plot entwickeln.",
-    "settings": { "costs": false, "utility": false, "currency": "EUR", "utilityMax": 10, "moscow": false },
+    "settings": { "costs": false, "utility": false, "currency": "EUR", "utilityMax": 10, "moscow": false, "criteria": [{ "id": "nw", "name": "", "weight": 100 }] },
     "categories": [
       { "id": "k1", "name": "Welt", "color": "#4f46e5" },
       { "id": "k2", "name": "Figuren", "color": "#0891b2" },
@@ -20,12 +20,12 @@
         "weight": 1,
         "categoryId": "k1",
         "options": [
-          { "id": "p1o1", "text": "Nordseeinsel im Herbststurm", "cost": null, "score": null, "priority": null, "note": "Abgeschnitten vom Festland – klassischer geschlossener Kreis von Verdächtigen." },
-          { "id": "p1o2", "text": "Wiener Kaffeehaus", "cost": null, "score": null, "priority": null },
-          { "id": "p1o3", "text": "Kloster in den Alpen", "cost": null, "score": null, "priority": null },
-          { "id": "p1o4", "text": "Raumstation im Orbit", "cost": null, "score": null, "priority": null, "note": "Niemand kann gehen, niemand kann kommen – wie die Insel, nur kälter." },
-          { "id": "p1o5", "text": "Techno-Club in Berlin", "cost": null, "score": null, "priority": null },
-          { "id": "p1o6", "text": "Weingut an der Mosel", "cost": null, "score": null, "priority": null }
+          { "id": "p1o1", "text": "Nordseeinsel im Herbststurm", "cost": null, "scores": {}, "priority": null, "note": "Abgeschnitten vom Festland – klassischer geschlossener Kreis von Verdächtigen." },
+          { "id": "p1o2", "text": "Wiener Kaffeehaus", "cost": null, "scores": {}, "priority": null },
+          { "id": "p1o3", "text": "Kloster in den Alpen", "cost": null, "scores": {}, "priority": null },
+          { "id": "p1o4", "text": "Raumstation im Orbit", "cost": null, "scores": {}, "priority": null, "note": "Niemand kann gehen, niemand kann kommen – wie die Insel, nur kälter." },
+          { "id": "p1o5", "text": "Techno-Club in Berlin", "cost": null, "scores": {}, "priority": null },
+          { "id": "p1o6", "text": "Weingut an der Mosel", "cost": null, "scores": {}, "priority": null }
         ]
       },
       {
@@ -34,11 +34,11 @@
         "weight": 1,
         "categoryId": "k1",
         "options": [
-          { "id": "p2o1", "text": "Spätmittelalter (um 1350)", "cost": null, "score": null, "priority": null },
-          { "id": "p2o2", "text": "Goldene Zwanziger", "cost": null, "score": null, "priority": null },
-          { "id": "p2o3", "text": "Nachkriegszeit (1950er)", "cost": null, "score": null, "priority": null },
-          { "id": "p2o4", "text": "Gegenwart", "cost": null, "score": null, "priority": null },
-          { "id": "p2o5", "text": "Nahe Zukunft (2080)", "cost": null, "score": null, "priority": null }
+          { "id": "p2o1", "text": "Spätmittelalter (um 1350)", "cost": null, "scores": {}, "priority": null },
+          { "id": "p2o2", "text": "Goldene Zwanziger", "cost": null, "scores": {}, "priority": null },
+          { "id": "p2o3", "text": "Nachkriegszeit (1950er)", "cost": null, "scores": {}, "priority": null },
+          { "id": "p2o4", "text": "Gegenwart", "cost": null, "scores": {}, "priority": null },
+          { "id": "p2o5", "text": "Nahe Zukunft (2080)", "cost": null, "scores": {}, "priority": null }
         ]
       },
       {
@@ -48,12 +48,12 @@
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p3o1", "text": "Kommissarin kurz vor der Pension", "cost": null, "score": null, "priority": null },
-          { "id": "p3o2", "text": "Pathologe mit Hang zur Philosophie", "cost": null, "score": null, "priority": null },
-          { "id": "p3o3", "text": "Vorsitzende des Strickclubs", "cost": null, "score": null, "priority": null, "note": "Hobbydetektivin im Stil von Miss Marple – unterschätzt und neugierig." },
-          { "id": "p3o4", "text": "Mönch mit kriminalistischem Gespür", "cost": null, "score": null, "priority": null },
-          { "id": "p3o5", "text": "KI-Assistenzsystem", "cost": null, "score": null, "priority": null },
-          { "id": "p3o6", "text": "Journalistin im Ruhestand", "cost": null, "score": null, "priority": null }
+          { "id": "p3o1", "text": "Kommissarin kurz vor der Pension", "cost": null, "scores": {}, "priority": null },
+          { "id": "p3o2", "text": "Pathologe mit Hang zur Philosophie", "cost": null, "scores": {}, "priority": null },
+          { "id": "p3o3", "text": "Vorsitzende des Strickclubs", "cost": null, "scores": {}, "priority": null, "note": "Hobbydetektivin im Stil von Miss Marple – unterschätzt und neugierig." },
+          { "id": "p3o4", "text": "Mönch mit kriminalistischem Gespür", "cost": null, "scores": {}, "priority": null },
+          { "id": "p3o5", "text": "KI-Assistenzsystem", "cost": null, "scores": {}, "priority": null },
+          { "id": "p3o6", "text": "Journalistin im Ruhestand", "cost": null, "scores": {}, "priority": null }
         ]
       },
       {
@@ -62,12 +62,12 @@
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p4o1", "text": "Erbe einer Brauerei-Dynastie", "cost": null, "score": null, "priority": null },
-          { "id": "p4o2", "text": "Influencerin", "cost": null, "score": null, "priority": null },
-          { "id": "p4o3", "text": "Bürgermeister", "cost": null, "score": null, "priority": null },
-          { "id": "p4o4", "text": "Abt", "cost": null, "score": null, "priority": null },
-          { "id": "p4o5", "text": "Sternekoch", "cost": null, "score": null, "priority": null },
-          { "id": "p4o6", "text": "Star-DJ", "cost": null, "score": null, "priority": null }
+          { "id": "p4o1", "text": "Erbe einer Brauerei-Dynastie", "cost": null, "scores": {}, "priority": null },
+          { "id": "p4o2", "text": "Influencerin", "cost": null, "scores": {}, "priority": null },
+          { "id": "p4o3", "text": "Bürgermeister", "cost": null, "scores": {}, "priority": null },
+          { "id": "p4o4", "text": "Abt", "cost": null, "scores": {}, "priority": null },
+          { "id": "p4o5", "text": "Sternekoch", "cost": null, "scores": {}, "priority": null },
+          { "id": "p4o6", "text": "Star-DJ", "cost": null, "scores": {}, "priority": null }
         ]
       },
       {
@@ -77,11 +77,11 @@
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p5o1", "text": "Die treue Haushälterin", "cost": null, "score": null, "priority": null },
-          { "id": "p5o2", "text": "Der Zwillingsbruder", "cost": null, "score": null, "priority": null },
-          { "id": "p5o3", "text": "Die Geschäftspartnerin", "cost": null, "score": null, "priority": null },
-          { "id": "p5o4", "text": "Das scheinbar zweite Opfer", "cost": null, "score": null, "priority": null, "note": "Täuscht den eigenen Tod oder einen Anschlag auf sich vor." },
-          { "id": "p5o5", "text": "Der Erzähler selbst", "cost": null, "score": null, "priority": null }
+          { "id": "p5o1", "text": "Die treue Haushälterin", "cost": null, "scores": {}, "priority": null },
+          { "id": "p5o2", "text": "Der Zwillingsbruder", "cost": null, "scores": {}, "priority": null },
+          { "id": "p5o3", "text": "Die Geschäftspartnerin", "cost": null, "scores": {}, "priority": null },
+          { "id": "p5o4", "text": "Das scheinbar zweite Opfer", "cost": null, "scores": {}, "priority": null, "note": "Täuscht den eigenen Tod oder einen Anschlag auf sich vor." },
+          { "id": "p5o5", "text": "Der Erzähler selbst", "cost": null, "scores": {}, "priority": null }
         ]
       },
       {
@@ -90,11 +90,11 @@
         "weight": 1,
         "categoryId": "k3",
         "options": [
-          { "id": "p6o1", "text": "Erbschaft", "cost": null, "score": null, "priority": null },
-          { "id": "p6o2", "text": "Rache für altes Unrecht", "cost": null, "score": null, "priority": null },
-          { "id": "p6o3", "text": "Eifersucht", "cost": null, "score": null, "priority": null },
-          { "id": "p6o4", "text": "Vertuschung eines Betrugs", "cost": null, "score": null, "priority": null },
-          { "id": "p6o5", "text": "Schutz eines Geheimnisses", "cost": null, "score": null, "priority": null }
+          { "id": "p6o1", "text": "Erbschaft", "cost": null, "scores": {}, "priority": null },
+          { "id": "p6o2", "text": "Rache für altes Unrecht", "cost": null, "scores": {}, "priority": null },
+          { "id": "p6o3", "text": "Eifersucht", "cost": null, "scores": {}, "priority": null },
+          { "id": "p6o4", "text": "Vertuschung eines Betrugs", "cost": null, "scores": {}, "priority": null },
+          { "id": "p6o5", "text": "Schutz eines Geheimnisses", "cost": null, "scores": {}, "priority": null }
         ]
       },
       {
@@ -103,11 +103,11 @@
         "weight": 1,
         "categoryId": "k3",
         "options": [
-          { "id": "p7o1", "text": "Gift", "cost": null, "score": null, "priority": null },
-          { "id": "p7o2", "text": "Kerzenleuchter", "cost": null, "score": null, "priority": null },
-          { "id": "p7o3", "text": "Manipulierte Technik", "cost": null, "score": null, "priority": null },
-          { "id": "p7o4", "text": "Eiszapfen", "cost": null, "score": null, "priority": null, "note": "Die Waffe schmilzt – und mit ihr der wichtigste Beweis." },
-          { "id": "p7o5", "text": "Armbrust", "cost": null, "score": null, "priority": null }
+          { "id": "p7o1", "text": "Gift", "cost": null, "scores": {}, "priority": null },
+          { "id": "p7o2", "text": "Kerzenleuchter", "cost": null, "scores": {}, "priority": null },
+          { "id": "p7o3", "text": "Manipulierte Technik", "cost": null, "scores": {}, "priority": null },
+          { "id": "p7o4", "text": "Eiszapfen", "cost": null, "scores": {}, "priority": null, "note": "Die Waffe schmilzt – und mit ihr der wichtigste Beweis." },
+          { "id": "p7o5", "text": "Armbrust", "cost": null, "scores": {}, "priority": null }
         ]
       },
       {
@@ -116,11 +116,11 @@
         "weight": 1,
         "categoryId": "k3",
         "options": [
-          { "id": "p8o1", "text": "Gefälschtes Alibi", "cost": null, "score": null, "priority": null },
-          { "id": "p8o2", "text": "Verschlossener Raum", "cost": null, "score": null, "priority": null },
-          { "id": "p8o3", "text": "Vertauschte Identität", "cost": null, "score": null, "priority": null },
-          { "id": "p8o4", "text": "Falscher Todeszeitpunkt", "cost": null, "score": null, "priority": null },
-          { "id": "p8o5", "text": "Abschiedsbrief", "cost": null, "score": null, "priority": null }
+          { "id": "p8o1", "text": "Gefälschtes Alibi", "cost": null, "scores": {}, "priority": null },
+          { "id": "p8o2", "text": "Verschlossener Raum", "cost": null, "scores": {}, "priority": null },
+          { "id": "p8o3", "text": "Vertauschte Identität", "cost": null, "scores": {}, "priority": null },
+          { "id": "p8o4", "text": "Falscher Todeszeitpunkt", "cost": null, "scores": {}, "priority": null },
+          { "id": "p8o5", "text": "Abschiedsbrief", "cost": null, "scores": {}, "priority": null }
         ]
       },
       {
@@ -129,10 +129,10 @@
         "weight": 1,
         "categoryId": "k4",
         "options": [
-          { "id": "p9o1", "text": "Ich-Erzähler", "cost": null, "score": null, "priority": null },
-          { "id": "p9o2", "text": "Einschübe aus Tätersicht", "cost": null, "score": null, "priority": null },
-          { "id": "p9o3", "text": "Wechselnde Perspektiven", "cost": null, "score": null, "priority": null },
-          { "id": "p9o4", "text": "Briefe & Tagebücher", "cost": null, "score": null, "priority": null }
+          { "id": "p9o1", "text": "Ich-Erzähler", "cost": null, "scores": {}, "priority": null },
+          { "id": "p9o2", "text": "Einschübe aus Tätersicht", "cost": null, "scores": {}, "priority": null },
+          { "id": "p9o3", "text": "Wechselnde Perspektiven", "cost": null, "scores": {}, "priority": null },
+          { "id": "p9o4", "text": "Briefe & Tagebücher", "cost": null, "scores": {}, "priority": null }
         ]
       },
       {
@@ -141,11 +141,11 @@
         "weight": 1,
         "categoryId": "k4",
         "options": [
-          { "id": "p10o1", "text": "Große Versammlung im Salon", "cost": null, "score": null, "priority": null },
-          { "id": "p10o2", "text": "Geständnis unter Druck", "cost": null, "score": null, "priority": null },
-          { "id": "p10o3", "text": "Forensischer Beweis", "cost": null, "score": null, "priority": null },
-          { "id": "p10o4", "text": "Offenes Ende", "cost": null, "score": null, "priority": null },
-          { "id": "p10o5", "text": "Der Täter entkommt", "cost": null, "score": null, "priority": null }
+          { "id": "p10o1", "text": "Große Versammlung im Salon", "cost": null, "scores": {}, "priority": null },
+          { "id": "p10o2", "text": "Geständnis unter Druck", "cost": null, "scores": {}, "priority": null },
+          { "id": "p10o3", "text": "Forensischer Beweis", "cost": null, "scores": {}, "priority": null },
+          { "id": "p10o4", "text": "Offenes Ende", "cost": null, "scores": {}, "priority": null },
+          { "id": "p10o5", "text": "Der Täter entkommt", "cost": null, "scores": {}, "priority": null }
         ]
       },
       {
@@ -154,10 +154,10 @@
         "weight": 1,
         "categoryId": "k4",
         "options": [
-          { "id": "p11o1", "text": "Cosy Crime", "cost": null, "score": null, "priority": null },
-          { "id": "p11o2", "text": "Düster-psychologisch", "cost": null, "score": null, "priority": null },
-          { "id": "p11o3", "text": "Humorvoll-skurril", "cost": null, "score": null, "priority": null },
-          { "id": "p11o4", "text": "Hard-boiled", "cost": null, "score": null, "priority": null }
+          { "id": "p11o1", "text": "Cosy Crime", "cost": null, "scores": {}, "priority": null },
+          { "id": "p11o2", "text": "Düster-psychologisch", "cost": null, "scores": {}, "priority": null },
+          { "id": "p11o3", "text": "Humorvoll-skurril", "cost": null, "scores": {}, "priority": null },
+          { "id": "p11o4", "text": "Hard-boiled", "cost": null, "scores": {}, "priority": null }
         ]
       }
     ],

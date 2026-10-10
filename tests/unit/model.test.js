@@ -23,13 +23,13 @@ test('normalize: altes Format, Standardwerte und Bereinigung', () => {
   });
   const p = m.parameters[0];
   assert.deepEqual(plain(p.options.map(o => o.text)), ['a', 'b']);
-  assert.ok(p.options.every(o => o.id && o.cost === null && o.score === null));
+  assert.ok(p.options.every(o => o.id && o.cost === null && Object.keys(o.scores).length === 0));
   assert.equal(p.weight, null);                 // negatives Gewicht verworfen
   assert.equal(p.categoryId, null);             // unbekannte Kategorie verworfen
   assert.deepEqual(plain(m.concepts[0].selections), {}); // ungültige Auswahl verworfen
   assert.equal(m.concepts[0].name, 'Konzept 1');
   assert.match(m.concepts[0].color, /^#[0-9a-f]{6}$/i);
-  assert.deepEqual(plain(m.settings), { costs: false, utility: false, currency: 'EUR', utilityMax: 10, moscow: false });
+  assert.deepEqual(plain(m.settings), { costs: false, utility: false, currency: 'EUR', utilityMax: 10, moscow: false, criteria: [{ id: 'nw', name: '', weight: 100 }] });
   assert.ok(p.options.every(o => o.priority === null));
   assert.equal(m.activeConceptId, 'c1');
   assert.deepEqual(plain(m.categories), []);
@@ -114,6 +114,25 @@ test('Datenformat: jede Version hat eine Migration bis zur aktuellen', () => {
   for (let v = 1; v < Model.SCHEMA_VERSION; v++) {
     assert.doesNotThrow(() => Model.migrate({ version: v, parameters: [] }), `Migration ${v} → ${v + 1}`);
   }
+});
+
+test('Kriterien: Version 6 wird zu einem Kriterium „Nutzwert“; ungültige Kriterien und Werte bereinigt', () => {
+  const m = Model.normalize({ version: 6, parameters: [{ id: 'p', options: [{ id: 'a', score: 7 }, { id: 'b', score: null }, { id: 'c' }] }] });
+  assert.deepEqual(plain(m.settings.criteria), [{ id: 'nw', name: '', weight: 100 }]);
+  assert.deepEqual(plain(m.parameters[0].options.map(o => o.scores)), [{ nw: 7 }, {}, {}]);
+  assert.ok(m.parameters[0].options.every(o => !('score' in o)));
+  const n = Model.normalize({
+    version: 7,
+    settings: { criteria: [{ id: 'g', name: 'Geschmack', weight: 35 }, { id: 'g', name: 'doppelt', weight: -3 }, null] },
+    parameters: [{ id: 'p', options: [{ id: 'a', scores: { g: 8, unbekannt: 3, x: 'neun' } }] }],
+  });
+  assert.equal(n.settings.criteria.length, 3);
+  assert.equal(n.settings.criteria[0].id, 'g');
+  assert.notEqual(n.settings.criteria[1].id, 'g'); // doppelte ID ersetzt
+  assert.equal(n.settings.criteria[1].weight, 100); // ungültiges Gewicht
+  assert.deepEqual(plain(n.parameters[0].options[0].scores), { g: 8 });
+  assert.deepEqual(plain(Model.normalize({ version: 7, settings: { criteria: [] }, parameters: [] }).settings.criteria), [{ id: 'nw', name: '', weight: 100 }]);
+  assert.equal(Model.criterionLabel({ id: 'x', name: ' ', weight: 1 }), 'Nutzwert');
 });
 
 test('Status je Konzept: Version 5 ohne Status ergibt „Entwurf“; ungültige Werte werden verworfen', () => {

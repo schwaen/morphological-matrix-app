@@ -33,7 +33,7 @@ test('HTML-Bericht: Kopf, Reihenfolge der Abschnitte, Konzepte mit Status, Kennz
   assert.match(html, /<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"[^>]*role="img"/);
   assert.match(html, /Muskelkraft verträgt sich nicht/); // Grund zum Status
   assert.match(html, /Heizt in ca\. 30 s auf/); // Notiz einer Ausprägung
-  assert.match(html, /Erstellt mit der App „Morphologische Matrix“ · Datenformat 6/);
+  assert.match(html, /Erstellt mit der App „Morphologische Matrix“ · Datenformat 7/);
 });
 
 test('HTML-Bericht: Teile abwählbar, verworfene Konzepte weglassen, Inhalte maskiert', () => {

@@ -159,6 +159,19 @@
   <div class="menu-list start-menu" id="startMenu" role="menu" data-i18n-attr="aria-label:ui.startTitle" hidden></div>
   <div class="menu-list tab-menu" id="tabMenu" role="menu" data-i18n-attr="aria-label:tabs.add" hidden></div>
   <div class="note-pop" id="notePop" role="tooltip" hidden></div>
+  <dialog class="dialog score-dialog" id="scoreDialog" aria-labelledby="scoreHeading">
+    <div class="dialog-head">
+      <h2 id="scoreHeading" data-i18n="ui.scoreHeading"></h2>
+      <button type="button" class="icon-btn" id="scoreClose" data-i18n-attr="aria-label:ui.close;title:ui.close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div id="scoreBody"></div>
+    <div class="dialog-foot">
+      <button type="button" class="btn btn-primary" id="scoreDone" data-i18n="ui.done"></button>
+    </div>
+  </dialog>
+
   <dialog class="dialog export-dialog" id="exportDialog" aria-labelledby="exportHeading">
     <div class="dialog-head">
       <h2 id="exportHeading" data-i18n="ui.exportHeading"></h2>
@@ -198,6 +211,7 @@
 
   <div class="cons-pop" id="consPop" role="dialog" aria-labelledby="consPopTitle" hidden></div>
   <div class="status-pop" id="statusPop" role="dialog" aria-labelledby="statusPopTitle" hidden></div>
+  <div class="score-pop" id="scorePop" role="dialog" aria-labelledby="scorePopTitle" hidden></div>
 
   <dialog class="dialog cons-dialog" id="consDialog" aria-labelledby="consHeading">
     <div class="dialog-head">
