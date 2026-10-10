@@ -116,6 +116,18 @@ test('Datenformat: jede Version hat eine Migration bis zur aktuellen', () => {
   }
 });
 
+test('Status je Konzept: Version 5 ohne Status ergibt „Entwurf“; ungültige Werte werden verworfen', () => {
+  const m = Model.normalize({
+    version: 5,
+    parameters: [],
+    concepts: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B', status: 'dropped', statusNote: 'zu teuer' }, { id: 'c', name: 'C', status: 'egal' }],
+  });
+  assert.equal(m.version, Model.SCHEMA_VERSION);
+  assert.deepEqual(m.concepts.map(c => [c.status, c.statusNote]), [['draft', ''], ['dropped', 'zu teuer'], ['draft', '']]);
+  assert.equal(Model.newConcept(m).status, 'draft');
+  assert.equal(Model.blankState().concepts[0].status, 'draft');
+});
+
 test('Priorität (MoSCoW): gültige Werte bleiben, ungültige werden verworfen', () => {
   const m = Model.normalize({
     version: 3,

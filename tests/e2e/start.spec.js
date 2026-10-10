@@ -56,7 +56,7 @@ test('Hilfe & Über: Reiter per Klick und Pfeiltasten, Über direkt aus dem Men�
   await page.locator('#startMenu').getByRole('menuitem', { name: 'Über die App' }).click();
   await expect(dlg.getByRole('tab', { name: 'Über' })).toHaveAttribute('aria-selected', 'true');
   await expect(dlg.locator('#helpAbout')).toContainText('nur lokal in diesem Browser gespeichert');
-  await expect(page.locator('#helpMeta')).toHaveText('Datenformat 5 · Daten nur lokal in diesem Browser');
+  await expect(page.locator('#helpMeta')).toHaveText('Datenformat 6 · Daten nur lokal in diesem Browser');
 });
 
 test('Start-Menü bleibt im schmalen Fenster sichtbar und schließt beim Klick daneben', async ({ page }) => {

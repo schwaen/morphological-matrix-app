@@ -16,6 +16,7 @@ import {
 import { Icon, IconButton } from './components.jsx';
 import { ConstraintButton, ConstraintCount, conflictText, statusText } from './constraints.jsx';
 import { activeConcept, collapseKey, fieldProps, isCollapsed, money, prefs, setPendingFocus, state, useMatrix } from './core.js';
+import { restCounts } from './count.js';
 import { $, focusField, shownColor } from './dom.jsx';
 import { scheduleLines } from './lines.js';
 import { NoteButton, NoteField, NoteMark, showNote } from './notes.jsx';
@@ -26,8 +27,10 @@ import { Util } from '../util.js';
 /**
  * Was alle Zeilen brauchen.
  * @typedef {{ editing: boolean, cols: number, active: MatrixConcept | null, showBands: boolean, found: Found,
- *             status: ReturnType<typeof Consistency.statusFor>, clash: MatrixConstraint[] }} RowContext
+ *             status: ReturnType<typeof Consistency.statusFor>, clash: MatrixConstraint[], rest: Remaining }} RowContext
  */
+/** @typedef {import('./count.js').Remaining} Remaining */
+/** Restzahl einer Ausprägung und die größte ihres Parameters (für den Balken). @typedef {{ n: bigint, max: bigint }} Rest */
 
 /** Die Matrix als Raster (`#matrix`); Spaltenzahl und Modus stehen am Container. */
 function Matrix() {
@@ -54,6 +57,9 @@ function Matrix() {
     // Verträglichkeiten zur Auswahl des aktiven Konzepts (nur im Modus „Kombinieren“)
     status: editing ? new Map() : Consistency.statusFor(state, active),
     clash: editing || !active ? [] : Consistency.conflicts(state, active).excluded,
+    // Restzahlen zur Auswahl des aktiven Konzepts (nur im Modus „Kombinieren“). Ist es
+    // vollständig, sagen sie nur noch „passt“ oder „passt nicht“ – das zeigt schon die Markierung.
+    rest: editing || (active && state.parameters.every(p => active.selections[p.id])) ? null : restCounts(state, active),
   };
   return (
     <>
@@ -77,12 +83,13 @@ function Matrix() {
  */
 function ParameterRow({ p, pi, ctx }) {
   const used = p.options.length + (ctx.editing ? 1 : 0);
+  const rest = rowRest(p, ctx.rest);
   return (
     <>
       {ctx.editing ? <ParameterEdit p={p} pi={pi} ctx={ctx} /> : <ParameterView p={p} pi={pi} ctx={ctx} />}
       {p.options.map((o, oi) => (ctx.editing
         ? <OptionEdit key={o.id} p={p} pi={pi} o={o} oi={oi} ctx={ctx} />
-        : <OptionPick key={o.id} p={p} o={o} oi={oi} ctx={ctx} />))}
+        : <OptionPick key={o.id} p={p} o={o} oi={oi} ctx={ctx} rest={rest ? rest(o.id) : null} />))}
       {ctx.editing ? (
         <button
           type="button" class="add-opt" title={Texts.matrix.addOption}
@@ -249,8 +256,48 @@ function PriorityBadge({ o }) {
   return <span class={`prio prio-${o.priority}`} title={o.priority === 'wont' ? Texts.moscow.wontHint : label}>{short}</span>;
 }
 
-/** Ausprägung im Modus „Kombinieren“. @param {{ p: MatrixParameter, o: MatrixOption, oi: number, ctx: RowContext }} props */
-function OptionPick({ p, o, oi, ctx }) {
+/**
+ * Restzahlen einer Zeile – nur, wenn sie sich bei den Ausprägungen des Parameters unterscheiden
+ * (sonst ohne Aussage). @param {MatrixParameter} p @param {Remaining} rest
+ * @returns {((oid: string) => Rest | null) | null}
+ */
+function rowRest(p, rest) {
+  if (!rest) return null;
+  const counts = p.options.map(o => rest.options.get(o.id));
+  // Noch vom vorigen Stand (Ergebnis steht aus): Ausprägungen fehlen
+  if (counts.some(n => n === undefined)) return null;
+  const ns = /** @type {bigint[]} */ (counts);
+  if (ns.every(n => n === ns[0])) return null;
+  const max = ns.reduce((a, b) => (b > a ? b : a), 0n);
+  return oid => ({ n: /** @type {bigint} */ (rest.options.get(oid)), max });
+}
+
+/** Breite des Balkens in Prozent (auch für sehr große Zahlen). @param {Rest} r */
+const restShare = r => (r.max ? Number((r.n * 1000n) / r.max) / 10 : 0);
+
+/**
+ * Restzahl an einer Ausprägung: Zahl mit Balken bzw. „∅“, wenn sie zur Auswahl passt, aber zu
+ * keiner Lösung mehr führt (direkt unverträgliche Ausprägungen sind schon durchgestrichen).
+ * @param {{ rest: Rest, blocked: boolean }} props
+ */
+function RestBadge({ rest, blocked }) {
+  if (!rest.n) return blocked ? null : <span class="rest rest-dead" title={Texts.cons.restDead}>∅</span>;
+  return (
+    <span class="rest" title={Texts.cons.restTitle(Util.formatInteger(rest.n), rest.n === 1n)}>
+      {Util.formatCompact(rest.n)}
+      <span class="rest-bar" aria-hidden="true"><i style={{ width: `${restShare(rest)}%` }} /></span>
+    </span>
+  );
+}
+
+/** Text der Restzahl für Screenreader. @param {Rest | null} rest */
+const restText = rest => (!rest ? null : rest.n ? Texts.cons.restTitle(Util.formatInteger(rest.n), rest.n === 1n) : Texts.cons.restDead);
+
+/**
+ * Ausprägung im Modus „Kombinieren“.
+ * @param {{ p: MatrixParameter, o: MatrixOption, oi: number, ctx: RowContext, rest: Rest | null }} props
+ */
+function OptionPick({ p, o, oi, ctx, rest }) {
   const { active, status, clash } = ctx;
   const selectedBy = state.concepts.filter(c => c.selections[p.id] === o.id);
   const isActive = !!active && active.selections[p.id] === o.id;
@@ -262,7 +309,10 @@ function OptionPick({ p, o, oi, ctx }) {
   const text = o.text.trim() || Texts.fallback.emptyOption(oi + 1);
   const cls = `opt-cell pick${isActive ? ' is-active' : ''}${o.text.trim() ? '' : ' is-empty'}`
     + `${state.settings.moscow && o.priority === 'wont' ? ' is-wont' : ''}${conflict.length ? ' is-conflict' : ''}`
-    + `${st ? (st.type === 'excluded' ? ' is-blocked' : ' is-conditional') : ''}${searchClass(ctx.found, p.id, o.id)}`;
+    + `${st ? (st.type === 'excluded' ? ' is-blocked' : ' is-conditional') : ''}${searchClass(ctx.found, p.id, o.id)}`
+    + `${rest ? ' has-rest' : ''}`;
+  const blocked = st?.type === 'excluded';
+  const restInfo = rest && (rest.n || !blocked) ? restText(rest) : null;
   return (
     <button
       type="button" class={cls} data-oid={o.id} aria-pressed={isActive}
@@ -271,7 +321,7 @@ function OptionPick({ p, o, oi, ctx }) {
       data-cell={`${p.id}:${o.id}`}
       data-note={o.note || undefined} data-note-label={o.note ? Texts.notes.title(text) : undefined}
       data-cons={cons ? cons.text : undefined} data-cons-label={cons ? cons.label : undefined} data-cons-type={cons ? cons.type : undefined}
-      aria-description={[cons && `${cons.label}: ${cons.text}`, o.note].filter(Boolean).join(' – ') || undefined}
+      aria-description={[cons && `${cons.label}: ${cons.text}`, restInfo, o.note].filter(Boolean).join(' – ') || undefined}
       onClick={() => toggleSelection(p.id, o.id)}
     >
       <span class="opt-label">
@@ -281,6 +331,7 @@ function OptionPick({ p, o, oi, ctx }) {
       {o.note ? <NoteMark /> : null}
       {conflict.length ? <span class="cons-badge" aria-hidden="true">{Texts.cons.conflictBadge}</span> : null}
       {st ? <span class={`cons-ico ${st.type}`} aria-hidden="true">{st.type === 'excluded' ? '✕' : '!'}</span> : null}
+      {rest ? <RestBadge rest={rest} blocked={blocked} /> : null}
       {selectedBy.length ? (
         <span class="markers" aria-hidden="true">
           {selectedBy.map(c => <span key={c.id} class="marker" style={{ '--c': shownColor(c.color) }} />)}

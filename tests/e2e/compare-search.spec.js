@@ -1,6 +1,11 @@
 import { test, expect, setEvaluation } from './fixtures.js';
 
-const headers = page => page.locator('#compareTable thead th').evaluateAll(els => els.slice(1).map(el => el.textContent.trim()));
+// Ohne Status-Symbol (Favorit, verworfen, …)
+const headers = page => page.locator('#compareTable thead th').evaluateAll(els => els.slice(1).map(el => {
+  const th = el.cloneNode(true);
+  th.querySelector('.status-chip')?.remove();
+  return th.textContent.trim();
+}));
 const paramRows = page => page.locator('#compareTable tbody tr:not(.cat-row):not(.note-row):not(.cons-row) th');
 
 test('Konzeptvergleich: nur Unterschiede zeigen', async ({ page }) => {

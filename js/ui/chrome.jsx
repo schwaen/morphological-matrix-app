@@ -70,6 +70,8 @@ function BelowMatrix() {
       ) : null}
       <p class="hint" id="hint">
         {editing ? Texts.hint.edit : (c ? Texts.hint.select(Model.nameOrUnnamed(c)) : Texts.hint.noConcept)}
+        {/* Restzahlen gibt es nur mit unverträglichen Paaren (siehe restCounts) */}
+        {!editing && state.constraints.some(x => x.type === 'excluded') ? ` ${Texts.cons.restLegend}` : null}
       </p>
     </>
   );

@@ -166,5 +166,46 @@ function countGroup(order, ex, owner, limit) {
   return total;
 }
 
+/**
+ * Restzahlen beim Kombinieren: Zahl der widerspruchsfreien Kombinationen, die die feste Auswahl
+ * `fixed` (Parameter-ID → Ausprägungs-ID) enthalten (`total`), und je Ausprägung die Zahl, wenn
+ * man bei ihrem Parameter sie statt der dortigen Auswahl nimmt (`options`); die Auswahl der
+ * übrigen Parameter bleibt dabei fest. `null`, wenn eine Zählung zu aufwendig wird.
+ * @param {Matrix} m @param {Record<string, string>} fixed @param {number} [limit]
+ * @returns {{ total: bigint, options: Map<string, bigint> } | null}
+ */
+function remaining(m, fixed, limit = 20000) {
+  const ex = exclusions(m);
+  /** Zählung mit festgelegten Parametern (Paare zu weggefallenen Ausprägungen entfallen). @param {Record<string, string>} fx */
+  const countWith = fx => {
+    const P = m.parameters.map(p => (fx[p.id] ? { ...p, options: p.options.filter(o => o.id === fx[p.id]) } : p));
+    const ids = new Set(P.flatMap(p => p.options.map(o => o.id)));
+    /** @type {Map<string, Set<string>>} */
+    const ex2 = new Map();
+    for (const [x, ys] of ex) {
+      if (!ids.has(x)) continue;
+      const keep = [...ys].filter(y => ids.has(y));
+      if (keep.length) ex2.set(x, new Set(keep));
+    }
+    return countUncached(P, ex2, limit);
+  };
+  // Nur Auswahlen, die es noch gibt
+  /** @type {Record<string, string>} */
+  const base = {};
+  for (const p of m.parameters) if (p.options.some(o => o.id === fixed[p.id])) base[p.id] = fixed[p.id];
+  const total = countWith(base);
+  if (total == null) return null;
+  /** @type {Map<string, bigint>} */
+  const options = new Map();
+  for (const p of m.parameters) {
+    for (const o of p.options) {
+      const n = base[p.id] === o.id ? total : countWith({ ...base, [p.id]: o.id });
+      if (n == null) return null;
+      options.set(o.id, n);
+    }
+  }
+  return { total, options };
+}
+
 /** Namensraum der Zählung (über `Consistency` auch für die übrigen Module). */
-export const Counting = { exclusions, countConsistent, countSignature };
+export const Counting = { exclusions, countConsistent, countSignature, remaining };

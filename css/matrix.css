@@ -104,6 +104,18 @@
     font-weight: 600;
   }
   .markers { position: absolute; top: 5px; right: 5px; display: flex; flex-direction: column; gap: 2px; }
+  /* Restzahl beim Kombinieren: Zahl links unten, Balken im Vergleich zu den anderen Ausprägungen */
+  .opt-cell.pick.has-rest { padding-bottom: 18px; }
+  .rest {
+    position: absolute; left: 10px; right: 30px; bottom: 5px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: .68rem; font-weight: 650; line-height: 1; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .opt-cell.pick:has(.note-ico):has(.cons-ico) .rest { right: 48px; }
+  .rest-bar { flex: 1; height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; }
+  .rest-bar i { display: block; height: 100%; background: var(--accent); opacity: .55; }
+  .rest-dead { font-size: .8rem; color: var(--bad); }
+  .opt-cell.pick.has-rest:has(.rest-dead) { border-style: dashed; }
   .marker { width: 7px; height: 7px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px var(--surface); }
 
   .add-opt {

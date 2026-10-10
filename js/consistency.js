@@ -89,7 +89,7 @@ export const Consistency = (() => {
     return map;
   }
 
-  const { exclusions, countConsistent, countSignature } = Counting;
+  const { exclusions, countConsistent, countSignature, remaining } = Counting;
 
   /**
    * Beste Kombination nach einem Schlüssel je Ausprägung (Summe, lexikografisch kleiner = besser),
@@ -205,5 +205,5 @@ export const Consistency = (() => {
     return selections;
   }
 
-  return { TYPES, key, get, partners, countFor, conflicts, statusFor, countConsistent, countSignature, optimize, randomCombination };
+  return { TYPES, key, get, partners, countFor, conflicts, statusFor, countConsistent, countSignature, remaining, optimize, randomCombination };
 })();

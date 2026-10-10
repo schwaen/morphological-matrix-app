@@ -245,3 +245,63 @@ test('countSignature: gleich bei gleicher Zählgrundlage, anders nach Änderunge
   assert.notEqual(Consistency.countSignature(m), sig);
   assert.notEqual(Consistency.countSignature(withPairs(), 5), sig); // andere Grenze
 });
+
+/** Restzahlen durch Durchzählen: Kombinationen mit der festen Auswahl (bei `swap` ersetzt). */
+function bruteRest(m, fixed) {
+  const all = [...combinations(m)].filter(os => consistent(m, os));
+  const fits = (os, fx) => m.parameters.every((p, i) => !fx[p.id] || os[i].id === fx[p.id]);
+  const options = new Map();
+  for (const p of m.parameters) {
+    for (const o of p.options) options.set(o.id, BigInt(all.filter(os => fits(os, { ...fixed, [p.id]: o.id })).length));
+  }
+  return { total: BigInt(all.filter(os => fits(os, fixed)).length), options };
+}
+
+test('remaining: Restzahlen zur Auswahl stimmen mit dem Durchzählen überein', () => {
+  const m = withPairs();
+  // Beispiel aus der Oberfläche: nur „Muskelkraft“ gewählt
+  const r = Consistency.remaining(m, { p5: 'p5o4' });
+  assert.equal(r.total, 88n);
+  assert.equal(r.options.get('p3o2'), 16n); // Kapsel schließt Schwerkraft aus
+  assert.equal(r.options.get('p1o1'), 0n); // unverträglich mit Muskelkraft
+  assert.equal(r.options.get('p5o1'), 720n); // Wechsel auf Netzstrom
+  assert.deepEqual(r, bruteRest(m, { p5: 'p5o4' }));
+  // Ohne Auswahl: Gesamtzahl je Ausprägung; Auswahl veralteter Ausprägungen zählt nicht
+  assert.deepEqual(Consistency.remaining(m, {}), bruteRest(m, {}));
+  assert.deepEqual(Consistency.remaining(m, { p5: 'weg' }), bruteRest(m, {}));
+});
+
+test('remaining: zufällige Matrizen und Auswahlen stimmen mit dem Durchzählen überein', () => {
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let run = 0; run < 80; run++) {
+    const nP = 2 + Math.floor(rnd() * 4);
+    const m = Model.normalize({
+      version: Model.SCHEMA_VERSION,
+      parameters: Array.from({ length: nP }, (_, i) => ({ id: `p${i}`, options: Array.from({ length: 1 + Math.floor(rnd() * 4) }, (_, j) => ({ id: `p${i}o${j}` })) })),
+    });
+    const all = m.parameters.flatMap(p => p.options.map(o => o.id));
+    for (let k = Math.floor(rnd() * 12); k > 0; k--) {
+      Ops.setConstraint(m, all[Math.floor(rnd() * all.length)], all[Math.floor(rnd() * all.length)], 'excluded');
+    }
+    const fixed = {};
+    for (const p of m.parameters) if (rnd() < 0.4) fixed[p.id] = p.options[Math.floor(rnd() * p.options.length)].id;
+    assert.deepEqual(Consistency.remaining(m, fixed), bruteRest(m, fixed), `Lauf ${run}`);
+  }
+});
+
+test('remaining: „Sackgasse“ – passt zur Auswahl, führt aber zu keiner Lösung', () => {
+  const m = Model.normalize({
+    version: Model.SCHEMA_VERSION,
+    parameters: [
+      { id: 'a', options: [{ id: 'a1' }, { id: 'a2' }] },
+      { id: 'b', options: [{ id: 'b1' }, { id: 'b2' }] },
+      { id: 'c', options: [{ id: 'c1' }] },
+    ],
+  });
+  // a2 verträgt sich mit der Auswahl b1, schließt aber die einzige Ausprägung von c aus
+  Ops.setConstraint(m, 'a2', 'c1', 'excluded');
+  const r = Consistency.remaining(m, { b: 'b1' });
+  assert.equal(r.options.get('a2'), 0n);
+  assert.equal(r.options.get('a1'), 1n);
+});

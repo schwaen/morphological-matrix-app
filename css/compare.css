@@ -85,6 +85,9 @@
   }
   .compare thead th .key { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 6px; vertical-align: 0; }
   .compare tbody tr:hover td, .compare tbody tr:hover th { background: var(--surface-2); }
+  /* Verworfene Konzepte treten zurück */
+  .compare thead th.is-dropped, .compare td[data-dropped] { opacity: .5; }
+  .compare thead th .status-chip { margin-left: 6px; padding: 0 5px; vertical-align: 1px; }
   .compare thead th .rank { margin-right: 6px; color: var(--text); font-variant-numeric: tabular-nums; }
   .compare tbody th { color: var(--text-2); font-weight: 600; }
   .compare td.none { color: var(--muted); }

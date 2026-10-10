@@ -28,13 +28,15 @@ export const Model = (() => {
   const NO_CATEGORY = '__none';
   /** @type {MatrixConstraintType[]} */
   const CONSTRAINT_TYPES = ['excluded', 'conditional'];
+  /** Status eines Konzepts; „draft“ (Entwurf) ist der Ausgangszustand. @type {ConceptStatus[]} */
+  const CONCEPT_STATUSES = ['draft', 'favorite', 'dropped', 'chosen'];
 
   /**
    * Aktuelle Version des Datenformats (gespeicherte Matrizen, JSON-Export, Teilen-Links).
    * Beschreibung: docs/DATENFORMAT.md. Bei inkompatiblen Änderungen erhöhen und in
    * MIGRATIONS eine Umwandlung von der Vorgängerversion ergänzen.
    */
-  const SCHEMA_VERSION = 5;
+  const SCHEMA_VERSION = 6;
 
   /**
    * Umwandlungen von Version n auf n + 1. Sie erhalten die Rohdaten und liefern Rohdaten;
@@ -60,6 +62,9 @@ export const Model = (() => {
     // 4 → 5: Verträglichkeiten zwischen Ausprägungen (`constraints`). Keine Umwandlung nötig –
     // die neue Version verhindert, dass ältere App-Versionen sie verwerfen.
     4: data => data,
+    // 5 → 6: Status je Konzept (`status`, `statusNote`). Keine Umwandlung nötig (fehlt der
+    // Status, gilt „Entwurf“) – die neue Version verhindert, dass ältere App-Versionen ihn verwerfen.
+    5: data => data,
   };
 
   /**
@@ -113,6 +118,8 @@ export const Model = (() => {
       name: uniqueName(m.concepts.map(c => c.name), base || Texts.fallback.concept(m.concepts.length + 1)),
       color: nextConceptColor(m.concepts),
       note: '',
+      status: 'draft',
+      statusNote: '',
       selections: {},
     };
   }
@@ -129,7 +136,8 @@ export const Model = (() => {
   /** @returns {Matrix} */
   function blankState() {
     const parameters = [1, 2, 3].map(i => newParameter(null, Texts.fallback.parameter(i)));
-    const concept = { id: uid(), name: Texts.fallback.concept(1), color: COLORS[0], note: '', selections: {} };
+    /** @type {MatrixConcept} */
+    const concept = { id: uid(), name: Texts.fallback.concept(1), color: COLORS[0], note: '', status: 'draft', statusNote: '', selections: {} };
     return {
       version: SCHEMA_VERSION,
       title: Texts.fallback.newMatrixTitle,
@@ -211,6 +219,8 @@ export const Model = (() => {
         name: str(c && c.name, Texts.fallback.concept(i + 1)),
         color: isColor(c && c.color) ? c.color : COLORS[i % COLORS.length],
         note: str(c && c.note),
+        status: CONCEPT_STATUSES.includes(c && c.status) ? c.status : 'draft',
+        statusNote: str(c && c.statusNote),
         selections,
       };
     });
@@ -390,7 +400,7 @@ export const Model = (() => {
   const nameOrUnnamed = x => (x && x.name) || Texts.fallback.unnamed;
 
   return {
-    COLORS, COLORS_DARK, CATEGORY_COLORS, CURRENCIES, SCALES, PRIORITIES, NO_CATEGORY, SCHEMA_VERSION, migrate,
+    COLORS, COLORS_DARK, CATEGORY_COLORS, CURRENCIES, SCALES, PRIORITIES, CONCEPT_STATUSES, NO_CATEGORY, SCHEMA_VERSION, migrate,
     defaultSettings, newOption, newParameter, newConcept, nextConceptColor, nextCategoryColor, uniqueName,
     blankState, normalize, sortedByCategory, resort,
     categoryById, categoryGroups, canMoveParameter, selectedOption, optionText, sameSelections,

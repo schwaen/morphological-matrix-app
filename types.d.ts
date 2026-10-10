@@ -37,12 +37,19 @@ interface MatrixCategory {
   color: string;
 }
 
+/** Status eines Konzepts: Entwurf, Favorit (in engerer Wahl), verworfen, gewählt */
+type ConceptStatus = 'draft' | 'favorite' | 'dropped' | 'chosen';
+
 interface MatrixConcept {
   id: string;
   name: string;
   color: string;
   /** Begründung / Notiz (Freitext, optional leer) */
   note: string;
+  /** Stand der Entscheidung */
+  status: ConceptStatus;
+  /** Grund zum Status, z. B. warum verworfen (Freitext, optional leer) */
+  statusNote: string;
   /** Parameter-ID → gewählte Ausprägungs-ID */
   selections: Record<string, string>;
 }
@@ -110,6 +117,8 @@ interface TabPrefs {
   compareSort?: 'order' | 'utility' | 'cost' | 'priceValue';
   /** Konzeptvergleich: Konzepte mit unverträglichem Paar ausblenden */
   compareHideConflicts?: boolean;
+  /** Konzeptvergleich: verworfene Konzepte ausblenden */
+  compareHideDropped?: boolean;
   /** Kategorie-ID (bzw. `__none`) → eingeklappt */
   collapsed?: Record<string, boolean>;
 }
@@ -122,6 +131,7 @@ interface TabView {
   compareDiff?: boolean;
   compareSort?: TabPrefs['compareSort'];
   compareHideConflicts?: boolean;
+  compareHideDropped?: boolean;
   collapsed?: Record<string, boolean>;
 }
 

@@ -134,6 +134,16 @@ export function deleteConcept(cid) {
   toast(Texts.toast.conceptDeleted(Model.nameOrUnnamed(c)), true);
 }
 
+/** Status eines Konzepts setzen (mit Rückgängig). @param {string} cid @param {ConceptStatus} status */
+export function setConceptStatus(cid, status) {
+  const c = state.concepts.find(x => x.id === cid);
+  if (!c || c.status === status) return;
+  mutate(m => {
+    const x = m.concepts.find(k => k.id === cid);
+    if (x) x.status = status;
+  });
+}
+
 /** Aktives Konzept wechseln (Ansichtsänderung, kein Verlaufseintrag). */
 export function setActiveConcept(cid) {
   if (state.activeConceptId === cid) return;
