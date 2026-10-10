@@ -17,6 +17,7 @@ import {
 } from './core.js';
 import { $ } from './dom.jsx';
 import { CompareChart } from './render-chart.jsx';
+import { CompareScatter } from './render-scatter.jsx';
 import { compareContent, CompareTable, CompareTools } from './render-panels.jsx';
 
 /** Bearbeiten / Kombinieren. */
@@ -149,7 +150,17 @@ function CompareSection() {
   if (!shown) return null;
   // Beim Drucken immer offen und als Tabelle
   const open = printing || prefs.compareOpen !== false;
-  const chart = !printing && prefs.compareView === 'chart';
+  // „Kosten/Nutzen“ nur mit Kosten und Nutzwert; sonst (und beim Drucken) die Tabelle
+  const scatterOk = state.settings.costs && state.settings.utility;
+  /** @type {Array<NonNullable<TabPrefs['compareView']>>} */
+  const views = ['table', 'chart', ...(scatterOk ? /** @type {const} */ (['scatter']) : [])];
+  const pref = prefs.compareView || 'table';
+  const view = printing || !views.includes(pref) ? 'table' : pref;
+  const VIEW_TEXT = {
+    table: { text: Texts.ui.compareTable, title: undefined },
+    chart: { text: Texts.ui.compareChart, title: Texts.ui.compareChartTitle },
+    scatter: { text: Texts.ui.compareScatter, title: Texts.ui.compareScatterTitle },
+  };
   return (
     <>
       <h2 id="compareHeading" class="collapsible-head">
@@ -162,12 +173,11 @@ function CompareSection() {
           <span class="collapse-meta" id="compareMeta">{Texts.compare.conceptCount(state.concepts.length)}</span>
         </button>
         <div class="segmented compare-views" role="group" aria-label={Texts.ui.compareViews}>
-          {/** @type {Array<'table' | 'chart'>} */ (['table', 'chart']).map(view => (
+          {views.map(v => (
             <button
-              key={view} type="button" data-compare-view={view} aria-pressed={prefs.compareView === view}
-              title={view === 'chart' ? Texts.ui.compareChartTitle : undefined}
-              onClick={() => { setPref('compareOpen', true); setCompareView('compareView', view); }}
-            >{view === 'chart' ? Texts.ui.compareChart : Texts.ui.compareTable}</button>
+              key={v} type="button" data-compare-view={v} aria-pressed={view === v} title={VIEW_TEXT[v].title}
+              onClick={() => { setPref('compareOpen', true); setCompareView('compareView', v); }}
+            >{VIEW_TEXT[v].text}</button>
           ))}
         </div>
       </h2>
@@ -175,8 +185,9 @@ function CompareSection() {
         {open ? (
           <>
             <div class="compare-tools" id="compareTools"><CompareTools setView={setCompareView} /></div>
-            <table class="compare" id="compareTable" hidden={chart}>{chart ? null : <CompareTable />}</table>
-            <div class="pc" id="compareChart" hidden={!chart}>{chart ? <CompareChart content={compareContent} /> : null}</div>
+            <table class="compare" id="compareTable" hidden={view !== 'table'}>{view === 'table' ? <CompareTable /> : null}</table>
+            <div class="pc" id="compareChart" hidden={view !== 'chart'}>{view === 'chart' ? <CompareChart content={compareContent} /> : null}</div>
+            <div class="pc sc" id="compareScatter" hidden={view !== 'scatter'}>{view === 'scatter' ? <CompareScatter content={compareContent} /> : null}</div>
           </>
         ) : null}
       </div>

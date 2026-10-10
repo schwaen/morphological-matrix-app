@@ -337,9 +337,40 @@ export const Evaluation = (() => {
     },
   };
 
+  /**
+   * Kosten gegen Nutzwert: Ein Konzept wird von einem anderen übertroffen, wenn dieses höchstens
+   * so viel kostet und mindestens so viel Nutzwert hat (und in einem davon besser ist). Die
+   * Pareto-Front sind die vollständig bewerteten Konzepte, die kein vollständig bewertetes
+   * übertrifft. Unvollständig bewertete gehören nie dazu (ihre Werte können sich noch ändern);
+   * für sie gilt „übertroffen“ nur nach den bisherigen Werten.
+   * Übertreffen mehrere, wird das mit dem höchsten Nutzwert genannt (bei Gleichstand das günstigere).
+   * @param {ConceptFigures[]} report
+   * @returns {Map<string, { cost: number, utility: number, complete: boolean, front: boolean, dominatedBy: MatrixConcept | null }>}
+   *   nur Konzepte mit Kosten und Nutzwert
+   */
+  function pareto(report) {
+    const points = report
+      .filter(r => r.cost && r.utility && r.utility.value != null)
+      .map(r => {
+        const cost = /** @type {NonNullable<ConceptFigures['cost']>} */ (r.cost);
+        const util = /** @type {NonNullable<ConceptFigures['utility']>} */ (r.utility);
+        return { c: r.concept, cost: cost.total, utility: /** @type {number} */ (util.value), complete: !cost.missing && !util.missing };
+      });
+    const complete = points.filter(q => q.complete);
+    /** @type {Map<string, { cost: number, utility: number, complete: boolean, front: boolean, dominatedBy: MatrixConcept | null }>} */
+    const result = new Map();
+    for (const q of points) {
+      const better = complete
+        .filter(o => o !== q && o.cost <= q.cost && o.utility >= q.utility && (o.cost < q.cost || o.utility > q.utility))
+        .sort((a, b) => b.utility - a.utility || a.cost - b.cost);
+      result.set(q.c.id, { cost: q.cost, utility: q.utility, complete: q.complete, front: q.complete && !better.length, dominatedBy: better[0] ? better[0].c : null });
+    }
+    return result;
+  }
+
   return {
     weightOf, totalWeight, clampScore, isEnabled, weightShare,
-    conceptCost, conceptUtility, priceValue, priorityProfile, conceptReport, rankConcepts, RANKINGS,
+    conceptCost, conceptUtility, priceValue, priorityProfile, conceptReport, rankConcepts, RANKINGS, pareto,
     GENERATORS,
   };
 })();

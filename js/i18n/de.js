@@ -92,6 +92,8 @@ export const TextsDe = (() => {
       compareTable: 'Tabelle',
       compareChart: 'Verlauf',
       compareChartTitle: 'Konzepte als Linienzug über alle Parameter (Parallelkoordinaten)',
+      compareScatter: 'Kosten/Nutzen',
+      compareScatterTitle: 'Gesamtkosten gegen Nutzwert je Konzept, mit Pareto-Front',
       close: 'Schließen',
       startTitle: 'Start & Hilfe',
       appName: 'Morphologische Matrix',
@@ -445,6 +447,23 @@ export const TextsDe = (() => {
       legend: 'Konzepte',
       axisLabel: (param, options) => `${param}: ${options}`,
       noOptions: 'keine Ausprägungen',
+    },
+
+    scatter: {
+      label: 'Gesamtkosten und Nutzwert je Konzept',
+      axisCost: 'Gesamtkosten →',
+      axisUtility: max => `Nutzwert (0–${max}) →`,
+      front: 'Pareto-Front',
+      keyFront: 'Pareto-Front – kein anderes Konzept ist günstiger und zugleich besser',
+      keyIncomplete: 'unvollständig bewertet (*)',
+      keyDominated: 'blass: von einem anderen Konzept übertroffen',
+      onFront: 'Auf der Pareto-Front',
+      dominatedBy: (name, how) => `Übertroffen von „${name}“: ${{ both: 'günstiger und besser', cost: 'gleich gut, aber günstiger', utility: 'gleich teuer, aber besser' }[how]}`,
+      dominatedPrelim: name => `Nach den bisherigen Werten übertroffen von „${name}“`,
+      incomplete: n => `* unvollständig bewertet (${n} ${n === 1 ? 'Wert fehlt' : 'Werte fehlen'}) – zählt nicht zur Pareto-Front`,
+      point: (name, cost, utility) => `${name}: ${cost}, Nutzwert ${utility}`,
+      notShown: n => `${plural(n, 'Konzept', 'Konzepte')} ohne Nutzwert nicht dargestellt`,
+      empty: 'Noch kein Konzept mit Kosten und Nutzwert.',
     },
 
     compare: {

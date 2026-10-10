@@ -87,6 +87,8 @@ export const TextsEn = (() => {
       compareTable: 'Table',
       compareChart: 'Profile',
       compareChartTitle: 'Concepts as a line across all parameters (parallel coordinates)',
+      compareScatter: 'Cost/benefit',
+      compareScatterTitle: 'Total cost against utility per concept, with Pareto front',
       close: 'Close',
       startTitle: 'Start & help',
       appName: 'Morphological matrix',
@@ -432,6 +434,23 @@ export const TextsEn = (() => {
       legend: 'Concepts',
       axisLabel: (param, options) => `${param}: ${options}`,
       noOptions: 'no options',
+    },
+
+    scatter: {
+      label: 'Total cost and utility per concept',
+      axisCost: 'Total cost →',
+      axisUtility: max => `Utility (0–${max}) →`,
+      front: 'Pareto front',
+      keyFront: 'Pareto front – no other concept is both cheaper and better',
+      keyIncomplete: 'incompletely rated (*)',
+      keyDominated: 'faded: outperformed by another concept',
+      onFront: 'On the Pareto front',
+      dominatedBy: (name, how) => `Outperformed by “${name}”: ${{ both: 'cheaper and better', cost: 'just as good but cheaper', utility: 'same cost but better' }[how]}`,
+      dominatedPrelim: name => `Based on current values outperformed by “${name}”`,
+      incomplete: n => `* incompletely rated (${n} ${n === 1 ? 'value' : 'values'} missing) – not part of the Pareto front`,
+      point: (name, cost, utility) => `${name}: ${cost}, utility ${utility}`,
+      notShown: n => `${plural(n, 'concept', 'concepts')} without utility not shown`,
+      empty: 'No concept with cost and utility yet.',
     },
 
     compare: {

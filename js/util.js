@@ -89,10 +89,10 @@ export const Util = (() => {
     return { value: Number(n / factor) + Number((n % factor) * 1000n / factor) / 1000, power };
   }
 
-  /** @param {number} n @param {string} currency */
-  function formatMoney(n, currency) {
+  /** Betrag mit Währung; `wholeOnly`: ohne Nachkommastellen (z. B. Achsenbeschriftung). @param {number} n @param {string} currency @param {boolean} [wholeOnly] */
+  function formatMoney(n, currency, wholeOnly = false) {
     try {
-      return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(n);
+      return new Intl.NumberFormat(locale, { style: 'currency', currency, ...(wholeOnly ? { minimumFractionDigits: 0, maximumFractionDigits: 0 } : {}) }).format(n);
     } catch (e) {
       return `${numberFormat.format(n)} ${currency}`;
     }

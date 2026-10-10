@@ -312,3 +312,26 @@ test('Beste Preis-Leistung: Parameter ohne verträgliche Ausprägung bleibt leer
   assert.equal(Object.keys(res.selections).length, m.parameters.length - 1);
   assert.equal(res.selections[p1.id] && res.selections[p2.id], undefined);
 });
+
+test('Pareto-Front: übertroffene, gleichwertige und unvollständig bewertete Konzepte', () => {
+  // Kennzahlen wie im Beispiel Lastenrad (missing > 0 = unvollständig)
+  const row = (id, cost, utility, missing = 0) => ({
+    concept: { id, name: id }, cost: { total: cost, missing, best: false }, utility: { value: utility, missing: 0, best: false },
+  });
+  const report = [
+    row('budget', 1365, 4.54), row('familie', 3645, 7.43), row('premium', 6555, 8.63), row('gewerbe', 5845, 7.89, 2),
+    row('sharing', 3275, 6.91), row('leicht', 2950, 5.54), row('entwurf', 3165, 5.17, 1),
+    row('teuer', 7000, 7.43), row('zwilling', 3645, 7.43), // übertroffen bzw. gleichwertig
+    { concept: { id: 'ohne', name: 'ohne' }, cost: { total: 0, missing: 6, best: false }, utility: { value: null, missing: 6, best: false } },
+  ];
+  const p = Evaluation.pareto(report);
+  const front = [...p].filter(([, v]) => v.front).map(([id]) => id);
+  assert.deepEqual(front, ['budget', 'familie', 'premium', 'sharing', 'leicht', 'zwilling']);
+  // Unvollständig: nie auf der Front, auch wenn nach bisherigen Werten nicht übertroffen
+  assert.equal(p.get('gewerbe').front, false);
+  assert.equal(p.get('gewerbe').dominatedBy, null);
+  assert.equal(p.get('entwurf').dominatedBy.id, 'leicht');
+  // Mehrere übertreffen: das mit dem höchsten Nutzwert, bei Gleichstand das günstigere
+  assert.equal(p.get('teuer').dominatedBy.id, 'premium');
+  assert.equal(p.has('ohne'), false); // ohne Nutzwert nicht darstellbar
+});
