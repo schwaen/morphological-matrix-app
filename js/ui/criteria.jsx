@@ -5,6 +5,7 @@
  * Die Rechnung steht in js/evaluation.js (optionScore, conceptCriteria).
  */
 import { signal } from '@preact/signals';
+import { useLayoutEffect } from 'preact/hooks';
 import { Fragment, render as mount } from 'preact';
 import { Evaluation } from '../evaluation.js';
 import { Model } from '../model.js';
@@ -12,28 +13,21 @@ import { Ops } from '../ops.js';
 import { Texts } from '../texts.js';
 import { Icon, IconButton } from './components.jsx';
 import { fieldProps, mutate, prefs, state, useMatrix } from './core.js';
-import { $, closeDialog, openDialog, placeNear } from './dom.jsx';
-import { NumberField } from './fields.jsx';
+import { AttributeTable } from './attributes.jsx';
+import { $, closeDialog, placeNear } from './dom.jsx';
+import { NumberField, selectField as focusField } from './fields.jsx';
+import { openValueTable, tableOpen, tableTab } from './value-table.js';
 import { Util } from '../util.js';
 
 /** Ausprägung, deren Popover offen ist. */
 const scoreFor = signal(/** @type {string | null} */ (null));
 /** Bis zu diesem Zeitpunkt löst Bildlauf kein Schließen aus (eigenes Weiterblättern scrollt). */
 let keepOpenUntil = 0;
-/** Bewertungstabelle geöffnet (nur dann wird sie gezeichnet). */
-const tableOpen = signal(false);
 
 /** Wert eines Kriteriums setzen bzw. (leer) entfernen. @param {MatrixOption} o @param {string} cid @param {number | null} n */
 function setScore(o, cid, n) {
   if (n == null) delete o.scores[cid];
   else o.scores[cid] = n;
-}
-
-/** Feld fokussieren und den Inhalt markieren, damit Tippen ihn ersetzt. @param {HTMLInputElement | null} el */
-function focusField(el) {
-  if (!el) return;
-  el.focus();
-  el.select();
 }
 
 /** Ob die Bewertung nach mehreren Kriterien aktiv ist. @param {Matrix} m */
@@ -207,11 +201,7 @@ function ScorePop() {
 
 // ---------- Bewertungstabelle ----------
 
-export function openScoreTable() {
-  tableOpen.value = true;
-  openDialog($('#scoreDialog'));
-  focusField(/** @type {HTMLInputElement | null} */ ($('#scoreDialog').querySelector('input[data-r="0"]')));
-}
+export const openScoreTable = () => openValueTable('utility');
 
 /** Enter bzw. ↓/↑ springen in derselben Spalte zur nächsten bzw. vorigen Zeile. @param {KeyboardEvent} e */
 function tableKey(e) {
@@ -225,9 +215,45 @@ function tableKey(e) {
   focusField(next);
 }
 
-function ScoreTable() {
+/**
+ * Wertetabelle: Reiter „Nutzwert“ (bei aktivem Nutzwert) und „Eigene Merkmale“ (sobald es welche
+ * gibt); Reiter nur, wenn beide zur Wahl stehen.
+ */
+function ValueTable() {
   const m = useMatrix();
+  /** @type {import('./value-table.js').TableTab[]} */
+  const tabs = [];
+  if (m.settings.utility) tabs.push('utility');
+  if (m.settings.attributes.length) tabs.push('attributes');
+  const tab = tabs.includes(tableTab.value) ? tableTab.value : tabs[0];
+  // Überschrift folgt dem Reiter
+  const heading = tab === 'attributes' ? Texts.attributes.tableHeading : Texts.ui.scoreHeading;
+  useLayoutEffect(() => { $('#scoreHeading').textContent = heading; }, [heading]);
   if (!tableOpen.value) return null;
+  if (!tab) {
+    queueMicrotask(() => closeDialog($('#scoreDialog')));
+    return null;
+  }
+  const labels = { utility: Texts.attributes.tabUtility, attributes: Texts.attributes.tabAttributes };
+  return (
+    <>
+      {tabs.length > 1 ? (
+        <div class="value-tabs" role="tablist">
+          {tabs.map(t => (
+            <button
+              key={t} type="button" role="tab" class={`value-tab${t === tab ? ' is-on' : ''}`} aria-selected={t === tab} data-tab={t}
+              onClick={() => { tableTab.value = t; }}
+            >{labels[t]}</button>
+          ))}
+        </div>
+      ) : null}
+      {tab === 'utility' ? <ScoreTable m={m} /> : <AttributeTable />}
+    </>
+  );
+}
+
+/** Nutzwert aller Ausprägungen je Kriterium. @param {{ m: Matrix }} props */
+function ScoreTable({ m }) {
   const shares = Evaluation.criterionShares(m);
   const max = m.settings.utilityMax;
   let row = 0;
@@ -281,7 +307,8 @@ function ScoreTable() {
 
 export function initCriteria() {
   mount(<ScorePop />, $('#scorePop'));
-  mount(<ScoreTable />, $('#scoreBody'));
+  mount(<ValueTable />, $('#scoreBody'));
+
   const dialog = $('#scoreDialog');
   dialog.addEventListener('close', () => { tableOpen.value = false; });
   $('#scoreClose').addEventListener('click', () => closeDialog(dialog));

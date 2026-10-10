@@ -29,7 +29,7 @@ test('normalize: altes Format, Standardwerte und Bereinigung', () => {
   assert.deepEqual(plain(m.concepts[0].selections), {}); // ungültige Auswahl verworfen
   assert.equal(m.concepts[0].name, 'Konzept 1');
   assert.match(m.concepts[0].color, /^#[0-9a-f]{6}$/i);
-  assert.deepEqual(plain(m.settings), { costs: false, utility: false, currency: 'EUR', utilityMax: 10, moscow: false, criteria: [{ id: 'nw', name: '', weight: 100 }] });
+  assert.deepEqual(plain(m.settings), { costs: false, utility: false, currency: 'EUR', utilityMax: 10, moscow: false, criteria: [{ id: 'nw', name: '', weight: 100 }], attributes: [] });
   assert.ok(p.options.every(o => o.priority === null));
   assert.equal(m.activeConceptId, 'c1');
   assert.deepEqual(plain(m.categories), []);

@@ -69,7 +69,7 @@ test('Ausgeschaltete Bewertung behält die Werte', async ({ page }) => {
   await page.click('[data-mode=edit]');
   await page.getByLabel('Kosten von Boiler').fill('99');
   await setEvaluation(page, { costs: false });
-  await expect(page.locator('.num-input')).toHaveCount(0);
+  await expect(page.locator('.opt-metrics .num-input')).toHaveCount(0);
   await setEvaluation(page, { costs: true });
   await expect(page.getByLabel('Kosten von Boiler')).toHaveValue('99');
 });
@@ -77,7 +77,7 @@ test('Ausgeschaltete Bewertung behält die Werte', async ({ page }) => {
 test('CSV enthält Bewertungsspalten', async ({ page }) => {
   await setEvaluation(page, { costs: true, utility: true });
   const { text } = await exportFile(page, 'csv');
-  expect(text).toContain('"Kategorie";"Parameter";"Beschreibung des Parameters";"Gewicht";"Ausprägung";"Kosten (EUR)";"Nutzwert (0–10)";"Notiz"');
+  expect(text).toContain('"Kategorie";"Parameter";"Beschreibung des Parameters";"Gewicht";"Ausprägung";"Kosten (EUR)";"Nutzwert (0–10)";"Gewicht [kg]";"Lautstärke [dB]";"Notiz"');
   expect(text).toContain('"Gesamtkosten (EUR)";"Nutzwert";"Kosten je Nutzwertpunkt (EUR)"');
   expect(text).toMatch(/"Kompakt-Espresso";.*;54;7,25;7,45/);
 });

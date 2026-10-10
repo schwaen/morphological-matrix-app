@@ -3,6 +3,7 @@
  * Konzeptvergleichs (Tabelle; Verlauf in render-chart.jsx, Rahmen in chrome.jsx).
  */
 import { Fragment, render as mount } from 'preact';
+import { Attributes } from '../attributes.js';
 import { Consistency } from '../consistency.js';
 import { Evaluation } from '../evaluation.js';
 import { Model } from '../model.js';
@@ -170,6 +171,19 @@ function Summary() {
         fig.utility.value == null ? '–' : Texts.summary.utilityValue(Util.formatNumber(fig.utility.value), state.settings.utilityMax),
         fig.utility.missing)
       : null,
+    ...state.settings.attributes.map((a, i) => {
+      const sum = Attributes.summarize(state, a, c);
+      if (!sum.text) return null;
+      const star = sum.missing > 0 && a.type !== 'text' && a.type !== 'bool' && a.aggregate !== 'none';
+      return (
+        <div key={a.id} class={`metric metric-attr${sum.warn ? ' is-warn' : ''}`}>
+          <span>{Attributes.label(a, i)}</span>
+          <strong>{sum.text}</strong>
+          {star ? <small>{`(${missingNote(sum.missing)})`}</small> : null}
+          {sum.warn ? <small class="attr-warn">{`⚠ ${Attributes.limitText(a)}`}</small> : null}
+        </div>
+      );
+    }),
   ].filter(Boolean) : [];
   return (
     <>
@@ -257,7 +271,15 @@ export function CompareTools({ setView }) {
   const differing = Model.differingParameters(m).size;
   const keys = /** @type {Array<keyof typeof Evaluation.RANKINGS>} */ (Object.keys(Evaluation.RANKINGS))
     .filter(k => Evaluation.RANKINGS[k].enabled(m.settings));
-  const current = keys.includes(/** @type {any} */ (prefs.compareSort)) ? prefs.compareSort : 'order';
+  /** Sortierung nach eigenen Merkmalen (je Merkmal aufsteigend und absteigend) */
+  const attrKeys = m.settings.attributes.flatMap((a, i) => (Attributes.sortable(a)
+    ? ['asc', 'desc'].map(dir => ({ key: `attr:${a.id}:${dir}`, label: Texts.attributes.sort(Attributes.label(a, i), /** @type {'asc' | 'desc'} */ (dir)) }))
+    : []));
+  const options = [
+    ...['order', ...keys].map(k => ({ key: k, label: Texts.compare.sort[/** @type {keyof typeof Texts.compare.sort} */ (k)] })),
+    ...attrKeys,
+  ];
+  const current = options.some(o => o.key === prefs.compareSort) ? prefs.compareSort : 'order';
   /** @param {Event} e */
   const checked = e => /** @type {HTMLInputElement} */ (e.currentTarget).checked;
   return (
@@ -288,11 +310,11 @@ export function CompareTools({ setView }) {
           {Texts.cons.hideConflicts}
         </label>
       ) : null}
-      {keys.length ? (
+      {options.length > 1 ? (
         <label class="compare-sort">
           <span>{Texts.compare.sortBy}</span>
           <select id="compareSort" value={current} onChange={e => setView('compareSort', /** @type {any} */ (/** @type {HTMLSelectElement} */ (e.currentTarget).value))}>
-            {['order', ...keys].map(k => <option key={k} value={k}>{Texts.compare.sort[/** @type {keyof typeof Texts.compare.sort} */ (k)]}</option>)}
+            {options.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
           </select>
         </label>
       ) : null}
@@ -329,6 +351,41 @@ function criteriaRows(m, report) {
       </tr>
     );
   });
+}
+
+/**
+ * Abschnitt „Eigene Merkmale“ unter den Parametern des Vergleichs: je Merkmal die Zusammenfassung je Konzept,
+ * fehlende Werte mit „*“, überschrittene Grenze als Warnung.
+ * @param {Matrix} m @param {ConceptFigures[]} report @param {number} span
+ */
+function attributeRows(m, report, span) {
+  const list = m.settings.attributes;
+  if (!list.length) return [];
+  return [
+    <tr key="attr-head" class="attr-head-row"><th scope="colgroup" colSpan={span}>{Texts.attributes.heading}</th></tr>,
+    ...list.map((a, i) => (
+      <tr key={`attr:${a.id}`} class="attr-row" data-attr-row={a.id}>
+        <th scope="row" title={[a.description, a.source].filter(Boolean).join(' – ') || undefined}>
+          {Texts.attributes.compareRow(Attributes.label(a, i), Attributes.aggregateLabel(a))}
+        </th>
+        {report.map(({ concept }) => {
+          const sum = Attributes.summarize(m, a, concept);
+          // Bei Listen und Ja/Nein ist das Fehlen schon im Text sichtbar
+          const star = sum.missing > 0 && sum.text && a.type !== 'text' && a.type !== 'bool' && a.aggregate !== 'none';
+          return (
+            <td
+              key={concept.id} data-dropped={concept.status === 'dropped' || undefined}
+              class={[sum.text ? '' : 'none', star ? 'incomplete' : '', sum.warn ? 'attr-warn-cell' : ''].join(' ').trim() || undefined}
+              title={star ? Texts.attributes.missing(sum.missing) : undefined}
+            >
+              {sum.text ? sum.text + (star ? ' *' : '') : '–'}
+              {sum.warn ? <span class="attr-warn" title={Texts.attributes.warnTitle(Attributes.limitText(a))}>{`⚠ ${Attributes.limitText(a)}`}</span> : null}
+            </td>
+          );
+        })}
+      </tr>
+    )),
+  ];
 }
 
 /** Konzeptvergleich als Tabelle: Parameter als Zeilen, Konzepte als Spalten, Kennzahlen im Fuß. */
@@ -435,6 +492,8 @@ export function CompareTable() {
           </tr>
         ) : null}
         {rows.length ? rows : <tr><td class="none" colSpan={span}>{Texts.compare.noDifferences}</td></tr>}
+        {/* Eigene Merkmale nach den Parametern; die Kennzahlen der Bewertung stehen im Fuß */}
+        {attributeRows(m, report, span)}
       </tbody>
       {footRows.length ? <tfoot>{footRows}</tfoot> : null}
     </>

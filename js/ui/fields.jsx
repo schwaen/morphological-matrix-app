@@ -38,3 +38,10 @@ export function NumberField({ value, label, placeholder, apply, validate, onKeyD
     />
   );
 }
+
+/** Feld fokussieren und den Inhalt markieren, damit Tippen ihn ersetzt. @param {HTMLElement | null} el */
+export function selectField(el) {
+  if (!el) return;
+  el.focus();
+  if (el instanceof HTMLInputElement) el.select();
+}

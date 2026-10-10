@@ -2,6 +2,7 @@
  * IO – Export (JSON, CSV) und Teilen-Links. Erzeugt nur Texte; das Herunterladen
  * übernimmt die Oberfläche. Exportiert den Namensraum `IO`.
  */
+import { Attributes } from './attributes.js';
 import { Consistency } from './consistency.js';
 import { Evaluation } from './evaluation.js';
 import { Model } from './model.js';
@@ -53,7 +54,15 @@ export const IO = (() => {
     const prio = o => (o.priority ? Texts.moscow.levels[o.priority].label : '');
     const paramNotes = m.parameters.some(p => p.note);
     const optionNotes = m.parameters.some(p => p.options.some(o => o.note));
-    if (costs || utility || moscow || paramNotes || optionNotes) {
+    // Eigene Merkmale: je Merkmal eine Spalte (Zahlen als Zahl, sonst als Text)
+    const attrs = m.settings.attributes;
+    const attrHeads = attrs.map((a, i) => cell(Texts.attributes.csvColumn(Attributes.label(a, i), a.unit.trim())));
+    /** @param {MatrixAttribute} a @param {MatrixOption} o */
+    const attrCell = (a, o) => {
+      const v = o.values[a.id];
+      return typeof v === 'number' ? csvNum(v) : cell(Attributes.formatValue(a, v));
+    };
+    if (costs || utility || moscow || paramNotes || optionNotes || attrs.length) {
       lines.push([], [...catHead, cell(L.parameter),
         ...(paramNotes ? [cell(L.parameterNote)] : []),
         ...(utility ? [cell(L.weight)] : []),
@@ -62,6 +71,7 @@ export const IO = (() => {
         ...criterionHeads,
         ...(utility ? [cell(L.utility(utilityMax))] : []),
         ...(moscow ? [cell(L.priority)] : []),
+        ...attrHeads,
         ...(optionNotes ? [cell(L.note)] : [])]);
       for (const p of m.parameters) {
         for (const o of p.options) {
@@ -73,6 +83,7 @@ export const IO = (() => {
             ...criteria.map(c => csvNum(o.scores[c.id] ?? null)),
             ...(utility ? [csvNum(Evaluation.optionScore(m, o).value)] : []),
             ...(moscow ? [cell(prio(o))] : []),
+            ...attrs.map(a => attrCell(a, o)),
             ...(optionNotes ? [cell(o.note)] : [])]);
         }
       }
@@ -104,6 +115,8 @@ export const IO = (() => {
         ...(utility ? [cell(L.utilityTotal)] : []),
         ...criterionHeads,
         ...(costs && utility ? [cell(L.priceValue(currency))] : []),
+        ...attrs.map((a, i) => cell(Texts.attributes.csvColumn(
+          Texts.attributes.compareRow(Attributes.label(a, i), Attributes.aggregateLabel(a)), a.unit.trim()))),
         ...(withConstraints ? [cell(L.conflicts)] : []),
         ...(conceptNotes ? [cell(L.conceptNote)] : []),
         ...(withStatus ? [cell(L.status), cell(L.statusNote)] : [])]);
@@ -113,6 +126,11 @@ export const IO = (() => {
           ...(util ? [csvNum(util.value)] : []),
           ...(criteria.length ? Evaluation.conceptCriteria(m, c).map(x => csvNum(x.value)) : []),
           ...(priceValue ? [csvNum(priceValue.value)] : []),
+          ...attrs.map(a => {
+            const sum = Attributes.summarize(m, a, c);
+            // Zusammengefasste Zahlen als Zahl, sonst der angezeigte Text
+            return Attributes.isNumeric(a.type) && a.aggregate !== 'none' ? csvNum(sum.sort) : cell(sum.text);
+          }),
           ...(withConstraints ? [cell(clashes(c))] : []),
           ...(conceptNotes ? [cell(c.note)] : []),
           ...(withStatus ? [cell(Texts.status.levels[c.status].label), cell(c.statusNote)] : [])]);

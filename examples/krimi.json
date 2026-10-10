@@ -3,7 +3,7 @@
   "name": "Krimi plotten",
   "description": "Kreatives Schreiben: Schauplatz, Figuren, Tat und Dramaturgie zu Krimi-Plots kombinieren. Ganz ohne Zahlen – Verträglichkeiten sichern die Logik der Geschichte (keine KI im Mittelalter), Notizen sammeln Ideen, „Zufällig“ wird zum Plot-Generator.",
   "data": {
-    "version": 7,
+    "version": 8,
     "title": "Beispiel: Krimi plotten",
     "description": "Baukasten für einen Kriminalroman. Unverträgliche Paare verhindern Logikfehler, bedingte Paare geben Hinweise fürs Schreiben. Tipp: Im Modus „Kombinieren“ eine zufällige Kombination erzeugen und daraus einen Plot entwickeln.",
     "settings": { "costs": false, "utility": false, "currency": "EUR", "utilityMax": 10, "moscow": false, "criteria": [{ "id": "nw", "name": "", "weight": 100 }] },

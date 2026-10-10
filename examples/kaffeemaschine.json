@@ -1,12 +1,18 @@
 {
   "id": "kaffeemaschine",
   "name": "Kaffeemaschine",
-  "description": "Produktentwicklung eines Haushaltsgeräts mit Konzepten für Espresso, Outdoor und Smart Home. Kosten, Nutzwerte, Prioritäten (MoSCoW), einige Notizen und Verträglichkeiten sind hinterlegt – zum Ausprobieren unter „Bewertung“ einschalten.",
+  "description": "Produktentwicklung eines Haushaltsgeräts mit Konzepten für Espresso, Outdoor und Smart Home. Kosten, Nutzwerte, Prioritäten (MoSCoW), eigene Merkmale (Gewicht, Lautstärke), einige Notizen und Verträglichkeiten sind hinterlegt – zum Ausprobieren unter „Bewertung“ einschalten.",
   "data": {
-    "version": 7,
+    "version": 8,
     "title": "Beispiel: Kaffeemaschine",
     "description": "Gesamtfunktion: Aus Wasser und Kaffee ein heißes Getränk zubereiten.",
-    "settings": { "costs": false, "utility": false, "currency": "EUR", "utilityMax": 10, "moscow": false, "criteria": [{ "id": "nw", "name": "", "weight": 100 }] },
+    "settings": {
+      "costs": false, "utility": false, "currency": "EUR", "utilityMax": 10, "moscow": false, "criteria": [{ "id": "nw", "name": "", "weight": 100 }],
+      "attributes": [
+        { "id": "gew", "name": "Gewicht", "description": "Gewicht der Baugruppe ohne Wasser", "source": "Datenblätter der Zulieferer", "type": "decimal", "unit": "kg", "decimals": 1, "levels": [], "aggregate": "sum", "limit": { "op": "above", "value": 4 } },
+        { "id": "db", "name": "Lautstärke", "description": "Lautester Betriebszustand in 1 m Abstand", "source": "Eigene Messung", "type": "int", "unit": "dB", "decimals": 0, "levels": [], "aggregate": "max", "limit": { "op": "above", "value": 65 } }
+      ]
+    },
     "categories": [
       { "id": "k1", "name": "Brühsystem", "color": "#4f46e5" },
       { "id": "k2", "name": "Nutzung & Betrieb", "color": "#0891b2" }
@@ -18,10 +24,10 @@
         "weight": 3,
         "categoryId": "k1",
         "options": [
-          { "id": "p1o1", "text": "Durchlauferhitzer", "cost": 18, "scores": { "nw": 6 }, "priority": "must" },
-          { "id": "p1o2", "text": "Boiler", "cost": 25, "scores": { "nw": 5 }, "priority": "wont" },
-          { "id": "p1o3", "text": "Thermoblock", "cost": 22, "scores": { "nw": 8 }, "priority": "should", "note": "Heizt in ca. 30 s auf; Temperatur schwankt stärker als beim Boiler." },
-          { "id": "p1o4", "text": "Induktion", "cost": 40, "scores": { "nw": 9 }, "priority": "could" }
+          { "id": "p1o1", "text": "Durchlauferhitzer", "cost": 18, "scores": { "nw": 6 }, "priority": "must", "values": { "gew": 0.4 } },
+          { "id": "p1o2", "text": "Boiler", "cost": 25, "scores": { "nw": 5 }, "priority": "wont", "values": { "gew": 1.1 } },
+          { "id": "p1o3", "text": "Thermoblock", "cost": 22, "scores": { "nw": 8 }, "priority": "should", "note": "Heizt in ca. 30 s auf; Temperatur schwankt stärker als beim Boiler.", "values": { "gew": 0.6 } },
+          { "id": "p1o4", "text": "Induktion", "cost": 40, "scores": { "nw": 9 }, "priority": "could", "values": { "gew": 0.9 } }
         ]
       },
       {
@@ -31,10 +37,10 @@
         "weight": 3,
         "categoryId": "k1",
         "options": [
-          { "id": "p2o1", "text": "Schwerkraft", "cost": 2, "scores": { "nw": 3 }, "priority": "wont" },
-          { "id": "p2o2", "text": "Vibrationspumpe", "cost": 12, "scores": { "nw": 7 }, "priority": "must", "note": "Bis 15 bar, aber hörbar laut – Standard bei Einstiegsgeräten." },
-          { "id": "p2o3", "text": "Rotationspumpe", "cost": 45, "scores": { "nw": 9 }, "priority": "could" },
-          { "id": "p2o4", "text": "Handhebel", "cost": 8, "scores": { "nw": 6 }, "priority": "wont" }
+          { "id": "p2o1", "text": "Schwerkraft", "cost": 2, "scores": { "nw": 3 }, "priority": "wont", "values": { "gew": 0, "db": 30 } },
+          { "id": "p2o2", "text": "Vibrationspumpe", "cost": 12, "scores": { "nw": 7 }, "priority": "must", "note": "Bis 15 bar, aber hörbar laut – Standard bei Einstiegsgeräten.", "values": { "gew": 0.3, "db": 72 } },
+          { "id": "p2o3", "text": "Rotationspumpe", "cost": 45, "scores": { "nw": 9 }, "priority": "could", "values": { "gew": 1.8, "db": 55 } },
+          { "id": "p2o4", "text": "Handhebel", "cost": 8, "scores": { "nw": 6 }, "priority": "wont", "values": { "gew": 1.2, "db": 35 } }
         ]
       },
       {
@@ -43,10 +49,10 @@
         "weight": 2,
         "categoryId": "k1",
         "options": [
-          { "id": "p3o1", "text": "Pulver (lose)", "cost": 3, "scores": { "nw": 6 }, "priority": "must" },
-          { "id": "p3o2", "text": "Kapsel", "cost": 10, "scores": { "nw": 8 }, "priority": "wont", "note": "Hohe Folgekosten und Verpackungsmüll – für die Zielgruppe kritisch." },
-          { "id": "p3o3", "text": "Pad", "cost": 6, "scores": { "nw": 5 }, "priority": "should" },
-          { "id": "p3o4", "text": "Bohnen mit Mahlwerk", "cost": 35, "scores": { "nw": 9 }, "priority": "could" }
+          { "id": "p3o1", "text": "Pulver (lose)", "cost": 3, "scores": { "nw": 6 }, "priority": "must", "values": { "gew": 0 } },
+          { "id": "p3o2", "text": "Kapsel", "cost": 10, "scores": { "nw": 8 }, "priority": "wont", "note": "Hohe Folgekosten und Verpackungsmüll – für die Zielgruppe kritisch.", "values": { "gew": 0.2 } },
+          { "id": "p3o3", "text": "Pad", "cost": 6, "scores": { "nw": 5 }, "priority": "should", "values": { "gew": 0.1 } },
+          { "id": "p3o4", "text": "Bohnen mit Mahlwerk", "cost": 35, "scores": { "nw": 9 }, "priority": "could", "values": { "gew": 1.5 } }
         ]
       },
       {
@@ -55,10 +61,10 @@
         "weight": 1,
         "categoryId": "k2",
         "options": [
-          { "id": "p4o1", "text": "Drehknopf", "cost": 2, "scores": { "nw": 5 }, "priority": "must" },
-          { "id": "p4o2", "text": "Tasten", "cost": 4, "scores": { "nw": 6 }, "priority": "should" },
-          { "id": "p4o3", "text": "Touch-Display", "cost": 20, "scores": { "nw": 8 }, "priority": "could" },
-          { "id": "p4o4", "text": "Smartphone-App", "cost": 15, "scores": { "nw": 7 }, "priority": "could" }
+          { "id": "p4o1", "text": "Drehknopf", "cost": 2, "scores": { "nw": 5 }, "priority": "must", "values": { "gew": 0.1 } },
+          { "id": "p4o2", "text": "Tasten", "cost": 4, "scores": { "nw": 6 }, "priority": "should", "values": { "gew": 0.1 } },
+          { "id": "p4o3", "text": "Touch-Display", "cost": 20, "scores": { "nw": 8 }, "priority": "could", "values": { "gew": 0.3 } },
+          { "id": "p4o4", "text": "Smartphone-App", "cost": 15, "scores": { "nw": 7 }, "priority": "could", "values": { "gew": 0.1 } }
         ]
       },
       {
@@ -67,10 +73,10 @@
         "weight": 2,
         "categoryId": "k2",
         "options": [
-          { "id": "p5o1", "text": "Netzstrom", "cost": 3, "scores": { "nw": 8 }, "priority": "must" },
-          { "id": "p5o2", "text": "Akku", "cost": 30, "scores": { "nw": 6 }, "priority": "could", "note": "Nur mit Thermoblock realistisch; Laufzeit ca. 8 Bezüge." },
-          { "id": "p5o3", "text": "Gaskartusche", "cost": 15, "scores": { "nw": 5 }, "priority": "wont" },
-          { "id": "p5o4", "text": "Muskelkraft", "cost": 1, "scores": { "nw": 3 }, "priority": "wont" }
+          { "id": "p5o1", "text": "Netzstrom", "cost": 3, "scores": { "nw": 8 }, "priority": "must", "values": { "gew": 0.2 } },
+          { "id": "p5o2", "text": "Akku", "cost": 30, "scores": { "nw": 6 }, "priority": "could", "note": "Nur mit Thermoblock realistisch; Laufzeit ca. 8 Bezüge.", "values": { "gew": 0.8 } },
+          { "id": "p5o3", "text": "Gaskartusche", "cost": 15, "scores": { "nw": 5 }, "priority": "wont", "values": { "gew": 0.5 } },
+          { "id": "p5o4", "text": "Muskelkraft", "cost": 1, "scores": { "nw": 3 }, "priority": "wont", "values": { "gew": 0.4 } }
         ]
       },
       {

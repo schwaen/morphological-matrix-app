@@ -2,6 +2,7 @@
  * Model – Datenmodell der Matrix: Standardwerte, Beispiel, Normalisierung importierter
  * Daten und reine Abfragen. Ohne DOM; exportiert den Namensraum `Model`.
  */
+import { Attributes } from './attributes.js';
 import { Texts } from './texts.js';
 import { Util } from './util.js';
 
@@ -36,7 +37,7 @@ export const Model = (() => {
    * Beschreibung: docs/DATENFORMAT.md. Bei inkompatiblen Änderungen erhöhen und in
    * MIGRATIONS eine Umwandlung von der Vorgängerversion ergänzen.
    */
-  const SCHEMA_VERSION = 7;
+  const SCHEMA_VERSION = 8;
 
   /**
    * Umwandlungen von Version n auf n + 1. Sie erhalten die Rohdaten und liefern Rohdaten;
@@ -82,6 +83,9 @@ export const Model = (() => {
         }
         : p)),
     }),
+    // 7 → 8: eigene Merkmale (`settings.attributes`, `values` je Ausprägung). Keine Umwandlung
+    // nötig – die neue Version verhindert, dass ältere App-Versionen sie verwerfen.
+    7: data => data,
   };
 
   /**
@@ -128,12 +132,12 @@ export const Model = (() => {
 
   /** @returns {MatrixSettings} */
   function defaultSettings() {
-    return { costs: false, utility: false, currency: 'EUR', utilityMax: 10, moscow: false, criteria: [defaultCriterion()] };
+    return { costs: false, utility: false, currency: 'EUR', utilityMax: 10, moscow: false, criteria: [defaultCriterion()], attributes: [] };
   }
 
   /** @returns {MatrixOption} */
   function newOption() {
-    return { id: uid(), text: '', cost: null, scores: {}, priority: null, note: '' };
+    return { id: uid(), text: '', cost: null, scores: {}, priority: null, note: '', values: {} };
   }
 
   /** @param {string | null} [categoryId] @returns {MatrixParameter} */
@@ -205,6 +209,7 @@ export const Model = (() => {
     data = migrate(data);
     // Rohdaten (any) werden hier geprüft und in typisierte Objekte überführt
     const criteria = normalizeCriteria(data.settings && data.settings.criteria);
+    const attributes = Attributes.normalizeAttributes(data.settings && data.settings.attributes);
     /** Werte je bekanntem Kriterium. @param {any} raw @returns {Record<string, number>} */
     const scoresOf = raw => {
       /** @type {Record<string, number>} */
@@ -237,6 +242,7 @@ export const Model = (() => {
             id: id(o && o.id), text: str(o && o.text), cost: num(o && o.cost), scores: scoresOf(o && o.scores),
             priority: PRIORITIES.includes(o && o.priority) ? o.priority : null,
             note: str(o && o.note),
+            values: Attributes.normalizeValues(attributes, o && o.values),
           })),
       };
     });
@@ -257,6 +263,7 @@ export const Model = (() => {
       utilityMax: SCALES.includes(src.utilityMax) ? src.utilityMax : 10,
       moscow: src.moscow === true,
       criteria,
+      attributes,
     };
     /** @type {MatrixConcept[]} */
     const concepts = (Array.isArray(data.concepts) ? data.concepts : []).map(/** @param {any} c @param {number} i */ (c, i) => {
@@ -420,7 +427,7 @@ export const Model = (() => {
   }
 
   /**
-   * Suche in Parameternamen, Ausprägungen und deren Notizen (ohne Groß-/Kleinschreibung und Akzente).
+   * Suche in Parameternamen, Ausprägungen, deren Notizen und Text-/Auswahl-Merkmalen (ohne Groß-/Kleinschreibung und Akzente).
    * @param {Matrix} m @param {string} query
    * @returns {{ params: Set<string>, options: Set<string>, hits: Array<{ pid: string, oid: string | null }> }}
    *   `params`: Parameter mit Treffer (in Name/Beschreibung oder einer Ausprägung), `options`: getroffene
@@ -432,10 +439,12 @@ export const Model = (() => {
     if (!q) return result;
     /** @param {string[]} texts */
     const matches = texts => texts.some(t => Util.searchKey(t).includes(q));
+    // Merkmale mit Text bzw. Stufen werden mit durchsucht
+    const textual = m.settings.attributes.filter(a => a.type === 'text' || a.type === 'choice');
     for (const p of m.parameters) {
       if (matches([p.name, p.note])) result.hits.push({ pid: p.id, oid: null });
       for (const o of p.options) {
-        if (!matches([o.text, o.note])) continue;
+        if (!matches([o.text, o.note, ...textual.map(a => Attributes.formatValue(a, o.values[a.id]))])) continue;
         result.options.add(o.id);
         result.hits.push({ pid: p.id, oid: o.id });
       }

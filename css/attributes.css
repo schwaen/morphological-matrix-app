@@ -1,0 +1,87 @@
+/* Eigene Merkmale: Eingabe an der Ausprägung, Definition in den Einstellungen, Vergleich */
+@layer areas {
+  /* In der Zelle (Bearbeiten): bis zu zwei Merkmale als Felder, sonst Knopf */
+  .opt-attrs { display: grid; gap: 4px; padding: 0 6px 6px 9px; contain: inline-size; }
+  .attr-field { display: grid; grid-template-columns: minmax(0, 46%) minmax(0, 1fr); gap: 4px; align-items: center; }
+  .attr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .72rem; font-weight: 600; color: var(--muted); }
+  .attr-select, .attr-text {
+    width: 100%; min-width: 0; height: 22px; padding: 0 4px;
+    border: 1px solid transparent; border-radius: 6px; background: var(--surface-2); font-size: .8rem;
+  }
+  .attr-text { padding: 0 6px; }
+  .attr-select:hover, .attr-text:hover { border-color: var(--border-strong); }
+  .attr-select:focus, .attr-text:focus { outline: none; background: var(--surface); border-color: var(--accent); }
+  /* Mehrere Werte brechen um, statt abgeschnitten zu werden */
+  .attr-btn { height: auto; min-height: 26px; padding-block: 3px; text-align: left; }
+  .attr-btn b { flex: 0 1 auto; min-width: 0; white-space: normal; overflow-wrap: anywhere; font-weight: 600; font-size: .78rem; line-height: 1.25; }
+  .attr-filled { flex: none; margin-left: auto; font-size: .7rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .attr-filled.is-partial { color: var(--warn); }
+  .attr-btn .score-chevron { margin-left: 0; }
+  .attr-row .num-input, .attr-row .attr-select, .attr-row .attr-text { height: 26px; }
+  .score-row.attr-row { grid-template-columns: minmax(0, 1fr) 132px; }
+  .score-row.attr-row .num-input { text-align: right; }
+
+  /* Kombinieren: Zahlen und Stufen als kleine Zeile unter Kosten/Nutzwert */
+  .opt-attrs-view { font-size: .7rem; font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* Tabelle: Reiter und Felder */
+  .value-tabs { display: flex; gap: 4px; margin: 10px 0 2px; border-bottom: 1px solid var(--border); }
+  .value-tab {
+    padding: 6px 12px; margin-bottom: -1px; border: 1px solid transparent; border-radius: 8px 8px 0 0;
+    background: none; color: var(--muted); font-weight: 600; cursor: pointer;
+  }
+  .value-tab:hover { color: var(--text); }
+  .value-tab.is-on { border-color: var(--border); border-bottom-color: var(--surface); background: var(--surface); color: var(--text); }
+  .attr-table .attr-cell { width: auto; min-width: 84px; }
+  .attr-table .attr-text { min-width: 140px; }
+
+  /* Definition in „Bewertung & Merkmale“ */
+  .setting-title { font-size: .95rem; font-weight: 650; }
+  .attrs-setting .setting-desc { margin-left: 0; }
+  .attr-none { margin: 4px 0; font-size: .85rem; color: var(--muted); }
+  .attr-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .attr-item { border: 1px solid var(--border); border-radius: 10px; }
+  .attr-item.is-open { border-color: var(--border-strong); }
+  .attr-head { display: flex; align-items: center; gap: 2px; padding: 4px 6px 4px 4px; }
+  .attr-title {
+    display: flex; flex-direction: column; align-items: flex-start; flex: 1; min-width: 0; padding: 4px 8px;
+    border: 0; border-radius: 6px; background: none; text-align: left; cursor: pointer;
+  }
+  .attr-title:hover { background: var(--surface-2); }
+  .attr-title small { font-size: .76rem; color: var(--muted); }
+  .attr-form {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 12px;
+    padding: 10px 12px 12px; border-top: 1px solid var(--border);
+  }
+  .attr-form label, .attr-levels { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: .76rem; font-weight: 600; color: var(--muted); }
+  .attr-form input[type="text"], .attr-form select, .attr-form textarea {
+    width: 100%; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--text); font-size: .88rem; font-weight: 400;
+  }
+  .attr-form input:focus, .attr-form select:focus, .attr-form textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .attr-form select:disabled { opacity: .7; }
+  .attr-wide { grid-column: 1 / -1; }
+  .attr-limit { display: flex; align-items: flex-end; gap: 8px; grid-column: span 2; }
+  .attr-limit > label:first-child { flex: 1 1 auto; }
+  .attr-limit-value { flex-direction: row !important; align-items: center !important; }
+  .attr-limit-value .num-input { width: 90px; padding: 5px 8px; border: 1px solid var(--border); background: var(--surface); font-size: .88rem; }
+  .attr-levels ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+  .attr-levels li { display: flex; align-items: center; gap: 2px; }
+  .attr-levels li input { flex: 1; }
+  .attr-levels .btn { align-self: flex-start; margin-top: 2px; }
+  .attr-form-foot { display: flex; justify-content: flex-end; }
+
+  /* Vergleich und Zusammenfassung */
+  .compare tr.attr-head-row th {
+    padding-top: 6px; padding-bottom: 6px; background: var(--surface-2); border-left: 3px solid var(--border-strong);
+    font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2);
+  }
+  .compare tr.attr-row td { font-variant-numeric: tabular-nums; }
+  .compare tr.attr-row td.incomplete { color: var(--muted); }
+  .attr-warn {
+    display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px;
+    background: var(--warn-bg); color: var(--warn); font-size: .7rem; font-weight: 700; white-space: nowrap;
+  }
+  .metric .attr-warn { margin: 2px 0 0; align-self: flex-start; }
+  .metric.is-warn { border-color: var(--warn); }
+}

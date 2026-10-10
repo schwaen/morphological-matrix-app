@@ -3,6 +3,7 @@
  * erstellte Konzepte. Reine Funktionen auf einer Matrix (ohne DOM, ohne globalen Zustand);
  * exportiert den Namensraum `Evaluation`.
  */
+import { Attributes } from './attributes.js';
 import { Consistency } from './consistency.js';
 import { Model } from './model.js';
 import { Texts } from './texts.js';
@@ -209,6 +210,21 @@ export const Evaluation = (() => {
   };
 
   /**
+   * Rangfolge nach einem eigenen Merkmal (`attr:<id>:asc` bzw. `:desc`), sonst `null`.
+   * @param {Matrix} m @param {string} key
+   */
+  function attributeRanking(m, key) {
+    const match = /^attr:(.+):(asc|desc)$/.exec(key);
+    const a = match ? m.settings.attributes.find(x => x.id === match[1]) : null;
+    if (!match || !a || !Attributes.sortable(a)) return null;
+    return {
+      enabled: () => true,
+      value: (/** @type {ConceptFigures} */ r) => Attributes.summarize(m, a, r.concept).sort,
+      higherIsBetter: match[2] === 'desc',
+    };
+  }
+
+  /**
    * Kennzahlen nach einer Rangfolge sortieren (bester zuerst); Konzepte ohne vergleichbaren Wert
    * (unvollständig) folgen in ihrer bisherigen Reihenfolge. Gleichstand behält die Reihenfolge.
    * Unbekannte oder nicht aktivierte Schlüssel ergeben die ursprüngliche Reihenfolge ohne Rang.
@@ -216,7 +232,7 @@ export const Evaluation = (() => {
    * @returns {Array<{ figures: ConceptFigures, rank: number | null }>}
    */
   function rankConcepts(m, report, key) {
-    const ranking = Object.hasOwn(RANKINGS, key) ? RANKINGS[/** @type {keyof typeof RANKINGS} */ (key)] : null;
+    const ranking = Object.hasOwn(RANKINGS, key) ? RANKINGS[/** @type {keyof typeof RANKINGS} */ (key)] : attributeRanking(m, key);
     if (!ranking || !ranking.enabled(m.settings)) return report.map(figures => ({ figures, rank: null }));
     const withValue = report.map((figures, i) => ({ figures, i, v: ranking.value(figures) }));
     const ranked = withValue.filter(x => x.v != null)

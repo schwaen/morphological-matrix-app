@@ -4,6 +4,7 @@
  */
 import { Fragment, render as mount } from 'preact';
 import { useLayoutEffect } from 'preact/hooks';
+import { Attributes } from '../attributes.js';
 import { Consistency } from '../consistency.js';
 import { Evaluation } from '../evaluation.js';
 import { Model } from '../model.js';
@@ -14,6 +15,7 @@ import {
   toggleSelection,
 } from './actions.js';
 import { Icon, IconButton } from './components.jsx';
+import { OptionAttributes } from './attributes.jsx';
 import { ConstraintButton, ConstraintCount, conflictText, statusText } from './constraints.jsx';
 import { activeConcept, collapseKey, fieldProps, isCollapsed, money, prefs, setPendingFocus, state, useMatrix } from './core.js';
 import { restCounts } from './count.js';
@@ -232,6 +234,7 @@ function OptionEdit({ p, pi, o, oi, ctx }) {
           ) : null}
         </div>
       ) : null}
+      <OptionAttributes o={o} optLabel={optLabel} />
       {moscow ? <PriorityPicker p={p} o={o} optLabel={optLabel} /> : null}
     </div>
   );
@@ -313,6 +316,7 @@ function OptionPick({ p, o, oi, ctx, rest }) {
   const st = isActive ? null : status.get(o.id) || null;
   const cons = conflict.length ? conflictText(o.id, conflict) : (st ? statusText(st) : null);
   const metrics = optionMetricsText(o);
+  const attrs = Attributes.shortText(state.settings.attributes, o);
   const text = o.text.trim() || Texts.fallback.emptyOption(oi + 1);
   const cls = `opt-cell pick${isActive ? ' is-active' : ''}${o.text.trim() ? '' : ' is-empty'}`
     + `${state.settings.moscow && o.priority === 'wont' ? ' is-wont' : ''}${conflict.length ? ' is-conflict' : ''}`
@@ -334,6 +338,7 @@ function OptionPick({ p, o, oi, ctx, rest }) {
       <span class="opt-label">
         <span>{text}</span>
         {metrics || (state.settings.moscow && o.priority) ? <span class="opt-metrics-view"><PriorityBadge o={o} />{metrics}</span> : null}
+        {attrs ? <span class="opt-attrs-view">{attrs}</span> : null}
       </span>
       {o.note ? <NoteMark /> : null}
       {conflict.length ? <span class="cons-badge" aria-hidden="true">{Texts.cons.conflictBadge}</span> : null}

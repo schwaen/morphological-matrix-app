@@ -54,13 +54,24 @@ test('CSV mit Priorität (MoSCoW)', () => {
 
 test('CSV mit Notizen: Beschreibung, Notiz je Ausprägung und Begründung je Konzept', () => {
   const csv = IO.toCsv(kaffeemaschine());
-  assert.match(csv, /"Kategorie";"Parameter";"Beschreibung des Parameters";"Ausprägung";"Notiz"\r\n/);
-  assert.match(csv, /"Brühsystem";"Druckerzeugung";"Bestimmt Crema-Qualität und Geräuschpegel.";"Vibrationspumpe";"Bis 15 bar/);
-  assert.match(csv, /"Brühsystem";"Wassererwärmung";"";"Boiler";""\r\n/);
+  assert.match(csv, /"Kategorie";"Parameter";"Beschreibung des Parameters";"Ausprägung";"Gewicht \[kg\]";"Lautstärke \[dB\]";"Notiz"\r\n/);
+  assert.match(csv, /"Brühsystem";"Druckerzeugung";"Bestimmt Crema-Qualität und Geräuschpegel.";"Vibrationspumpe";0,3;72;"Bis 15 bar/);
+  assert.match(csv, /"Brühsystem";"Wassererwärmung";"";"Boiler";1,1;"";""\r\n/);
   assert.match(csv, /"Begründung";"Status";"Grund zum Status"\r\n/);
   assert.match(csv, /"Kompakt-Espresso";.*;"Günstigster Einstieg[^"]*\nOffen: Lautstärke/);
   assert.match(csv, /"Smart Home";.*;"";"Entwurf";""(\r\n|$)/);
   assert.doesNotMatch(IO.toCsv(withoutNotes()), /Notiz|Begründung/);
+});
+
+test('CSV mit eigenen Merkmalen: Werte je Ausprägung, Zusammenfassung je Konzept', () => {
+  const m = kaffeemaschine();
+  m.settings.attributes.push({ id: 'j', name: 'Spülmaschinenfest', description: '', source: '', type: 'bool', unit: '', decimals: 0, levels: [], aggregate: 'count', limit: null });
+  m.parameters[5].options[2].values.j = true;
+  const csv = IO.toCsv(m);
+  assert.match(csv, /"Vibrationspumpe";0,3;72;"";"Bis 15 bar/);
+  assert.match(csv, /"Reinigung";"";"Spülmaschinenfest";"";"";"Ja";""\r\n/);
+  assert.match(csv, /;"Gewicht \(Summe\) \[kg\]";"Lautstärke \(Maximum\) \[dB\]";"Spülmaschinenfest \(Anzahl Ja\)";/);
+  assert.match(csv, /"Kompakt-Espresso";(?:"[^"]*";){6}1,2;72;"0 von 1 Ja";/);
 });
 
 test('CSV mit Verträglichkeiten: Liste der Paare und Unverträglichkeiten je Konzept', () => {

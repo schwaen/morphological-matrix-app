@@ -17,6 +17,7 @@ import {
 } from './core.js';
 import { $ } from './dom.jsx';
 import { CompareChart } from './render-chart.jsx';
+import { AttributesEditor } from './attributes.jsx';
 import { CriteriaEditor } from './criteria.jsx';
 import { CompareScatter } from './render-scatter.jsx';
 import { compareContent, CompareTable, CompareTools } from './render-panels.jsx';
@@ -242,6 +243,7 @@ function SettingsForm() {
         </label>
         <p class="setting-desc" dangerouslySetInnerHTML={{ __html: Texts.ui.moscowDesc }} />
       </div>
+      <AttributesEditor />
     </>
   );
 }
