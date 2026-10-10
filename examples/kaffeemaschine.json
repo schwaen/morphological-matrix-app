@@ -3,7 +3,7 @@
   "name": "Kaffeemaschine",
   "description": "Produktentwicklung eines Haushaltsgeräts mit Konzepten für Espresso, Outdoor und Smart Home. Kosten, Nutzwerte, Prioritäten (MoSCoW), einige Notizen und Verträglichkeiten sind hinterlegt – zum Ausprobieren unter „Bewertung“ einschalten.",
   "data": {
-    "version": 5,
+    "version": 6,
     "title": "Beispiel: Kaffeemaschine",
     "description": "Gesamtfunktion: Aus Wasser und Kaffee ein heißes Getränk zubereiten.",
     "settings": { "costs": false, "utility": false, "currency": "EUR", "utilityMax": 10, "moscow": false },
@@ -91,6 +91,7 @@
         "name": "Kompakt-Espresso",
         "note": "Günstigster Einstieg mit solider Espresso-Qualität, ideal für kleine Küchen.\nOffen: Lautstärke der Pumpe im Prototyp messen.",
         "color": "#2a78d6",
+        "status": "favorite",
         "selections": { "p1": "p1o3", "p2": "p2o2", "p3": "p3o1", "p4": "p4o2", "p5": "p5o1", "p6": "p6o2" }
       },
       {
@@ -98,6 +99,8 @@
         "name": "Outdoor",
         "note": "Für Camping: unabhängig vom Stromnetz, robust und leicht.",
         "color": "#eb6834",
+        "status": "dropped",
+        "statusNote": "Muskelkraft verträgt sich nicht mit der automatischen Spülung; Zielgruppe zu klein.",
         "selections": { "p1": "p1o4", "p2": "p2o4", "p3": "p3o3", "p4": "p4o1", "p5": "p5o4", "p6": "p6o1" }
       },
       {

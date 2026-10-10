@@ -17,6 +17,7 @@ import { initNotePop } from './notes.jsx';
 import { initPanels } from './render-panels.jsx';
 import { initSearch } from './search.js';
 import { initStart } from './start.jsx';
+import { initStatus } from './status.jsx';
 import { initTabs, onExternalDocChange, tabById, toggleTabMenu } from './tabs.jsx';
 import { initMatrix } from './render-matrix.jsx';
 import { initChrome } from './chrome.jsx';
@@ -161,6 +162,7 @@ function init() {
   initMatrix();
   initPanels();
   initConstraints();
+  initStatus();
   initStart();
   save(); // auch eine neu erzeugte Startmatrix sofort sichern (stabile IDs nach Neuladen)
   // Einstellungen und geöffnete Tabs sofort an diesen Browser-Tab binden – sonst übernähme er

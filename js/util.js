@@ -67,6 +67,10 @@ export const Util = (() => {
   /** Ganzzahl mit Tausendertrennern der Sprache (auch BigInt). @param {number | bigint} n */
   const formatInteger = n => n.toLocaleString(locale);
 
+  const compactFormat = new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 });
+  /** Kurze Anzahl für enge Stellen: bis 9.999 exakt, darüber gerundet („12 Tsd.“, „1,2 Mio.“). @param {bigint} n */
+  const formatCompact = n => (n < 10000n ? formatInteger(n) : compactFormat.format(Number(n)));
+
   /** @param {number} n */
   function formatNumber(n) {
     return numberFormat.format(n);
@@ -139,7 +143,7 @@ export const Util = (() => {
 
   return {
     errorMessage,
-    uid, str, num, isColor, parseNumber, numberToInput, formatNumber, formatInteger, formatPercent, scaleBigInt, formatMoney, currencySymbol,
+    uid, str, num, isColor, parseNumber, numberToInput, formatNumber, formatInteger, formatCompact, formatPercent, scaleBigInt, formatMoney, currencySymbol,
     slugify, lexLess, toBase64Url, fromBase64Url, searchKey,
   };
 })();

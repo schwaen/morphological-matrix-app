@@ -2,13 +2,13 @@
 
 Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON-Export, Teilen-Links (`#m=…`, Base64url-kodiertes JSON) und die mitgelieferten Beispiele (`data` in `examples/*.json`, siehe [`examples/README.md`](../examples/README.md)). Typdefinitionen für die Entwicklung stehen in [`types.d.ts`](../types.d.ts).
 
-**Aktuelle Version: 5** (`Model.SCHEMA_VERSION` in `js/model.js`)
+**Aktuelle Version: 6** (`Model.SCHEMA_VERSION` in `js/model.js`)
 
 ## Aufbau
 
 ```jsonc
 {
-  "version": 5,
+  "version": 6,
   "title": "Beispiel: Kaffeemaschine",
   "description": "Gesamtfunktion: …",
   "settings": {
@@ -41,6 +41,8 @@ Dieses Format wird verwendet für gespeicherte Matrizen (localStorage), den JSON
       "name": "Kompakt-Espresso",
       "color": "#2a78d6",
       "note": "Günstigster Einstieg …",  // Begründung / Notiz (optional, leer = keine)
+      "status": "favorite",    // "draft" (Entwurf, Standard) | "favorite" | "dropped" (verworfen) | "chosen" (gewählt)
+      "statusNote": "",        // Grund zum Status (optional, leer = keiner)
       "selections": { "p1": "o1" }   // Parameter-ID → Ausprägungs-ID
     }
   ],
@@ -82,6 +84,7 @@ Beim Wiederherstellen (`IO.parseBackup`, `IO.planRestore`) werden vorhandene Mat
 - Auswahlen, die auf nicht vorhandene Ausprägungen zeigen, und Zuordnungen zu unbekannten Kategorien werden entfernt.
 - Negative Gewichte werden verworfen; ungültige Farben durch Standardfarben ersetzt; unbekannte Prioritäten werden zu `null`.
 - Fehlende Notizen (`note`) werden zu `""` – in Dateien und Beispielen dürfen sie daher fehlen.
+- Fehlender oder unbekannter Konzept-Status wird zu `"draft"`, ein fehlender Grund (`statusNote`) zu `""` – auch diese Felder dürfen in Dateien fehlen.
 - Verträglichkeiten: Paare mit unbekannten Ausprägungen, aus demselben Parameter, mit unbekannter Art oder doppelt werden verworfen; `a` und `b` werden so geordnet, dass `a < b`. Beim Löschen einer Ausprägung oder eines Parameters entfallen die zugehörigen Paare.
 
 ## Versionen
@@ -93,6 +96,7 @@ Beim Wiederherstellen (`IO.parseBackup`, `IO.planRestore`) werden vorhandene Mat
 | 3 | Priorität nach MoSCoW: `priority` je Ausprägung, `settings.moscow` | keine Umwandlung nötig (fehlende Felder ergänzt `normalize`); die neue Version verhindert, dass ältere App-Versionen Prioritäten beim Öffnen stillschweigend verwerfen |
 | 4 | Notizen: `note` je Ausprägung (Notiz), Parameter (Beschreibung) und Konzept (Begründung) | keine Umwandlung nötig; die neue Version verhindert, dass ältere App-Versionen Notizen verwerfen |
 | 5 | Verträglichkeiten zwischen Ausprägungen: `constraints` | keine Umwandlung nötig; die neue Version verhindert, dass ältere App-Versionen Verträglichkeiten verwerfen |
+| 6 | Status je Konzept: `status`, `statusNote` | keine Umwandlung nötig (fehlt der Status, gilt „Entwurf“); die neue Version verhindert, dass ältere App-Versionen den Status verwerfen |
 
 ## Eine neue Version einführen
 

@@ -6,12 +6,19 @@ import { loadApp, plain } from './load.js';
 const { Model, Examples, Consistency, Evaluation } = loadApp();
 const examples = await Examples.all();
 
-/** Notizen und Verträglichkeiten sind in Dateien optional (fehlend = leer); für den Vergleich mit `normalize` ergänzen. */
+/**
+ * Notizen, Status und Verträglichkeiten sind in Dateien optional (fehlend = leer bzw. „Entwurf“);
+ * für den Vergleich mit `normalize` ergänzen.
+ */
 function withEmptyNotes(data) {
   const d = plain(data);
   const fill = x => { if (x.note === undefined) x.note = ''; };
   d.parameters.forEach(p => { fill(p); p.options.forEach(fill); });
-  d.concepts.forEach(fill);
+  d.concepts.forEach(c => {
+    fill(c);
+    if (c.status === undefined) c.status = 'draft';
+    if (c.statusNote === undefined) c.statusNote = '';
+  });
   if (d.constraints === undefined) d.constraints = [];
   return d;
 }

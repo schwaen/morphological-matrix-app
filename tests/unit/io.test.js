@@ -57,9 +57,9 @@ test('CSV mit Notizen: Beschreibung, Notiz je Ausprägung und Begründung je Kon
   assert.match(csv, /"Kategorie";"Parameter";"Beschreibung des Parameters";"Ausprägung";"Notiz"\r\n/);
   assert.match(csv, /"Brühsystem";"Druckerzeugung";"Bestimmt Crema-Qualität und Geräuschpegel.";"Vibrationspumpe";"Bis 15 bar/);
   assert.match(csv, /"Brühsystem";"Wassererwärmung";"";"Boiler";""\r\n/);
-  assert.match(csv, /"Begründung"\r\n/);
+  assert.match(csv, /"Begründung";"Status";"Grund zum Status"\r\n/);
   assert.match(csv, /"Kompakt-Espresso";.*;"Günstigster Einstieg[^"]*\nOffen: Lautstärke/);
-  assert.match(csv, /"Smart Home";.*;""(\r\n|$)/);
+  assert.match(csv, /"Smart Home";.*;"";"Entwurf";""(\r\n|$)/);
   assert.doesNotMatch(IO.toCsv(withoutNotes()), /Notiz|Begründung/);
 });
 
@@ -68,9 +68,18 @@ test('CSV mit Verträglichkeiten: Liste der Paare und Unverträglichkeiten je Ko
   assert.match(csv, /"Parameter";"Ausprägung";"Parameter";"Ausprägung";"Verträglichkeit";"Begründung der Verträglichkeit"\r\n/);
   assert.match(csv, /"Wassererwärmung";"Induktion";"Energieversorgung";"Muskelkraft";"Unverträglich";"Induktion braucht elektrische Leistung"/);
   assert.match(csv, /"Kaffeezufuhr";"Bohnen mit Mahlwerk";"Energieversorgung";"Muskelkraft";"Bedingt verträglich";"Nur mit Handmühle"/);
-  assert.match(csv, /;"Unverträglichkeiten";"Begründung"\r\n/);
+  assert.match(csv, /;"Unverträglichkeiten";"Begründung";"Status";"Grund zum Status"\r\n/);
   assert.match(csv, /"Outdoor";.*;"Induktion ✕ Muskelkraft";"Für Camping/);
-  assert.match(csv, /"Smart Home";.*;"";""(\r\n|$)/);
+  assert.match(csv, /"Smart Home";.*;"";"";"Entwurf";""(\r\n|$)/);
+});
+
+test('CSV mit Status: Spalten nur, wenn ein Konzept mehr als „Entwurf“ ist', () => {
+  const csv = IO.toCsv(kaffeemaschine());
+  assert.match(csv, /"Kompakt-Espresso";[\s\S]*?;"Favorit";""\r\n/);
+  assert.match(csv, /"Outdoor";.*;"Verworfen";"Muskelkraft verträgt sich nicht/);
+  const m = kaffeemaschine();
+  m.concepts.forEach(c => { c.status = 'draft'; c.statusNote = ''; });
+  assert.doesNotMatch(IO.toCsv(m), /Grund zum Status/);
 });
 
 test('CSV maskiert Anführungszeichen', () => {

@@ -4,6 +4,7 @@
   .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 
   .concept-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .concept-rest { grid-column: 2 / -1; margin: -2px 0 2px; font-size: .72rem; font-weight: 650; color: var(--accent); }
   .concept {
     position: relative;
     display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 4px;
@@ -31,13 +32,15 @@
   /* Mit Maus: Aktionen nur am aktiven Konzept, beim Darüberfahren und mit Tastaturfokus –
      sonst schweben sie ausgeblendet über der Zeile und nehmen dem Namen keinen Platz weg. */
   @media (hover: hover) {
-    .concept:not(.is-active):not(:focus-within) .concept-tools {
-      position: absolute; right: 4px; top: 50%; translate: 0 -50%;
+    /* Auf Höhe der ersten Zeile (darunter können Status und Grund stehen); auch mit Fokus schwebend,
+       sonst sprängen die Knöpfe beim Klicken unter der Maus weg */
+    .concept:not(.is-active) .concept-tools {
+      position: absolute; right: 4px; top: 6px;
       background: var(--surface-2); border-radius: 8px;
       box-shadow: -10px 0 8px -4px var(--surface-2);
       opacity: 0; pointer-events: none; transition: opacity .12s;
     }
-    .concept:not(.is-active):hover .concept-tools { opacity: 1; pointer-events: auto; }
+    .concept:not(.is-active):hover .concept-tools, .concept:not(.is-active):focus-within .concept-tools { opacity: 1; pointer-events: auto; }
   }
   .concept-progress {
     padding: 1px 7px; border-radius: 999px; background: var(--surface-3);
@@ -73,4 +76,34 @@
   .summary dt { color: var(--muted); overflow-wrap: break-word; hyphens: auto; }
   .summary dd { margin: 0; font-weight: 550; overflow-wrap: break-word; hyphens: auto; }
   .dd-note { display: block; margin-top: 1px; font-size: .78rem; font-weight: 400; font-style: italic; color: var(--muted); white-space: pre-line; }
+
+  /* Status je Konzept: Chip unter dem Namen, Grund daneben; Menü zum Ändern */
+  .concept-status { grid-column: 2 / -1; display: flex; align-items: baseline; gap: 6px; min-width: 0; margin: -2px 0 2px; }
+  .status-why { min-width: 0; font-size: .72rem; font-style: italic; color: var(--muted); overflow-wrap: anywhere; }
+  .status-chip {
+    display: inline-flex; align-items: center; gap: 3px; flex: none;
+    padding: 1px 7px; border: 1px solid var(--border); border-radius: 999px;
+    background: var(--surface); color: var(--muted); font: inherit; font-size: .68rem; font-weight: 700; white-space: nowrap;
+  }
+  button.status-chip { cursor: pointer; }
+  button.status-chip:hover { border-color: var(--border-strong); color: var(--text); }
+  .status-chip.status-favorite { color: var(--warn); background: var(--warn-bg); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+  .status-chip.status-dropped { color: var(--muted); background: var(--surface-2); }
+  .status-chip.status-chosen { color: var(--good); background: var(--good-bg); border-color: color-mix(in srgb, var(--good) 40%, transparent); }
+  .concept.is-dropped .concept-name { text-decoration: line-through; color: var(--muted); }
+  .concept.is-dropped .swatch { opacity: .45; }
+
+  .status-pop {
+    position: absolute; z-index: 85; width: 260px; max-width: calc(100vw - 16px); padding: 8px;
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-lg);
+  }
+  .status-pop h3 { margin: 2px 6px 6px; font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  .status-option { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 6px; font-size: .85rem; cursor: pointer; }
+  .status-option:hover { background: var(--surface-2); }
+  .status-option.is-on { background: var(--accent-soft); font-weight: 650; }
+  .status-option small { margin-left: auto; font-size: .72rem; font-weight: 400; color: var(--muted); }
+  .status-note {
+    width: 100%; margin-top: 6px; padding: 6px 7px; resize: none;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); color: var(--text); font: inherit; font-size: .8rem;
+  }
 }

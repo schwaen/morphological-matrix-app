@@ -58,9 +58,9 @@ export function useMatrix() {
 
 const HISTORY_LIMIT = 200;
 /** @type {TabPrefs} */
-export const DEFAULT_PREFS = { mode: 'select', lines: 'active', compareOpen: true, compareView: 'table', compareDiff: false, compareSort: 'order', compareHideConflicts: false };
+export const DEFAULT_PREFS = { mode: 'select', lines: 'active', compareOpen: true, compareView: 'table', compareDiff: false, compareSort: 'order', compareHideConflicts: false, compareHideDropped: false };
 /** Ansichtseinstellungen, die jeder App-Tab für sich behält (`lines` gilt für alle). */
-const VIEW_KEYS = /** @type {const} */ (['mode', 'compareOpen', 'compareView', 'compareDiff', 'compareSort', 'compareHideConflicts', 'collapsed']);
+const VIEW_KEYS = /** @type {const} */ (['mode', 'compareOpen', 'compareView', 'compareDiff', 'compareSort', 'compareHideConflicts', 'compareHideDropped', 'collapsed']);
 export const CLOSED_LIMIT = 8;
 
 

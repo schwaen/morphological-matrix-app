@@ -11,10 +11,11 @@ import { deleteConcept, duplicateConcept, setActiveConcept } from './actions.js'
 import { Icon, IconButton } from './components.jsx';
 import { ConflictBox, ConflictPill, pairLabel } from './constraints.jsx';
 import { activeConcept, fieldProps, money, prefs, render, state, useMatrix } from './core.js';
-import { consistentCount } from './count.js';
+import { consistentCount, restCounts } from './count.js';
 import { $, shownColor } from './dom.jsx';
 import { hoverConcept } from './lines.js';
 import { categoryColor } from './render-matrix.jsx';
+import { StatusChip } from './status.jsx';
 import { Util } from '../util.js';
 
 /**
@@ -49,6 +50,11 @@ function Stats() {
   const combos = P ? state.parameters.reduce((n, p) => n * BigInt(p.options.length), 1n) : 0n;
   const C = state.concepts.length;
   const count = formatCount(combos);
+  /** @type {Array<Exclude<ConceptStatus, 'draft'>>} */
+  const shown = ['chosen', 'favorite', 'dropped'];
+  const parts = shown.map(s => [s, state.concepts.filter(c => c.status === s).length])
+    .filter(([, n]) => n).map(([s, n]) => Texts.status.count(/** @type {number} */ (n), /** @type {any} */ (s)));
+  const statusSummary = parts.length ? Texts.status.summary(parts) : '';
   return (
     <>
       <Stat value={Util.formatInteger(P)} label={Texts.stats.parameters} />
@@ -56,7 +62,9 @@ function Stats() {
       <Stat value={count.text} label={Texts.stats.combinations(combos === 1n)} title={count.title}>
         {state.constraints.some(x => x.type === 'excluded') ? <ConsistentCount /> : null}
       </Stat>
-      <Stat value={Util.formatInteger(C)} label={Texts.stats.concepts(C)} />
+      <Stat value={Util.formatInteger(C)} label={Texts.stats.concepts(C)}>
+        {statusSummary ? <span class="stat-note">{statusSummary}</span> : null}
+      </Stat>
     </>
   );
 }
@@ -66,11 +74,25 @@ function ConsistentCount() {
   useMatrix();
   const { value: ok, pending } = consistentCount(state);
   const okText = ok === undefined ? '…' : ok == null ? Texts.cons.notCountable : formatCount(ok).text;
+  const left = conceptRest(activeConcept());
   return (
     <span class="stat-sub" title={ok == null ? undefined : formatCount(ok).title ?? undefined} aria-busy={pending || undefined}>
       {Texts.cons.consistentCount(okText)}
+      {left != null ? <>{' · '}<span class="stat-rest">{Texts.cons.restStat(formatCount(left).text)}</span></> : null}
     </span>
   );
+}
+
+/**
+ * Wie viele widerspruchsfreie Lösungen die Auswahl eines teilweise ausgefüllten Konzepts
+ * noch zulässt (nur beim Kombinieren; sonst `null`). @param {MatrixConcept | null} c
+ */
+function conceptRest(c) {
+  if (!c || prefs.mode !== 'select') return null;
+  const filled = state.parameters.filter(p => c.selections[p.id]).length;
+  if (!filled || filled === state.parameters.length || c.id !== state.activeConceptId) return null;
+  const rest = restCounts(state, c);
+  return rest ? rest.total : null;
 }
 
 // ---------- Konzepte ----------
@@ -86,9 +108,10 @@ function ConceptItem({ c, ci }) {
   const total = state.parameters.length;
   const filled = state.parameters.filter(p => c.selections[p.id]).length;
   const name = fieldProps(v => { c.name = v.replace(/[\r\n]+/g, ' '); });
+  const left = conceptRest(c);
   return (
     <li
-      class={`concept${c.id === state.activeConceptId ? ' is-active' : ''}`}
+      class={`concept${c.id === state.activeConceptId ? ' is-active' : ''}${c.status === 'dropped' ? ' is-dropped' : ''}`}
       style={{ '--c': shownColor(c.color) }} data-cid={c.id}
       onMouseEnter={() => hoverConcept(c.id)} onMouseLeave={() => hoverConcept(null)}
       onClick={e => { if (!/** @type {HTMLElement} */ (e.target).closest('button, input, textarea')) setActiveConcept(c.id); }}
@@ -113,6 +136,11 @@ function ConceptItem({ c, ci }) {
         <IconButton icon="copy" label={Texts.concept.duplicate} onClick={() => duplicateConcept(c.id)} />
         <IconButton icon="trash" label={Texts.concept.delete} onClick={() => deleteConcept(c.id)} danger />
       </span>
+      <span class="concept-status">
+        <StatusChip c={c} />
+        {c.statusNote.trim() ? <span class="status-why">{c.statusNote}</span> : null}
+      </span>
+      {left != null ? <span class="concept-rest">{Texts.cons.restConcept(formatCount(left).text, left === 1n)}</span> : null}
     </li>
   );
 }
@@ -213,7 +241,8 @@ export function compareContent() {
   const report = Evaluation.conceptReport(m);
   const hide = prefs.compareHideConflicts && m.constraints.some(x => x.type === 'excluded');
   const ranked = Evaluation.rankConcepts(m, report, prefs.compareSort || 'order')
-    .filter(({ figures: { concept: c } }) => !hide || !Consistency.conflicts(m, c).excluded.length);
+    .filter(({ figures: { concept: c } }) => !hide || !Consistency.conflicts(m, c).excluded.length)
+    .filter(({ figures: { concept: c } }) => !prefs.compareHideDropped || c.status !== 'dropped');
   const diff = prefs.compareDiff && m.concepts.length > 1 ? Model.differingParameters(m) : null;
   const groups = Model.categoryGroups(m).map(g => ({ ...g, items: diff ? g.items.filter(({ p }) => diff.has(p.id)) : g.items }));
   return { ranked, groups, filtered: !!diff };
@@ -241,6 +270,15 @@ export function CompareTools({ setView }) {
         {Texts.compare.onlyDiff}
         <span class="compare-diff-count">{Texts.compare.diffCount(differing, m.parameters.length)}</span>
       </label>
+      {m.concepts.some(c => c.status === 'dropped') ? (
+        <label class="check compare-hide">
+          <input
+            type="checkbox" id="compareHideDropped" checked={!!prefs.compareHideDropped}
+            onChange={e => setView('compareHideDropped', checked(e))}
+          />
+          {Texts.status.hideDropped}
+        </label>
+      ) : null}
       {m.constraints.length ? (
         <label class="check compare-hide">
           <input
@@ -284,7 +322,7 @@ export function CompareTable() {
           const text = Model.optionText(p, c.selections[p.id]);
           const o = Model.selectedOption(p, c);
           return (
-            <td key={c.id} class={text ? undefined : 'none'}>
+            <td key={c.id} data-dropped={c.status === 'dropped' || undefined} class={text ? undefined : 'none'}>
               {text || '–'}
               {o && o.note ? <span class="note-ico" title={o.note} role="img" aria-label={Texts.notes.title(text || '')}><Icon name="note" /></span> : null}
             </td>
@@ -301,18 +339,18 @@ export function CompareTable() {
   const row = (key, th, active, cellOf) => (active ? <tr key={key}>{th}{report.map(cellOf)}</tr> : null);
   const footRows = [
     row('prio', <th scope="row" title={Texts.moscow.profileTitle}>{Texts.compare.priority}</th>, m.settings.moscow, ({ concept, priority }) => priority && (
-      <td key={concept.id}>
+      <td key={concept.id} data-dropped={concept.status === 'dropped' || undefined}>
         <PriorityProfile counts={priority} />
         {priority.wont ? <small class="prio-note">{Texts.moscow.wontNote(priority.wont)}</small> : null}
       </td>
     )),
     row('cost', <th scope="row">{Texts.compare.totalCost}</th>, m.settings.costs, ({ concept, cost }) => cost && (
-      <td key={concept.id} class={metricClass(cost.missing, cost.best)} title={cost.missing ? missingNote(cost.missing) : undefined}>
+      <td key={concept.id} data-dropped={concept.status === 'dropped' || undefined} class={metricClass(cost.missing, cost.best)} title={cost.missing ? missingNote(cost.missing) : undefined}>
         {money(cost.total) + (cost.missing ? ' *' : '')}
       </td>
     )),
     row('utility', <th scope="row">{Texts.compare.utility(m.settings.utilityMax)}</th>, m.settings.utility, ({ concept, utility }) => utility && (
-      <td key={concept.id} class={metricClass(utility.missing, utility.best)} title={utility.missing ? missingNote(utility.missing) : undefined}>
+      <td key={concept.id} data-dropped={concept.status === 'dropped' || undefined} class={metricClass(utility.missing, utility.best)} title={utility.missing ? missingNote(utility.missing) : undefined}>
         {utility.value == null ? '–' : Util.formatNumber(utility.value) + (utility.missing ? ' *' : '')}
       </td>
     )),
@@ -321,7 +359,7 @@ export function CompareTable() {
         {Texts.compare.priceValue}<small class="th-note">{Texts.compare.priceValueNote}</small>
       </th>
     ), m.settings.costs && m.settings.utility, ({ concept, priceValue }) => priceValue && (
-      <td key={concept.id} class={priceValue.value == null ? 'incomplete' : (priceValue.best ? 'best' : undefined)} title={priceValue.reason ?? undefined}>
+      <td key={concept.id} data-dropped={concept.status === 'dropped' || undefined} class={priceValue.value == null ? 'incomplete' : (priceValue.best ? 'best' : undefined)} title={priceValue.reason ?? undefined}>
         {priceValue.value == null ? '–' : money(priceValue.value)}
       </td>
     )),
@@ -332,9 +370,10 @@ export function CompareTable() {
         <tr>
           <th scope="col">{Texts.compare.parameter}</th>
           {ranked.map(({ figures: { concept: c }, rank }) => (
-            <th key={c.id} scope="col" style={{ '--c': shownColor(c.color) }}>
+            <th key={c.id} scope="col" style={{ '--c': shownColor(c.color) }} class={c.status === 'dropped' ? 'is-dropped' : undefined}>
               {rank != null ? <span class="rank" title={Texts.compare.rankTitle(rank)}>{`${rank}.`}</span> : null}
               <span class="key" aria-hidden="true" />{Model.nameOrUnnamed(c)}
+              <StatusChip c={c} compact />
             </th>
           ))}
         </tr>
@@ -347,7 +386,7 @@ export function CompareTable() {
             {ranked.map(({ figures: { concept: c } }) => {
               const { excluded, conditional } = Consistency.conflicts(m, c);
               return (
-                <td key={c.id}>
+                <td key={c.id} data-dropped={c.status === 'dropped' || undefined}>
                   {excluded.length
                     ? <span class="cons-pill excluded">{`⚠ ${Texts.cons.conflictCount(excluded.length)}`}</span>
                     : <span class="cons-pill ok">{`✓ ${Texts.cons.consistent}`}</span>}
@@ -362,7 +401,7 @@ export function CompareTable() {
         {ranked.some(({ figures: { concept: c } }) => c.note.trim()) ? (
           <tr class="note-row">
             <th scope="row">{Texts.compare.conceptNote}</th>
-            {ranked.map(({ figures: { concept: c } }) => <td key={c.id} class={c.note.trim() ? undefined : 'none'}>{c.note.trim() || '–'}</td>)}
+            {ranked.map(({ figures: { concept: c } }) => <td key={c.id} data-dropped={c.status === 'dropped' || undefined} class={c.note.trim() ? undefined : 'none'}>{c.note.trim() || '–'}</td>)}
           </tr>
         ) : null}
         {rows.length ? rows : <tr><td class="none" colSpan={span}>{Texts.compare.noDifferences}</td></tr>}

@@ -3,7 +3,7 @@
   "name": "Food-Truck gründen",
   "description": "Gründung eines Food-Trucks: Küche, Fahrzeug, Betrieb und Marke zu Geschäftsmodellen kombinieren. Mit Startinvestition, Nutzwert, Prioritäten (MoSCoW) für die Pfade MVP, Standard und Premium sowie Verträglichkeiten – ein Konzept zeigt absichtlich Konflikte.",
   "data": {
-    "version": 5,
+    "version": 6,
     "title": "Beispiel: Food-Truck gründen",
     "description": "Gründung eines Food-Trucks. Kosten = Startinvestition in Euro für den jeweiligen Baustein, Nutzwert = erwarteter Beitrag zum Geschäftserfolg von 0 bis 10. Die Prioritäten (MoSCoW) beschreiben den Ausbaupfad vom kleinen Einstieg (Must) bis zur Wunschausstattung (Could).",
     "settings": { "costs": true, "utility": true, "currency": "EUR", "utilityMax": 10, "moscow": true },

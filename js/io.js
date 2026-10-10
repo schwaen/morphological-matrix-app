@@ -89,6 +89,8 @@ export const IO = (() => {
     }
     if (m.concepts.length) {
       const conceptNotes = m.concepts.some(c => c.note);
+      // Status nur, wenn ein Konzept mehr als „Entwurf“ ist
+      const withStatus = m.concepts.some(c => c.status !== 'draft' || c.statusNote);
       const withConstraints = m.constraints.length > 0;
       /** Unverträgliche Paare eines Konzepts als Text. @param {MatrixConcept} c */
       const clashes = c => Consistency.conflicts(m, c).excluded.map(x => `${ref(x.a).text} ✕ ${ref(x.b).text}`).join('; ');
@@ -97,14 +99,16 @@ export const IO = (() => {
         ...(utility ? [cell(L.utilityTotal)] : []),
         ...(costs && utility ? [cell(L.priceValue(currency))] : []),
         ...(withConstraints ? [cell(L.conflicts)] : []),
-        ...(conceptNotes ? [cell(L.conceptNote)] : [])]);
+        ...(conceptNotes ? [cell(L.conceptNote)] : []),
+        ...(withStatus ? [cell(L.status), cell(L.statusNote)] : [])]);
       for (const { concept: c, cost, utility: util, priceValue } of conceptReport(m)) {
         lines.push([cell(c.name), ...m.parameters.map(p => cell(optionText(p, c.selections[p.id]) || '')),
           ...(cost ? [csvNum(cost.total)] : []),
           ...(util ? [csvNum(util.value)] : []),
           ...(priceValue ? [csvNum(priceValue.value)] : []),
           ...(withConstraints ? [cell(clashes(c))] : []),
-          ...(conceptNotes ? [cell(c.note)] : [])]);
+          ...(conceptNotes ? [cell(c.note)] : []),
+          ...(withStatus ? [cell(Texts.status.levels[c.status].label), cell(c.statusNote)] : [])]);
       }
     }
     return '\ufeff' + lines.map(l => l.join(Texts.meta.csvSeparator)).join('\r\n');

@@ -133,6 +133,9 @@ test('Zahlenformate je Sprache', () => {
   assert.equal(Util.formatNumber(1234.567), '1.234,57');
   assert.equal(Util.formatInteger(1234567), '1.234.567');
   assert.equal(Util.formatInteger(12345678901234567890n), '12.345.678.901.234.567.890');
+  assert.equal(Util.formatCompact(9999n), '9.999');
+  assert.equal(Util.formatCompact(12345n), '12.345');
+  assert.equal(Util.formatCompact(1234567n), '1,2\u00a0Mio.'); // geschütztes Leerzeichen
   assert.equal(sp(Util.formatPercent(0.255)), '25,5 %');
 });
 

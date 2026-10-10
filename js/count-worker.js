@@ -1,11 +1,13 @@
 /*
  * Web Worker: zählt die widerspruchsfreien Kombinationen (js/counting.js)
  * außerhalb der Oberfläche, damit große Matrizen die Bedienung nicht blockieren.
- * Nachricht hin: { id, matrix } – zurück: { id, value } (BigInt oder null).
+ * Nachricht hin: { id, kind, matrix, fixed } – zurück: { id, kind, value }.
+ * `kind`: 'count' (Gesamtzahl: BigInt oder null) bzw. 'remaining' (Restzahlen zur Auswahl `fixed`).
  */
 import { Counting } from './counting.js';
 
-self.onmessage = (/** @type {MessageEvent<{ id: number, matrix: Matrix }>} */ e) => {
-  const { id, matrix } = e.data;
-  self.postMessage({ id, value: Counting.countConsistent(matrix) });
+self.onmessage = (/** @type {MessageEvent<{ id: number, kind: 'count' | 'remaining', matrix: Matrix, fixed: Record<string, string> }>} */ e) => {
+  const { id, kind, matrix, fixed } = e.data;
+  const value = kind === 'remaining' ? Counting.remaining(matrix, fixed) : Counting.countConsistent(matrix);
+  self.postMessage({ id, kind, value });
 };

@@ -272,6 +272,24 @@ export const TextsEn = (() => {
       none: 'No concepts yet.',
     },
 
+    // Status per concept
+    status: {
+      levels: {
+        draft: { icon: '', label: 'Draft', hint: 'default' },
+        favorite: { icon: '★', label: 'Favorite', hint: 'shortlisted' },
+        dropped: { icon: '⊘', label: 'Dropped', hint: 'not pursued' },
+        chosen: { icon: '✓', label: 'Chosen', hint: 'decision' },
+      },
+      button: (name, label) => `Status of “${name}”: ${label} – change`,
+      popTitle: name => `Status of “${name}”`,
+      notePlaceholder: 'Reason (optional) …',
+      noteLabel: name => `Reason for the status of “${name}”`,
+      summary: parts => parts.join(' · '),
+      count: (n, key) => `${n} ${{ favorite: n === 1 ? 'favorite' : 'favorites', dropped: 'dropped', chosen: 'chosen' }[key]}`,
+      hideDropped: 'Hide dropped',
+      compareRow: 'Status',
+    },
+
     moscow: {
       levels: {
         must: { short: 'M', label: 'Must have' },
@@ -311,6 +329,12 @@ export const TextsEn = (() => {
       conflicts: n => `${n} ${n === 1 ? 'incompatibility' : 'incompatibilities'}`,
       conceptConflicts: n => `${n} ${n === 1 ? 'incompatibility' : 'incompatibilities'} in this concept`,
       consistentCount: text => `consistent: ${text}`,
+      // Remaining counts while combining
+      restTitle: (text, one) => `${text} consistent ${one ? 'solution' : 'solutions'} if selected`,
+      restDead: 'Fits the selection but no longer leads to any consistent solution',
+      restLegend: 'Number on an option: consistent solutions if it is selected · ∅: no longer leads to any solution.',
+      restStat: text => `with selection: ${text} left`,
+      restConcept: (text, one) => `${text} consistent ${one ? 'solution' : 'solutions'} still possible`,
       notCountable: 'not computable',
       compareRow: 'Compatibility',
       consistent: 'consistent',
@@ -521,6 +545,8 @@ export const TextsEn = (() => {
       constraintNote: 'Reason',
       conflicts: 'Incompatibilities',
       conceptNote: 'Rationale',
+      status: 'Status',
+      statusNote: 'Reason for status',
     },
   };
 })();

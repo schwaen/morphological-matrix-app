@@ -282,6 +282,24 @@ export const TextsDe = (() => {
       none: 'Noch keine Konzepte.',
     },
 
+    // Status je Konzept
+    status: {
+      levels: {
+        draft: { icon: '', label: 'Entwurf', hint: 'Standard' },
+        favorite: { icon: '★', label: 'Favorit', hint: 'in engerer Wahl' },
+        dropped: { icon: '⊘', label: 'Verworfen', hint: 'nicht weiter verfolgt' },
+        chosen: { icon: '✓', label: 'Gewählt', hint: 'Entscheidung' },
+      },
+      button: (name, label) => `Status von „${name}“: ${label} – ändern`,
+      popTitle: name => `Status von „${name}“`,
+      notePlaceholder: 'Grund (optional) …',
+      noteLabel: name => `Grund zum Status von „${name}“`,
+      summary: parts => parts.join(' · '),
+      count: (n, key) => `${n} ${{ favorite: n === 1 ? 'Favorit' : 'Favoriten', dropped: 'verworfen', chosen: 'gewählt' }[key]}`,
+      hideDropped: 'Verworfene ausblenden',
+      compareRow: 'Status',
+    },
+
     // Priorität nach MoSCoW
     moscow: {
       levels: {
@@ -322,6 +340,12 @@ export const TextsDe = (() => {
       conflicts: n => `${n} ${n === 1 ? 'Unverträglichkeit' : 'Unverträglichkeiten'}`,
       conceptConflicts: n => `${n} ${n === 1 ? 'Unverträglichkeit' : 'Unverträglichkeiten'} in diesem Konzept`,
       consistentCount: text => `davon widerspruchsfrei: ${text}`,
+      // Restzahlen beim Kombinieren
+      restTitle: (text, one) => `${text} widerspruchsfreie ${one ? 'Lösung' : 'Lösungen'}, wenn gewählt`,
+      restDead: 'Passt zur Auswahl, führt aber zu keiner widerspruchsfreien Lösung mehr',
+      restLegend: 'Zahl an einer Ausprägung: widerspruchsfreie Lösungen, wenn sie gewählt wird · ∅: führt zu keiner Lösung mehr.',
+      restStat: text => `mit Auswahl: noch ${text}`,
+      restConcept: (text, one) => `noch ${text} widerspruchsfreie ${one ? 'Lösung' : 'Lösungen'} möglich`,
       notCountable: 'nicht berechenbar',
       compareRow: 'Verträglichkeit',
       consistent: 'widerspruchsfrei',
@@ -534,6 +558,8 @@ export const TextsDe = (() => {
       constraintNote: 'Begründung der Verträglichkeit',
       conflicts: 'Unverträglichkeiten',
       conceptNote: 'Begründung',
+      status: 'Status',
+      statusNote: 'Grund zum Status',
     },
   };
 })();

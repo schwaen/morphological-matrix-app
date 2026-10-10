@@ -31,6 +31,8 @@
   .cons-pill.ok { background: var(--good-bg); color: var(--good); }
   .concept-meta { display: inline-flex; align-items: center; gap: 4px; }
   .stat-sub { font-size: .75rem; font-weight: 600; color: var(--good); }
+  .stat-rest { color: var(--accent); }
+  .stat-note { font-size: .75rem; font-weight: 600; color: var(--muted); }
   .cons-box {
     margin: -2px 0 12px; padding: 9px 11px; border: 1px solid var(--bad-line); border-left: 3px solid var(--bad);
     border-radius: var(--radius-sm); background: var(--bad-bg); font-size: .82rem; line-height: 1.4; color: var(--text);
