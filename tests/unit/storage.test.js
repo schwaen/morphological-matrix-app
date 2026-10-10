@@ -117,3 +117,14 @@ test('Tab-Zuordnung aus der Zeit vor den App-Tabs', () => {
   session.setItem('morphologische-matrix:tab-doc', 'alt-1');
   assert.equal(Store.legacyTabDocId(), 'alt-1');
 });
+
+test('Export-Einstellungen: gemerkt; fehlende, ungültige und kaputte Werte nach Vorgabe', () => {
+  const defaults = { format: 'html', parts: { facts: true, chart: true } };
+  assert.deepEqual(Store.loadExportPrefs(defaults), defaults);
+  Store.saveExportPrefs({ format: 'md', parts: { facts: false, chart: true } });
+  assert.deepEqual(Store.loadExportPrefs(defaults), { format: 'md', parts: { facts: false, chart: true } });
+  localStorage.setItem('morphologische-matrix:export', JSON.stringify({ format: 3, parts: { facts: 'nein', extra: true } }));
+  assert.deepEqual(Store.loadExportPrefs(defaults), defaults);
+  localStorage.setItem('morphologische-matrix:export', '{kaputt');
+  assert.deepEqual(Store.loadExportPrefs(defaults), defaults);
+});

@@ -76,4 +76,28 @@
   }
   .help-foot { justify-content: space-between; align-items: center; gap: 12px; }
   .help-meta { font-size: .8rem; color: var(--muted); }
+
+  /* Exportieren: Formate als Karten, Inhalt des Berichts als Kästchen */
+  .export-dialog { width: min(640px, calc(100vw - 32px)); }
+  .export-formats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 4px; }
+  .export-format {
+    display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: start; align-content: start;
+    padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer;
+  }
+  .export-format:hover { border-color: var(--border-strong); }
+  .export-format input { margin-top: 3px; }
+  .export-format b { font-size: .92rem; }
+  .export-format small { grid-column: 2; font-size: .78rem; line-height: 1.35; color: var(--muted); }
+  .export-format.is-on { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .export-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: .68rem; font-weight: 700; vertical-align: 1px; }
+  .export-heading { margin: 14px 0 6px; font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  .export-parts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; padding-bottom: 12px; }
+  .export-parts .check { color: var(--text); }
+  .export-parts .export-sub { padding-left: 26px; }
+  .export-foot { justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .export-file { margin: 0; font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
+  .export-actions { display: flex; gap: 8px; margin-left: auto; }
+  @media (max-width: 560px) {
+    .export-formats, .export-parts { grid-template-columns: 1fr; }
+  }
 }

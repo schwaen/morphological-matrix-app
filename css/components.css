@@ -57,6 +57,8 @@
     padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; cursor: pointer;
     font-size: .9rem; color: var(--text-2);
   }
+  .menu-list button.menu-strong { display: flex; align-items: baseline; gap: 12px; font-weight: 650; }
+  .menu-hint { margin-left: auto; font-size: .76rem; font-weight: 400; color: var(--muted); }
   .menu-list button:hover, .menu-list button:focus-visible { background: var(--surface-2); color: var(--text); outline: none; }
   .menu-list [role="menuitemradio"][aria-checked="true"] { color: var(--text); font-weight: 650; }
   .menu-list [role="menuitemradio"][aria-checked="true"]::after { content: "✓"; float: right; color: var(--accent); }

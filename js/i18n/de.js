@@ -47,9 +47,9 @@ export const TextsDe = (() => {
         constraints: 'Verträglichkeiten …',
         exportJson: 'Als JSON speichern',
         importJson: 'JSON öffnen …',
-        exportCsv: 'Als CSV exportieren',
+        export: 'Exportieren …',
+        exportHint: 'Bericht, CSV, PDF',
         share: 'Link zum Teilen kopieren',
-        print: 'Drucken / PDF',
         language: 'Sprache',
       },
       matrixHeading: 'Matrix',
@@ -119,6 +119,7 @@ export const TextsDe = (() => {
       examplesHeading: 'Beispiele',
       examplesHint: 'Ein Beispiel öffnet sich als neue Matrix in einem eigenen Tab. Änderungen daran wirken sich nicht auf das Beispiel aus.',
       settingsHeading: 'Bewertung der Ausprägungen',
+      exportHeading: 'Exportieren',
       settingsHint: 'Die Einstellungen gelten für die gesamte Matrix. Ausgeblendete Werte bleiben erhalten und erscheinen beim erneuten Aktivieren wieder.',
       costsToggle: '<strong>Kosten</strong> je Ausprägung erfassen',
       costsDesc: 'Für jedes Konzept werden die Kosten der gewählten Ausprägungen summiert.',
@@ -284,6 +285,48 @@ export const TextsDe = (() => {
       none: 'Noch keine Konzepte.',
     },
 
+    // Bericht (HTML/Markdown) und Export-Dialog
+    report: {
+      meta: date => `Bericht vom ${date} · erstellt mit der App „Morphologische Matrix“`,
+      combinations: (total, ok) => (ok == null ? `${total} Kombinationen` : `${total} Kombinationen, davon ${ok} widerspruchsfrei`),
+      concepts: (n, detail) => `${plural(n, 'Konzept', 'Konzepte')}${detail ? `: ${detail}` : ''}`,
+      sections: {
+        concepts: 'Lösungskonzepte', compare: 'Konzeptvergleich', chart: 'Kosten und Nutzwert',
+        matrix: 'Morphologische Matrix', notes: 'Notizen', constraints: 'Verträglichkeiten',
+      },
+      perPoint: 'je Punkt',
+      chosenBy: names => `gewählt in: ${names}`,
+      option: 'Ausprägung',
+      droppedHidden: n => `${plural(n, 'verworfenes Konzept', 'verworfene Konzepte')} nicht aufgeführt.`,
+      noConcepts: 'Noch keine Konzepte.',
+      footer: version => `Erstellt mit der App „Morphologische Matrix“ · Datenformat ${version}`,
+    },
+    exportDialog: {
+      hint: title => `„${title}“ als Datei zum Weitergeben. Zum Weiterbearbeiten in der App dient „Als JSON speichern“.`,
+      formatsLabel: 'Format',
+      formats: {
+        html: { label: 'Bericht', tag: 'HTML', desc: 'Gegliedertes Dokument mit Konzepten, Vergleich, Matrix und Begründungen – im Browser lesbar, als PDF druckbar, per Mail verschickbar.' },
+        md: { label: 'Bericht', tag: 'Markdown', desc: 'Gleicher Inhalt als Text für Wikis, Confluence, GitHub oder Notiz-Apps.' },
+        csv: { label: 'Tabelle', tag: 'CSV', desc: 'Für Excel und Co.: Matrix, Konzepte, Kennzahlen und Verträglichkeiten als Zeilen.' },
+        print: { label: 'Drucken / PDF', tag: '', desc: 'Die aktuelle Ansicht über den Druckdialog des Browsers.' },
+      },
+      partsHeading: 'Inhalt des Berichts',
+      parts: {
+        facts: 'Problemstellung und Kennzahlen',
+        concepts: 'Konzepte mit Status und Begründung',
+        hideDropped: n => `Verworfene weglassen (${n})`,
+        compare: 'Konzeptvergleich',
+        evaluation: 'Bewertung (Kosten, Nutzwert, Priorität)',
+        chart: 'Kosten/Nutzen-Diagramm (nur HTML)',
+        matrix: 'Matrix mit Notizen',
+        constraints: n => `Verträglichkeiten (${plural(n, 'Paar', 'Paare')})`,
+      },
+      file: name => `Datei: ${name}`,
+      download: 'Herunterladen',
+      print: 'Drucken …',
+      cancel: 'Abbrechen',
+    },
+
     // Status je Konzept
     status: {
       levels: {
@@ -386,7 +429,7 @@ export const TextsDe = (() => {
       steps: [
         ['Bearbeiten', 'Parameter (Zeilen) und ihre Ausprägungen (Zellen) anlegen, bei großen Matrizen in Kategorien gliedern. Notizen, Bewertung und Verträglichkeiten sind optional.'],
         ['Kombinieren', 'Je Parameter eine Ausprägung anklicken – so entsteht ein Lösungskonzept. Mit „+ Konzept“ weitere Konzepte anlegen.'],
-        ['Vergleichen', 'Konzepte im Konzeptvergleich als Tabelle oder Verlauf gegenüberstellen, sortieren und als JSON oder CSV exportieren.'],
+        ['Vergleichen', 'Konzepte im Konzeptvergleich als Tabelle, Verlauf oder Kosten/Nutzen gegenüberstellen und sortieren; unter „Datei → Exportieren“ als Bericht, CSV oder PDF weitergeben.'],
       ],
       more: 'Alle Funktionen beschreibt die README des Projekts.',
       or: 'oder',

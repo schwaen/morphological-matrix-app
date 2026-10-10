@@ -42,9 +42,9 @@ export const TextsEn = (() => {
         constraints: 'Compatibility …',
         exportJson: 'Save as JSON',
         importJson: 'Open JSON …',
-        exportCsv: 'Export as CSV',
+        export: 'Export …',
+        exportHint: 'Report, CSV, PDF',
         share: 'Copy share link',
-        print: 'Print / PDF',
         language: 'Language',
       },
       matrixHeading: 'Matrix',
@@ -114,6 +114,7 @@ export const TextsEn = (() => {
       examplesHeading: 'Examples',
       examplesHint: 'An example opens as a new matrix in its own tab. Your changes do not affect the example.',
       settingsHeading: 'Evaluating options',
+      exportHeading: 'Export',
       settingsHint: 'These settings apply to the whole matrix. Hidden values are kept and reappear when you turn the setting back on.',
       costsToggle: 'Record <strong>cost</strong> per option',
       costsDesc: 'For each concept, the costs of the selected options are added up.',
@@ -274,6 +275,48 @@ export const TextsEn = (() => {
       none: 'No concepts yet.',
     },
 
+    // Report (HTML/Markdown) and export dialog
+    report: {
+      meta: date => `Report of ${date} · created with the “Morphological Matrix” app`,
+      combinations: (total, ok) => (ok == null ? `${total} combinations` : `${total} combinations, ${ok} of them consistent`),
+      concepts: (n, detail) => `${plural(n, 'concept', 'concepts')}${detail ? `: ${detail}` : ''}`,
+      sections: {
+        concepts: 'Solution concepts', compare: 'Concept comparison', chart: 'Cost and utility',
+        matrix: 'Morphological matrix', notes: 'Notes', constraints: 'Compatibility',
+      },
+      perPoint: 'per point',
+      chosenBy: names => `selected in: ${names}`,
+      option: 'Option',
+      droppedHidden: n => `${plural(n, 'dropped concept', 'dropped concepts')} not listed.`,
+      noConcepts: 'No concepts yet.',
+      footer: version => `Created with the “Morphological Matrix” app · data format ${version}`,
+    },
+    exportDialog: {
+      hint: title => `“${title}” as a file to share. To keep editing in the app, use “Save as JSON”.`,
+      formatsLabel: 'Format',
+      formats: {
+        html: { label: 'Report', tag: 'HTML', desc: 'Structured document with concepts, comparison, matrix and rationales – readable in the browser, printable as PDF, easy to email.' },
+        md: { label: 'Report', tag: 'Markdown', desc: 'Same content as text for wikis, Confluence, GitHub or note apps.' },
+        csv: { label: 'Table', tag: 'CSV', desc: 'For Excel and co.: matrix, concepts, figures and compatibility as rows.' },
+        print: { label: 'Print / PDF', tag: '', desc: 'The current view via the browser’s print dialog.' },
+      },
+      partsHeading: 'Report content',
+      parts: {
+        facts: 'Problem statement and figures',
+        concepts: 'Concepts with status and rationale',
+        hideDropped: n => `Leave out dropped (${n})`,
+        compare: 'Concept comparison',
+        evaluation: 'Evaluation (cost, utility, priority)',
+        chart: 'Cost/benefit chart (HTML only)',
+        matrix: 'Matrix with notes',
+        constraints: n => `Compatibility (${plural(n, 'pair', 'pairs')})`,
+      },
+      file: name => `File: ${name}`,
+      download: 'Download',
+      print: 'Print …',
+      cancel: 'Cancel',
+    },
+
     // Status per concept
     status: {
       levels: {
@@ -373,7 +416,7 @@ export const TextsEn = (() => {
       steps: [
         ['Edit', 'Add parameters (rows) and their options (cells); group large matrices into categories. Notes, evaluation and compatibility are optional.'],
         ['Combine', 'Click one option per parameter to build a solution concept. Use “+ Concept” to add more concepts.'],
-        ['Compare', 'Compare concepts as a table or profile, sort them and export as JSON or CSV.'],
+        ['Compare', 'Compare and sort concepts as a table, profile or cost/benefit chart; share them via “File → Export” as a report, CSV or PDF.'],
       ],
       more: 'The project README describes every feature.',
       or: 'or',

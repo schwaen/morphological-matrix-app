@@ -12,54 +12,8 @@ import { money, state, useMatrix } from './core.js';
 import { shownColor } from './dom.jsx';
 import { hovered, hoverConcept } from './lines.js';
 import { ChartLegend, emphasisClass } from './render-chart.jsx';
+import { ScatterLayout } from '../scatter-layout.js';
 import { Util } from '../util.js';
-
-const PAD = { left: 64, right: 28, top: 14, bottom: 46 };
-const DOT = 6;
-/** Geschätzte Zeichenbreite der Punktbeschriftung (12px, halbfett). */
-const CHAR_W = 6.9;
-
-/** „Schöne“ Schrittweite für etwa `n` Abschnitte bis `max`. @param {number} max @param {number} n */
-function niceStep(max, n) {
-  const raw = max / n;
-  const pow = 10 ** Math.floor(Math.log10(raw));
-  const f = raw / pow;
-  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * pow;
-}
-
-/** @typedef {{ x1: number, x2: number, y1: number, y2: number }} Box */
-
-/**
- * Beschriftungen ohne Überschneidung: je Punkt der erste freie Platz aus rechts, links, oben,
- * unten. Ohne freien Platz bleibt der Punkt unbeschriftet (Legende und Tooltip nennen ihn) –
- * außer bei `must` (aktives Konzept), das dann rechts bzw. links beschriftet wird.
- * `obstacles`: weitere belegte Flächen (Linie und Beschriftung der Front).
- * @param {Array<{ x: number, y: number, text: string, must: boolean }>} pts @param {number} left @param {number} right
- * @param {Box[]} obstacles
- * @returns {Array<{ x: number, y: number, anchor: 'start' | 'end' } | null>}
- */
-function placeLabels(pts, left, right, obstacles) {
-  /** @type {Box[]} */
-  const taken = [...pts.map(p => ({ x1: p.x - DOT, x2: p.x + DOT, y1: p.y - DOT, y2: p.y + DOT })), ...obstacles];
-  const hit = (/** @type {{ x1: number, x2: number, y1: number, y2: number }} */ b) =>
-    taken.some(t => b.x1 < t.x2 && b.x2 > t.x1 && b.y1 < t.y2 && b.y2 > t.y1);
-  return pts.map(p => {
-    const w = p.text.length * CHAR_W;
-    /** @type {Array<{ x: number, y: number, anchor: 'start' | 'end' }>} */
-    const tries = [
-      { x: p.x + 10, y: p.y + 4, anchor: 'start' }, { x: p.x - 10, y: p.y + 4, anchor: 'end' },
-      { x: p.x - 10, y: p.y - 10, anchor: 'end' }, { x: p.x + 10, y: p.y - 10, anchor: 'start' },
-      { x: p.x + 10, y: p.y + 18, anchor: 'start' }, { x: p.x - 10, y: p.y + 18, anchor: 'end' },
-    ];
-    const box = (/** @type {{ x: number, y: number, anchor: string }} */ t) => /** @type {Box} */ ({
-      x1: t.anchor === 'start' ? t.x : t.x - w, x2: t.anchor === 'start' ? t.x + w : t.x, y1: t.y - 11, y2: t.y + 3,
-    });
-    const fits = (/** @type {{ x: number, y: number, anchor: string }} */ t) => { const b = box(t); return b.x1 >= left && b.x2 <= right && !hit(b); };
-    const best = tries.find(fits) || (p.must ? tries[p.x + 10 + w <= right ? 0 : 1] : null);
-    if (best) taken.push(box(best));
-    return best;
-  });
-}
 
 /**
  * @param {{ content: () => CompareContent }} props `content`: Inhalt des Vergleichs (Reihenfolge, ausgeblendete Konzepte)
@@ -92,42 +46,13 @@ export function CompareScatter({ content }) {
     return { c, f, missing, figures: r.figures };
   });
   const hiddenCount = ranked.length - pts.length;
+  const {
+    W, H, pad: PAD, plotR, X, Y, xTicks, yTicks, frontPath, frontArea, frontLabelY, hasFront, labels, dot: DOT,
+  } = ScatterLayout.layout(pts.map(q => ({
+    cost: q.f.cost, utility: q.f.utility, front: q.f.front, active: q.c.id === state.activeConceptId,
+    label: `${Model.nameOrUnnamed(q.c)}${q.f.complete ? '' : ' *'}`,
+  })), { width, yMax: state.settings.utilityMax, frontLabel: Texts.scatter.front });
   const yMax = state.settings.utilityMax;
-  const xStep = niceStep(Math.max(1, ...pts.map(q => q.f.cost)) * 1.08, 5);
-  const xMax = Math.max(xStep, Math.ceil((Math.max(0, ...pts.map(q => q.f.cost)) * 1.08) / xStep) * xStep);
-  const W = width;
-  const H = Math.round(Math.min(420, Math.max(280, W * 0.42)));
-  const plotR = W - PAD.right;
-  const X = (/** @type {number} */ v) => PAD.left + (v / xMax) * (plotR - PAD.left);
-  const Y = (/** @type {number} */ v) => PAD.top + (1 - v / yMax) * (H - PAD.top - PAD.bottom);
-  const xTicks = Array.from({ length: Math.round(xMax / xStep) + 1 }, (_, i) => i * xStep);
-  const yTicks = Array.from({ length: 6 }, (_, i) => (i * yMax) / 5);
-
-  // Pareto-Front als Treppe von links unten nach rechts oben; Fläche rechts darunter ist übertroffen
-  const onFront = pts.filter(q => q.f.front).sort((a, b) => a.f.cost - b.f.cost || a.f.utility - b.f.utility);
-  /** Ecken der Treppe; die Linie belegt Platz, den Beschriftungen meiden. */
-  const corners = onFront.flatMap((q, i) => [
-    ...(i ? [{ x: X(q.f.cost), y: Y(onFront[i - 1].f.utility) }] : []), { x: X(q.f.cost), y: Y(q.f.utility) },
-  ]);
-  if (corners.length) corners.push({ x: X(xMax), y: corners[corners.length - 1].y });
-  const frontPath = corners.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(' ');
-  const frontArea = corners.length ? `${frontPath} L${X(xMax)},${Y(0)} L${corners[0].x},${Y(0)} Z` : '';
-  const frontLabelY = corners.length ? corners[corners.length - 1].y - 8 : 0;
-  /** @type {Box[]} */
-  const obstacles = corners.slice(1).map((p, i) => {
-    const a = corners[i];
-    return { x1: Math.min(a.x, p.x) - 2, x2: Math.max(a.x, p.x) + 2, y1: Math.min(a.y, p.y) - 2, y2: Math.max(a.y, p.y) + 2 };
-  });
-  if (corners.length) obstacles.push({ x1: plotR - 4 - Texts.scatter.front.length * 6, x2: plotR, y1: frontLabelY - 11, y2: frontLabelY + 3 });
-  // Aktives Konzept zuerst, damit es seinen Platz sicher bekommt
-  const labelOrder = pts.map((q, i) => i).sort((a, b) => Number(pts[b].c.id === state.activeConceptId) - Number(pts[a].c.id === state.activeConceptId));
-  const placed = placeLabels(labelOrder.map(i => {
-    const q = pts[i];
-    return { x: X(q.f.cost), y: Y(q.f.utility), text: `${Model.nameOrUnnamed(q.c)}${q.f.complete ? '' : ' *'}`, must: q.c.id === state.activeConceptId };
-  }), PAD.left, plotR, obstacles);
-  /** @type {Array<{ x: number, y: number, anchor: 'start' | 'end' } | null>} */
-  const labels = [];
-  labelOrder.forEach((i, k) => { labels[i] = placed[k]; });
   // Aktives Konzept zuletzt zeichnen, damit es oben liegt (nicht das hervorgehobene: der Punkt
   // unter der Maus würde sonst im DOM verschoben)
   const order = pts.map((q, i) => ({ q, i })).sort((a, b) => Number(a.q.c.id === state.activeConceptId) - Number(b.q.c.id === state.activeConceptId));
@@ -148,7 +73,7 @@ export function CompareScatter({ content }) {
             </g>
             {frontArea ? <path class="sc-dominated" d={frontArea} aria-hidden="true" /> : null}
             {frontPath ? <path class="sc-front" d={frontPath} aria-hidden="true" /> : null}
-            {corners.length ? (
+            {hasFront ? (
               <text class="sc-front-label" x={plotR - 4} y={frontLabelY} text-anchor="end" aria-hidden="true">{Texts.scatter.front}</text>
             ) : null}
             <g class="sc-axis" aria-hidden="true">
