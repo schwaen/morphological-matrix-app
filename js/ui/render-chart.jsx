@@ -52,11 +52,7 @@ export function CompareChart({ content }) {
   // Mehrere Konzepte auf derselben Ausprägung leicht versetzt zeichnen
   const spread = n > 1 ? Math.min(3, 12 / (n - 1)) : 0;
   const offset = (/** @type {number} */ ci) => (ci - (n - 1) / 2) * spread;
-  /** Betonung je Konzept: aktiv oder hervorgehoben; die übrigen treten zurück, solange eines hervorgehoben ist. */
-  const emphasis = (/** @type {string} */ cid) => {
-    const strong = cid === m.activeConceptId || cid === hot;
-    return `${strong ? ' is-strong' : ''}${hot != null && !strong ? ' is-faint' : ''}`;
-  };
+  const emphasis = (/** @type {string} */ cid) => emphasisClass(cid, hot);
   // Aktives und hervorgehobenes Konzept zuletzt zeichnen, damit sie oben liegen
   const rank = (/** @type {string} */ cid) => (cid === hot ? 2 : cid === m.activeConceptId ? 1 : 0);
   const order = m.concepts.map((c, ci) => ({ c, ci })).sort((a, b) => rank(a.c.id) - rank(b.c.id));
@@ -77,23 +73,7 @@ export function CompareChart({ content }) {
 
   return (
     <>
-      <ul class="pc-legend" aria-label={Texts.chart.legend}>
-        {view.ranked.map(({ figures: { concept: c }, rank: r }) => (
-          <li key={c.id}>
-            <button
-              type="button" class={`pc-key${emphasis(c.id)}`} data-cid={c.id} style={{ '--c': shownColor(c.color) }}
-              aria-pressed={c.id === m.activeConceptId}
-              onMouseEnter={() => hoverConcept(c.id)} onMouseLeave={() => hoverConcept(null)}
-              onFocus={() => hoverConcept(c.id)} onBlur={() => hoverConcept(null)}
-              onClick={() => setActiveConcept(c.id)}
-            >
-              <span class="pc-swatch" aria-hidden="true" />
-              {r != null ? <span class="pc-rank" title={Texts.compare.rankTitle(r)}>{`${r}.`}</span> : null}
-              {Model.nameOrUnnamed(c)}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <ChartLegend ranked={view.ranked} />
       {params.length ? (
         <div class="pc-plot">
           <svg
@@ -158,6 +138,42 @@ export function CompareChart({ content }) {
         </div>
       ) : <p class="pc-empty">{Texts.compare.noDifferences}</p>}
     </>
+  );
+}
+
+/**
+ * Betonung je Konzept in den Diagrammen: aktiv oder hervorgehoben; die übrigen treten zurück,
+ * solange eines hervorgehoben ist. @param {string} cid @param {string | null} hot
+ */
+export function emphasisClass(cid, hot) {
+  const strong = cid === state.activeConceptId || cid === hot;
+  return `${strong ? ' is-strong' : ''}${hot != null && !strong ? ' is-faint' : ''}`;
+}
+
+/**
+ * Legende der Diagramme: Darüberfahren hebt hervor, Klick wählt das Konzept aus.
+ * @param {{ ranked: CompareContent['ranked'] }} props
+ */
+export function ChartLegend({ ranked }) {
+  const hot = hovered.value;
+  return (
+    <ul class="pc-legend" aria-label={Texts.chart.legend}>
+      {ranked.map(({ figures: { concept: c }, rank: r }) => (
+        <li key={c.id}>
+          <button
+            type="button" class={`pc-key${emphasisClass(c.id, hot)}`} data-cid={c.id} style={{ '--c': shownColor(c.color) }}
+            aria-pressed={c.id === state.activeConceptId}
+            onMouseEnter={() => hoverConcept(c.id)} onMouseLeave={() => hoverConcept(null)}
+            onFocus={() => hoverConcept(c.id)} onBlur={() => hoverConcept(null)}
+            onClick={() => setActiveConcept(c.id)}
+          >
+            <span class="pc-swatch" aria-hidden="true" />
+            {r != null ? <span class="pc-rank" title={Texts.compare.rankTitle(r)}>{`${r}.`}</span> : null}
+            {Model.nameOrUnnamed(c)}
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 

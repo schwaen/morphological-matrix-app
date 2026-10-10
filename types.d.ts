@@ -110,7 +110,7 @@ interface TabPrefs {
   showLines?: boolean;
   compareOpen: boolean;
   /** Konzeptvergleich als Tabelle oder Verlaufsdiagramm */
-  compareView?: 'table' | 'chart';
+  compareView?: 'table' | 'chart' | 'scatter';
   /** Konzeptvergleich: nur Parameter zeigen, bei denen sich die Konzepte unterscheiden */
   compareDiff?: boolean;
   /** Konzeptvergleich: Reihenfolge der Konzepte (`order` = wie in der Liste) */
